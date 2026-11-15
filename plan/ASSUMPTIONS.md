@@ -63,3 +63,14 @@ Recorded during milestone execution. Kept up to date without interrupting the us
 - **Interactive Controls & Test Walk**:
   - Added CCTV camera buttons (`ALL`, `OFFICE`, `LIVING`, `BEDROOM`, `KITCHEN`, `GAME`, `CONFESSION`) that smoothly pan and zoom to each room with customized camera labels.
   - Added `#btn-test-walk` button: clicking it spawns/moves a character to Bedroom (4, 5) and routes through the bedroom door (6, 11), down the hallway, through the office door (32, 11), and into the office desk (26, 4) without clipping any dividing walls.
+
+## Milestone 4: House Life
+
+- **POI Schema (`config/pois.json` & `public/pois.json`)**:
+  - All POIs adhere to the standard schema `{ id, room, x, y, facing, action, minSec, maxSec, capacity, tags }`.
+  - Configured across all 7 non-hallway rooms: 4 bunk beds in Bedroom, 4 sofa spots + TV + bookshelf in Living Room, 8 primary desks + 4 subagent desks in Office, Sink + Stove + Fridge + Dining in Kitchen, Pool table cues + 2 Arcade cabinets in Game Room, Treadmill + Foliage garden corner in Gym, and Spotlight Chair in Confession Room.
+- **Autonomous House Life Manager (`public/life.ts`)**:
+  - Enforces strict seat reservations and POI capacity constraints (e.g. TV console has capacity 2, desks have capacity 1).
+  - Enforces anti-repetition rule (`picked.id !== previousPoiId`) so characters never immediately repeat the same activity.
+  - Applies weighted room rotation inversely proportional to recent visits to prevent idle housemates from clustering or piling up in the living room; housemates actively visit the kitchen, game room, gym, and living room.
+  - Sleep/Wake state transitions: harnesses that are not running remain asleep in bunk beds with floating `Zzz`. As soon as a process starts running, the housemate wakes up with a `thumbs_up` emote, leaves the bedroom, and begins house life.

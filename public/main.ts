@@ -1,10 +1,11 @@
-// Bahay ni Kuya scene controller: snapshot reconciliation, A* navigation, 4-direction animation, CCTV & WS.
+// Bahay ni Kuya scene controller: snapshot reconciliation, A* navigation, autonomous house life, 4-direction animation, CCTV & WS.
 
 import { HARNESS_ORDER, MONO, PALETTE, accentFor, VARIANT_ACCENTS } from "./sprites.js";
-import { loadHouseMap, type HouseMap, type MapPOI, type RoomId } from "./map.js";
+import { loadHouseMap, type HouseMap, type RoomId } from "./map.js";
 import { MapRenderer, type YSortable } from "./renderer.js";
 import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
+import { HouseLifeManager, type POI } from "./life.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
 const SCENE_W = 672;
@@ -77,6 +78,7 @@ const chars = new Map<string, Char>();
 let houseMap: HouseMap | null = null;
 let navGrid: NavGrid | null = null;
 let renderer: MapRenderer | null = null;
+const lifeManager = new HouseLifeManager();
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
@@ -104,7 +106,7 @@ function calculateAStarPath(fromX: number, fromY: number, toX: number, toY: numb
   return waypoints;
 }
 
-// ---------------------------------------------------------------- POI assignment
+// ---------------------------------------------------------------- snapshot reconciliation
 
 interface Desired {
   key: string;
@@ -119,44 +121,6 @@ interface Desired {
   directory?: string;
   pid?: number;
   instanceIndex: number;
-}
-
-function findBestPOI(desired: Desired, claimedPOIs: Set<string>): MapPOI | null {
-  if (!houseMap) return null;
-
-  let candidates: MapPOI[] = [];
-  if (desired.sleeping) {
-    candidates = houseMap.pois.filter((p) => p.room === "bedroom" && !claimedPOIs.has(p.id));
-  } else if (desired.working) {
-    if (desired.sub) {
-      candidates = houseMap.pois.filter(
-        (p) => p.room === "office" && p.tags.includes("subagent") && !claimedPOIs.has(p.id),
-      );
-      if (candidates.length === 0) {
-        candidates = houseMap.pois.filter((p) => p.room === "office" && !claimedPOIs.has(p.id));
-      }
-    } else {
-      candidates = houseMap.pois.filter(
-        (p) => p.room === "office" && p.tags.includes("primary") && !claimedPOIs.has(p.id),
-      );
-      if (candidates.length === 0) {
-        candidates = houseMap.pois.filter((p) => p.room === "office" && !claimedPOIs.has(p.id));
-      }
-    }
-  } else {
-    // Idle housemate: choose from living, gameroom, kitchen, gym
-    candidates = houseMap.pois.filter(
-      (p) =>
-        (p.room === "living" || p.room === "gameroom" || p.room === "kitchen" || p.room === "gym") &&
-        !claimedPOIs.has(p.id),
-    );
-  }
-
-  if (candidates.length === 0) {
-    candidates = houseMap.pois.filter((p) => p.room === desired.room);
-  }
-
-  return candidates.length > 0 ? candidates[0] : null;
 }
 
 function reconcile(snap: Snapshot, now: number): number {
@@ -245,48 +209,53 @@ function reconcile(snap: Snapshot, now: number): number {
 
   // Drop characters that no longer exist (preserve manual test walker)
   for (const key of [...chars.keys()]) {
-    if (key !== "test:walker" && !desired.has(key)) chars.delete(key);
-  }
-
-  // Allocate POIs
-  const claimedPOIs = new Set<string>();
-  for (const d of desired.values()) {
-    const existing = chars.get(d.key);
-    if (existing && existing.room === d.room && existing.poiId) {
-      claimedPOIs.add(existing.poiId);
+    if (key !== "test:walker" && !desired.has(key)) {
+      chars.delete(key);
+      lifeManager.removeHousemate(key);
     }
   }
 
   for (const d of desired.values()) {
     let c = chars.get(d.key);
-    let targetX = 0;
-    let targetY = 0;
-    let poiFacing: Facing = "down";
-    let poiAction: Action = d.sleeping ? "sleep" : d.working ? "type" : "sit";
+    let poi: POI | null = null;
 
-    const poi = findBestPOI(d, claimedPOIs);
-    if (poi) {
-      claimedPOIs.add(poi.id);
-      targetX = poi.x * 16 + 8;
-      targetY = poi.y * 16 + 14;
-      poiFacing = poi.facing;
-      poiAction = (poi.action as Action) || (d.sleeping ? "sleep" : d.working ? "type" : "sit");
+    if (d.sleeping) {
+      poi = lifeManager.pickBedPOI(d.key);
+    } else if (d.working) {
+      poi = lifeManager.pickDeskPOI(d.key, d.sub);
     } else {
-      targetX = 18 * 16 + 8;
-      targetY = 6 * 16 + 14;
+      // Idle housemate: if previously sleeping or unassigned, wake up and pick an idle POI
+      const prevState = lifeManager.states.get(d.key);
+      if (!prevState || prevState.isSleeping || !prevState.currentPoiId) {
+        poi = lifeManager.pickIdlePOI(d.key, now);
+      } else {
+        poi = lifeManager.getPOI(prevState.currentPoiId) || lifeManager.pickIdlePOI(d.key, now);
+      }
     }
 
+    const targetX = poi ? poi.x * 16 + 8 : 18 * 16 + 8;
+    const targetY = poi ? poi.y * 16 + 14 : 6 * 16 + 14;
+    const poiFacing: Facing = poi ? poi.facing : "down";
+    const poiAction: Action = poi
+      ? poi.action
+      : d.sleeping
+        ? "sleep"
+        : d.working
+          ? "type"
+          : "sit";
+    const targetRoom: RoomId = poi ? poi.room : d.room;
+
     if (!c) {
-      // Spawn at bedroom door if sleeping, or living room door
-      const spawnX = d.sleeping ? 6 * 16 + 8 : 17 * 16 + 8;
-      const spawnY = d.sleeping ? 11 * 16 + 14 : 11 * 16 + 14;
+      // Spawn at bedroom if sleeping, or bedroom door waking up
+      const spawnX = d.sleeping ? targetX : 6 * 16 + 8;
+      const spawnY = d.sleeping ? targetY : 11 * 16 + 14;
       c = {
         key: d.key,
         harness: d.harness,
         parentKey: d.parentKey,
         sub: d.sub,
         sleeping: d.sleeping,
-        room: d.room,
+        room: targetRoom,
         label: d.label,
         working: d.working,
         tool: d.tool,
@@ -300,11 +269,11 @@ function reconcile(snap: Snapshot, now: number): number {
         y: spawnY,
         targetX,
         targetY,
-        path: calculateAStarPath(spawnX, spawnY, targetX, targetY),
+        path: d.sleeping ? [] : calculateAStarPath(spawnX, spawnY, targetX, targetY),
         facing: poiFacing,
         action: d.sleeping ? "sleep" : "walk",
         emote: null,
-        walking: true,
+        walking: !d.sleeping,
         poiId: poi ? poi.id : null,
       };
       chars.set(d.key, c);
@@ -315,15 +284,21 @@ function reconcile(snap: Snapshot, now: number): number {
       c.directory = d.directory;
       c.pid = d.pid;
       c.instanceIndex = d.instanceIndex;
-      c.sleeping = d.sleeping;
       c.parentKey = d.parentKey;
       c.sub = d.sub;
 
-      const roomChanged = c.room !== d.room;
+      // Wake up event
+      if (c.sleeping && !d.sleeping) {
+        c.emote = "thumbs_up";
+        c.emoteUntil = now + 3000;
+      }
+      c.sleeping = d.sleeping;
+
+      const roomChanged = c.room !== targetRoom;
       const targetChanged = Math.abs(c.targetX - targetX) > 4 || Math.abs(c.targetY - targetY) > 4;
 
       if (roomChanged || targetChanged) {
-        c.room = d.room;
+        c.room = targetRoom;
         c.targetX = targetX;
         c.targetY = targetY;
         c.poiId = poi ? poi.id : null;
@@ -395,11 +370,19 @@ function step(c: Char, dt: number): void {
   if (c.walking) {
     c.action = "walk";
   } else {
-    // Reached destination: assume room action
+    // Reached destination: assume assigned POI activity
     if (c.sleeping) {
       c.action = "sleep";
     } else if (c.working) {
       c.action = "type";
+    } else if (c.poiId) {
+      const poi = lifeManager.getPOI(c.poiId);
+      if (poi) {
+        c.action = poi.action;
+        c.facing = poi.facing;
+      } else {
+        c.action = "sit";
+      }
     } else {
       c.action = "sit";
     }
@@ -859,7 +842,7 @@ function connect(): void {
   };
 }
 
-// ---------------------------------------------------------------- motion loop
+// ---------------------------------------------------------------- motion & house life loop
 
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 let reduced = motionQuery.matches;
@@ -882,6 +865,26 @@ function frame(now: number): void {
   lastFrame = now;
 
   if (renderer) renderer.update(dt);
+
+  // House life autonomous POI progression for idle housemates
+  for (const c of chars.values()) {
+    if (c.key === "test:walker") continue;
+    if (!c.working && !c.sleeping && !c.walking) {
+      const state = lifeManager.states.get(c.key);
+      if (state && now >= state.activityUntil) {
+        const nextPoi = lifeManager.pickIdlePOI(c.key, now);
+        if (nextPoi) {
+          c.room = nextPoi.room;
+          c.poiId = nextPoi.id;
+          c.targetX = nextPoi.x * 16 + 8;
+          c.targetY = nextPoi.y * 16 + 14;
+          c.path = calculateAStarPath(c.x, c.y, c.targetX, c.targetY);
+          c.action = "walk";
+          c.walking = true;
+        }
+      }
+    }
+  }
 
   if (reduced) {
     for (const c of chars.values()) {
@@ -907,9 +910,14 @@ fitCanvas();
 setConnected(false);
 window.addEventListener("resize", fitCanvas);
 
-// Load house map and initialize renderer & navigation grid
-loadHouseMap()
-  .then((map) => {
+// Load house map & POIs, then initialize renderer, navGrid, and house life
+Promise.all([
+  loadHouseMap(),
+  fetch("/pois.json")
+    .then((r) => (r.ok ? r.json() : []))
+    .catch(() => []),
+])
+  .then(([map, loadedPois]) => {
     houseMap = map;
     renderer = new MapRenderer(map);
     navGrid = new NavGrid(map.width, map.height, map.collision);
@@ -920,6 +928,10 @@ loadHouseMap()
         navGrid.setWalkable(i % map.width, Math.floor(i / map.width), true);
       }
     }
+
+    // Initialize autonomous life POIs
+    const poisList = Array.isArray(loadedPois) && loadedPois.length > 0 ? loadedPois : map.pois;
+    lifeManager.setPOIs(poisList as POI[]);
 
     connect();
 
