@@ -731,7 +731,54 @@ function clientToWorld(clientX: number, clientY: number): { x: number; y: number
   return { x: worldX, y: worldY };
 }
 
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragCamStartX = 0;
+let dragCamStartY = 0;
+let didMove = false;
+
+canvas.addEventListener("mousedown", (e) => {
+  if (e.button === 0) {
+    isDragging = true;
+    didMove = false;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    if (renderer) {
+      dragCamStartX = renderer.camera.targetX;
+      dragCamStartY = renderer.camera.targetY;
+    }
+  }
+});
+
+window.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  if (!renderer) return;
+  const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+  const newZoom = Math.max(1.0, Math.min(3.5, renderer.camera.targetZoom * zoomFactor));
+  renderer.camera.targetZoom = Math.round(newZoom * 100) / 100;
+}, { passive: false });
+
 canvas.addEventListener("mousemove", (e) => {
+  if (isDragging && renderer) {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    if (Math.hypot(dx, dy) > 4) {
+      didMove = true;
+      const rect = canvas.getBoundingClientRect();
+      const worldDx = (dx * (SCENE_W / rect.width)) / renderer.camera.zoom;
+      const worldDy = (dy * (SCENE_H / rect.height)) / renderer.camera.zoom;
+      renderer.camera.targetX = Math.max(50, Math.min(620, dragCamStartX - worldDx));
+      renderer.camera.targetY = Math.max(40, Math.min(390, dragCamStartY - worldDy));
+      renderer.camera.x = renderer.camera.targetX;
+      renderer.camera.y = renderer.camera.targetY;
+    }
+  }
+
   const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
@@ -753,11 +800,13 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("mouseleave", () => {
+  isDragging = false;
   hoveredKey = null;
   if (!pinnedKey) hideCard();
 });
 
 canvas.addEventListener("click", (e) => {
+  if (didMove) return;
   const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
@@ -794,13 +843,13 @@ if (cardCloseEl) {
 // ---------------------------------------------------------------- CCTV controls
 
 const CAM_CONFIGS: Record<string, { x: number; y: number; zoom: number; label: string }> = {
-  all: { x: 336, y: 216, zoom: 1, label: "CAM ALL - BAHAY NI KUYA" },
-  office: { x: 520, y: 80, zoom: 1.8, label: "CAM 3 - OFFICE" },
-  living: { x: 272, y: 80, zoom: 1.8, label: "CAM 2 - LIVING ROOM" },
-  bedroom: { x: 88, y: 80, zoom: 1.8, label: "CAM 1 - BEDROOM" },
-  kitchen: { x: 88, y: 224, zoom: 1.8, label: "CAM 4 - KITCHEN" },
-  gameroom: { x: 272, y: 224, zoom: 1.8, label: "CAM 5 - GAME ROOM" },
-  confession: { x: 72, y: 360, zoom: 2.2, label: "CAM 6 - CONFESSION ROOM" },
+  all: { x: 336, y: 216, zoom: 1.15, label: "CAM ALL - BAHAY NI KUYA" },
+  office: { x: 512, y: 88, zoom: 2.2, label: "CAM 3 - OFFICE" },
+  living: { x: 288, y: 88, zoom: 2.2, label: "CAM 2 - LIVING ROOM" },
+  bedroom: { x: 96, y: 88, zoom: 2.2, label: "CAM 1 - BEDROOM" },
+  kitchen: { x: 256, y: 320, zoom: 2.2, label: "CAM 4 - KITCHEN" },
+  gameroom: { x: 464, y: 320, zoom: 2.2, label: "CAM 5 - GAME ROOM" },
+  confession: { x: 72, y: 330, zoom: 2.4, label: "CAM 6 - CONFESSION ROOM" },
 };
 
 document.querySelectorAll<HTMLButtonElement>(".cam-btn").forEach((btn) => {

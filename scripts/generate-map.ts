@@ -284,7 +284,7 @@ for (const dy of [3, 6]) {
       room: "office",
       x: dx,
       y: dy + 1,
-      facing: "up",
+      facing: "down",
       action: "type",
       tags: ["work", "desk", "primary"],
     });
@@ -302,7 +302,7 @@ for (const dx of [26, 29, 32, 35]) {
     room: "office",
     x: dx,
     y: 10,
-    facing: "up",
+    facing: "down",
     action: "type",
     tags: ["work", "desk", "subagent"],
   });

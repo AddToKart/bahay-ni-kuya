@@ -65,118 +65,133 @@ export interface AnimatedSpriteState {
 interface ChibiPalette {
   hair: string;
   hairShadow: string;
-  hairStyle: "wavy" | "bangs" | "spiky" | "slick" | "spectacles" | "ponytail";
+  hairStyle: "wavy" | "bangs" | "spiky" | "slick" | "spectacles" | "ponytail" | "afro" | "parted";
   skin: string;
   skinShadow: string;
   shirt: string;
   shirtDetail?: string;
+  shirtStyle?: "plain" | "striped" | "collar";
   pants: string;
   shoes: string;
+  isShorts?: boolean;
 }
 
 const CHIBI_PALETTES: Record<string, ChibiPalette> = {
+  // pi: Matches kitchen boy in reference image (neat black parted hair, red t-shirt, white collar, dark shorts, red shoes)
+  pi: {
+    hair: "#1a1a1a",
+    hairShadow: "#0d0d0d",
+    hairStyle: "parted",
+    skin: "#ffdfba",
+    skinShadow: "#e8c39e",
+    shirt: "#dc2626",
+    shirtDetail: "#ffffff",
+    shirtStyle: "collar",
+    pants: "#1e293b",
+    shoes: "#dc2626",
+    isShorts: true,
+  },
+  // omp: Matches aisle walker in reference image (dark afro hair, dark skin, red sweater, blue jeans, white sneakers)
+  omp: {
+    hair: "#18181b",
+    hairShadow: "#09090b",
+    hairStyle: "afro",
+    skin: "#8d5524",
+    skinShadow: "#6b3d16",
+    shirt: "#b91c1c",
+    shirtDetail: "#991b1b",
+    pants: "#2563eb",
+    shoes: "#ffffff",
+  },
+  // codex: Royal violet/indigo sweater, purple anime hair, charcoal slacks, white sneakers
   codex: {
     hair: "#7d44aa",
     hairShadow: "#5b327d",
     hairStyle: "wavy",
-    skin: "#fde8d7",
+    skin: "#fedac5",
     skinShadow: "#ecc8b2",
     shirt: "#4834d4",
     shirtDetail: "#686de0",
     pants: "#2d3436",
-    shoes: "#f5f6fa",
+    shoes: "#f8fafc",
   },
+  // opencode: Forest green sweater, auburn bangs, beige/brown slacks, dark boots
   opencode: {
-    hair: "#e67e22",
-    hairShadow: "#d35400",
+    hair: "#d97706",
+    hairShadow: "#b45309",
     hairStyle: "bangs",
     skin: "#fbe9dd",
     skinShadow: "#ebd1c1",
-    shirt: "#27ae60",
-    shirtDetail: "#2ecc71",
-    pants: "#795548",
+    shirt: "#15803d",
+    shirtDetail: "#22c55e",
+    pants: "#78350f",
     shoes: "#3e2723",
   },
-  pi: {
-    hair: "#2c3e50",
-    hairShadow: "#1a252f",
-    hairStyle: "spiky",
-    skin: "#fae3d9",
-    skinShadow: "#e8c5b6",
-    shirt: "#e74c3c",
-    shirtDetail: "#ffffff",
-    pants: "#2980b9",
-    shoes: "#fdfefe",
-  },
-  omp: {
-    hair: "#34495e",
-    hairShadow: "#2c3e50",
-    hairStyle: "spiky",
-    skin: "#f5cba7",
-    skinShadow: "#e0ad85",
-    shirt: "#2c3e50",
-    shirtDetail: "#00cec9",
-    pants: "#17202a",
-    shoes: "#212f3d",
-  },
+  // hermes: Matches lounge scholar in reference image (fluffy silver/white afro, silver spectacles, white collared shirt, gray vest)
   hermes: {
-    hair: "#dfe6e9",
-    hairShadow: "#b2bec3",
-    hairStyle: "spectacles",
-    skin: "#fbf3eb",
+    hair: "#f1f5f9",
+    hairShadow: "#cbd5e1",
+    hairStyle: "afro",
+    skin: "#fedac5",
     skinShadow: "#ebd8cb",
-    shirt: "#636e72",
-    shirtDetail: "#f5f6fa",
-    pants: "#2c3e50",
-    shoes: "#3e2723",
+    shirt: "#ffffff",
+    shirtDetail: "#64748b",
+    shirtStyle: "collar",
+    pants: "#334155",
+    shoes: "#451a03",
   },
 };
 
-// Alternate human character palettes for multiple instances of a harness
+// Alternate human character palettes directly matching reference visualizer
 const VARIANT_PALETTES: ChibiPalette[] = [
+  // Variant 0: Matches bottom-right desk worker (blonde anime hair, black & white vertically striped shirt, dark jeans, white sneakers)
   {
-    hair: "#f1c40f",
-    hairShadow: "#f39c12",
-    hairStyle: "ponytail",
-    skin: "#fceade",
+    hair: "#eab308",
+    hairShadow: "#ca8a04",
+    hairStyle: "bangs",
+    skin: "#fedac5",
     skinShadow: "#eecdb9",
-    shirt: "#e84393",
-    shirtDetail: "#fd79a8",
-    pants: "#0984e3",
-    shoes: "#dfe6e9",
+    shirt: "#ffffff",
+    shirtDetail: "#1e293b",
+    shirtStyle: "striped",
+    pants: "#1e293b",
+    shoes: "#ffffff",
   },
+  // Variant 1: Matches bottom-left desk worker (chestnut spiky hair, clean white t-shirt, slacks, brown shoes)
   {
-    hair: "#c0392b",
-    hairShadow: "#962d22",
+    hair: "#6d4c41",
+    hairShadow: "#4e342e",
+    hairStyle: "spiky",
+    skin: "#fedac5",
+    skinShadow: "#e0ad85",
+    shirt: "#ffffff",
+    shirtDetail: "#e2e8f0",
+    pants: "#334155",
+    shoes: "#ffffff",
+  },
+  // Variant 2: Matches lounge worker in armchair (flowing golden/auburn wavy hair, chic black long-sleeve outfit)
+  {
+    hair: "#e67e22",
+    hairShadow: "#d35400",
     hairStyle: "wavy",
+    skin: "#fedac5",
+    skinShadow: "#ecc6b3",
+    shirt: "#18181b",
+    shirtDetail: "#27272a",
+    pants: "#18181b",
+    shoes: "#27272a",
+  },
+  // Variant 3: Purple anime hair, cyan accent hoodie
+  {
+    hair: "#9333ea",
+    hairShadow: "#7e22ce",
+    hairStyle: "spiky",
     skin: "#fbe8dc",
     skinShadow: "#ecc6b3",
-    shirt: "#00b894",
-    shirtDetail: "#55efc4",
-    pants: "#636e72",
-    shoes: "#2d3436",
-  },
-  {
-    hair: "#ecf0f1",
-    hairShadow: "#bdc3c7",
-    hairStyle: "bangs",
-    skin: "#f8e0cf",
-    skinShadow: "#e4beaa",
-    shirt: "#8e44ad",
-    shirtDetail: "#9b59b6",
-    pants: "#2c3e50",
-    shoes: "#111111",
-  },
-  {
-    hair: "#8d6e63",
-    hairShadow: "#6d4c41",
-    hairStyle: "slick",
-    skin: "#fcefe6",
-    skinShadow: "#e9d5c8",
-    shirt: "#f5f6fa",
-    shirtDetail: "#2980b9",
-    pants: "#2d3436",
-    shoes: "#3e2723",
+    shirt: "#2563eb",
+    shirtDetail: "#38bdf8",
+    pants: "#1e293b",
+    shoes: "#ffffff",
   },
 ];
 
@@ -259,97 +274,155 @@ export function drawAnimatedCharacter(
   const scale = isSubagent ? 0.75 : 1.0;
   if (scale !== 1.0) ctx.scale(scale, scale);
 
-  const py = -24; // top of head relative to feet
+  // --- SEAT / STOOL ---
+  // When sitting or typing, render an authentic round wooden stool beneath them
+  if (action === "sit" || action === "type") {
+    // Stool seat top surface
+    ctx.fillStyle = "#c8965a";
+    ctx.beginPath();
+    ctx.ellipse(0, -6, 6.5, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Stool rim
+    ctx.strokeStyle = "#8a5a2b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // 2 visible wooden legs
+    ctx.fillStyle = "#5c3317";
+    ctx.fillRect(-4, -4, 2, 4);
+    ctx.fillRect(2, -4, 2, 4);
+  }
 
   // --- LEGS & SHOES ---
   const leftLegOffset = action === "walk" ? (legCycle === 1 ? -2 : legCycle === 3 ? 2 : 0) : 0;
   const rightLegOffset = action === "walk" ? (legCycle === 1 ? 2 : legCycle === 3 ? -2 : 0) : 0;
 
   if (action === "sleep") {
-    // Sleeping: curled horizontally
-    ctx.fillStyle = pal.pants;
-    ctx.fillRect(-5, -6, 10, 4);
+    // Sleeping: curled in bed under duvet
+    ctx.fillStyle = "#1e40af"; // Duvet
+    ctx.fillRect(-6, -8, 12, 6);
     ctx.fillStyle = pal.shoes;
-    ctx.fillRect(5, -6, 3, 4);
+    ctx.fillRect(5, -6, 3, 3);
   } else if (action === "sit" || action === "type") {
-    // Seated pose: thighs forward
+    // Seated pose: thighs forward on stool
     ctx.fillStyle = pal.pants;
-    ctx.fillRect(-4, -6, 8, 4);
+    ctx.fillRect(-4, -7, 8, 4);
+    if (pal.isShorts) {
+      ctx.fillStyle = pal.skin;
+      ctx.fillRect(-3, -4, 2, 2);
+      ctx.fillRect(1, -4, 2, 2);
+    }
     ctx.fillStyle = pal.shoes;
-    ctx.fillRect(-3, -2, 3, 2);
-    ctx.fillRect(1, -2, 3, 2);
+    ctx.fillRect(-3, -3, 3, 2);
+    ctx.fillRect(1, -3, 3, 2);
   } else {
     // Standing / Walking legs
     if (facing === "left") {
       ctx.fillStyle = pal.pants;
-      ctx.fillRect(-2 + leftLegOffset, -7, 4, 5);
+      ctx.fillRect(-2 + leftLegOffset, -7, 4, pal.isShorts ? 3 : 5);
+      if (pal.isShorts) {
+        ctx.fillStyle = pal.skin;
+        ctx.fillRect(-2 + leftLegOffset, -4, 3, 2);
+      }
       ctx.fillStyle = pal.shoes;
       ctx.fillRect(-3 + leftLegOffset, -2, 5, 2);
     } else if (facing === "right") {
       ctx.fillStyle = pal.pants;
-      ctx.fillRect(-2 + rightLegOffset, -7, 4, 5);
+      ctx.fillRect(-2 + rightLegOffset, -7, 4, pal.isShorts ? 3 : 5);
+      if (pal.isShorts) {
+        ctx.fillStyle = pal.skin;
+        ctx.fillRect(-1 + rightLegOffset, -4, 3, 2);
+      }
       ctx.fillStyle = pal.shoes;
       ctx.fillRect(-2 + rightLegOffset, -2, 5, 2);
     } else {
       // Facing Down or Up
       // Left leg
       ctx.fillStyle = pal.pants;
-      ctx.fillRect(-4, -7 + leftLegOffset, 3, 5);
+      ctx.fillRect(-4, -7 + leftLegOffset, 3, pal.isShorts ? 3 : 5);
+      if (pal.isShorts) {
+        ctx.fillStyle = pal.skin;
+        ctx.fillRect(-4, -4 + leftLegOffset, 3, 2);
+      }
       ctx.fillStyle = pal.shoes;
       ctx.fillRect(-4, -2 + leftLegOffset, 3, 2);
 
       // Right leg
       ctx.fillStyle = pal.pants;
-      ctx.fillRect(1, -7 + rightLegOffset, 3, 5);
+      ctx.fillRect(1, -7 + rightLegOffset, 3, pal.isShorts ? 3 : 5);
+      if (pal.isShorts) {
+        ctx.fillStyle = pal.skin;
+        ctx.fillRect(1, -4 + rightLegOffset, 3, 2);
+      }
       ctx.fillStyle = pal.shoes;
       ctx.fillRect(1, -2 + rightLegOffset, 3, 2);
     }
   }
 
   // --- TORSO & SHIRT ---
-  ctx.fillStyle = pal.shirt;
-  ctx.fillRect(-4, -14, 8, 7);
+  if (pal.shirtStyle === "striped") {
+    // Black & white vertical stripes (matching reference desk character)
+    for (let sx = -4; sx < 4; sx++) {
+      ctx.fillStyle = sx % 2 === 0 ? "#ffffff" : "#1e293b";
+      ctx.fillRect(sx, -14, 1, 7);
+    }
+  } else {
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(-4, -14, 8, 7);
 
-  // Shirt detail (collar / jacket inner)
-  if (pal.shirtDetail && facing === "down") {
-    ctx.fillStyle = pal.shirtDetail;
-    ctx.fillRect(-1, -14, 2, 4);
+    // Collar detail
+    if (pal.shirtStyle === "collar" || (pal.shirtDetail && facing === "down")) {
+      ctx.fillStyle = pal.shirtDetail || "#ffffff";
+      ctx.fillRect(-2, -14, 4, 2);
+      ctx.fillRect(-1, -12, 2, 2);
+    }
   }
 
   // Arms
   if (action === "type") {
     // Typing: arms extended forward with hands tapping
     ctx.fillStyle = pal.shirt;
-    ctx.fillRect(-5, -13, 3, 3);
-    ctx.fillRect(2, -13, 3, 3);
+    ctx.fillRect(-5, -13, 2, 4);
+    ctx.fillRect(3, -13, 2, 4);
     ctx.fillStyle = pal.skin;
     ctx.fillRect(-5, -10 + typingCycle, 3, 2);
     ctx.fillRect(2, -11 + typingCycle, 3, 2);
+
+    // Compact open laptop with glowing screen
+    ctx.fillStyle = "#94a3b8"; // Laptop base
+    ctx.fillRect(-4, -8, 8, 2);
+    ctx.fillStyle = "#38bdf8"; // Display screen
+    ctx.fillRect(-3, -11, 6, 3);
   } else if (action === "pool") {
-    // Pool player: holding cue stick
+    // Pool player: holding wooden cue stick
     ctx.fillStyle = pal.shirt;
     ctx.fillRect(-5, -13, 3, 4);
     ctx.fillRect(2, -13, 3, 4);
     ctx.fillStyle = "#8d6e63"; // Cue stick
-    ctx.fillRect(-7, -11, 14, 2);
+    ctx.fillRect(-8, -11, 16, 2);
+    ctx.fillStyle = "#38bdf8"; // Blue chalked cue tip
+    ctx.fillRect(7, -11, 2, 2);
   } else if (facing === "left") {
+    const swing = action === "walk" ? (legCycle === 1 ? 2 : legCycle === 3 ? -2 : 0) : 0;
     ctx.fillStyle = pal.shirt;
-    ctx.fillRect(-4, -13, 3, 5);
+    ctx.fillRect(-4, -13 + swing, 3, 5);
     ctx.fillStyle = pal.skin;
-    ctx.fillRect(-4, -8, 2, 2);
+    ctx.fillRect(-4, -8 + swing, 2, 2);
   } else if (facing === "right") {
+    const swing = action === "walk" ? (legCycle === 1 ? -2 : legCycle === 3 ? 2 : 0) : 0;
     ctx.fillStyle = pal.shirt;
-    ctx.fillRect(1, -13, 3, 5);
+    ctx.fillRect(1, -13 + swing, 3, 5);
     ctx.fillStyle = pal.skin;
-    ctx.fillRect(2, -8, 2, 2);
+    ctx.fillRect(2, -8 + swing, 2, 2);
   } else {
-    // Left & Right arms at sides
+    // Facing Down or Up: Left & Right arms with subtle swing
+    const armSwingL = action === "walk" ? (legCycle === 1 ? -1 : legCycle === 3 ? 1 : 0) : 0;
+    const armSwingR = action === "walk" ? (legCycle === 1 ? 1 : legCycle === 3 ? -1 : 0) : 0;
     ctx.fillStyle = pal.shirt;
-    ctx.fillRect(-6, -13, 2, 5);
-    ctx.fillRect(4, -13, 2, 5);
+    ctx.fillRect(-6, -13 + armSwingL, 2, 5);
+    ctx.fillRect(4, -13 + armSwingR, 2, 5);
     ctx.fillStyle = pal.skin;
-    ctx.fillRect(-6, -8, 2, 2);
-    ctx.fillRect(4, -8, 2, 2);
+    ctx.fillRect(-6, -8 + armSwingL, 2, 2);
+    ctx.fillRect(4, -8 + armSwingR, 2, 2);
   }
 
   // --- HEAD & FACE ---
@@ -360,46 +433,61 @@ export function drawAnimatedCharacter(
   // Back of head if facing UP
   if (facing === "up") {
     ctx.fillStyle = pal.hair;
-    ctx.fillRect(-5, -24, 10, 10);
-    ctx.fillStyle = pal.hairShadow;
-    ctx.fillRect(-5, -16, 10, 2);
+    if (pal.hairStyle === "afro") {
+      ctx.beginPath();
+      ctx.arc(0, -21, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-6, -24, 12, 10);
+      ctx.fillStyle = pal.hairShadow;
+      ctx.fillRect(-5, -15, 10, 2);
+    }
   } else {
-    // Face features (Eyes, Cheeks, Hair)
-    // Subtle peach blush
-    ctx.fillStyle = "rgba(235, 77, 75, 0.25)";
-    ctx.fillRect(-4, -17, 2, 1);
-    ctx.fillRect(2, -17, 2, 1);
+    // Face features (Eyes, Cheeks, Mouth, Hair)
+    // Subtle rose blush on cheeks
+    ctx.fillStyle = "rgba(239, 68, 68, 0.30)";
+    ctx.fillRect(-4, -16, 2, 1);
+    ctx.fillRect(2, -16, 2, 1);
 
-    // Eyes
+    // Subtle mouth
+    ctx.fillStyle = "#e07a5f";
+    ctx.fillRect(-1, -15, 2, 1);
+
+    // Expressive 2x3 anime eyes with white catchlight highlight
     if (action === "sleep") {
-      // Closed sleepy eyes: - _ -
-      ctx.fillStyle = "#1e272e";
+      // Closed sleepy eye slits: - _ -
+      ctx.fillStyle = "#1e293b";
       ctx.fillRect(-4, -18, 2, 1);
       ctx.fillRect(2, -18, 2, 1);
     } else if (facing === "left") {
       // Profile eye (left)
-      ctx.fillStyle = "#1e272e";
-      ctx.fillRect(-4, -19, 2, 2);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-4, -19, 2, 3);
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(-4, -19, 1, 1);
     } else if (facing === "right") {
       // Profile eye (right)
-      ctx.fillStyle = "#1e272e";
-      ctx.fillRect(2, -19, 2, 2);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(2, -19, 2, 3);
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(3, -19, 1, 1);
     } else {
-      // Facing Down: 2 expressive anime eyes with white catchlight
-      ctx.fillStyle = "#1e272e";
-      ctx.fillRect(-4, -19, 2, 2);
-      ctx.fillRect(2, -19, 2, 2);
+      // Facing Down: 2 expressive anime eyes
+      ctx.fillStyle = "#0f172a"; // Deep pupil
+      ctx.fillRect(-4, -19, 2, 3);
+      ctx.fillRect(2, -19, 2, 3);
+      // White catchlight highlight
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(-4, -19, 1, 1);
       ctx.fillRect(2, -19, 1, 1);
+      // Eyelid line
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(-4, -20, 2, 1);
+      ctx.fillRect(2, -20, 2, 1);
     }
 
     // Spectacles (for Hermes / scholar style)
-    if (pal.hairStyle === "spectacles" && facing === "down") {
+    if (pal.hairStyle === "spectacles" || pal.harness === "hermes") {
       ctx.strokeStyle = "#485460";
       ctx.lineWidth = 1;
       ctx.strokeRect(-4.5, -19.5, 3, 3);
@@ -408,32 +496,56 @@ export function drawAnimatedCharacter(
       ctx.fillRect(-1.5, -18.5, 3, 1); // Bridge
     }
 
-    // Hair Cap & Bangs
+    // Hair Style Rendering
     ctx.fillStyle = pal.hair;
-    ctx.fillRect(-5, -24, 10, 4); // Top volume
-    ctx.fillRect(-6, -23, 2, 7); // Left sideburn
-    ctx.fillRect(4, -23, 2, 7);  // Right sideburn
-
-    if (pal.hairStyle === "bangs") {
-      ctx.fillRect(-3, -20, 6, 2);
+    if (pal.hairStyle === "afro") {
+      // Big puffy rounded afro (matches aisle walker & lounge scholar)
+      ctx.beginPath();
+      ctx.arc(0, -22, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Textured side curls
+      ctx.fillRect(-7, -21, 2, 5);
+      ctx.fillRect(5, -21, 2, 5);
+      ctx.fillStyle = pal.hairShadow;
+      ctx.fillRect(-5, -20, 10, 2);
+    } else if (pal.hairStyle === "parted") {
+      // Neat side-parted hair (matches kitchen boy)
+      ctx.fillRect(-6, -24, 12, 5); // Hair cap
+      ctx.fillRect(-6, -23, 2, 7);  // Left sideburn
+      ctx.fillRect(4, -23, 2, 7);   // Right sideburn
+      ctx.fillRect(-4, -20, 3, 2);  // Left parted bang
+      ctx.fillRect(0, -20, 4, 2);   // Right parted bang
+      // Hair glint
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.fillRect(-3, -23, 6, 1);
     } else if (pal.hairStyle === "spiky") {
-      ctx.fillRect(-3, -25, 2, 2);
-      ctx.fillRect(1, -25, 2, 2);
-      ctx.fillRect(-2, -20, 4, 1);
+      // Anime spiky tufts (matches bottom-left desk worker)
+      ctx.fillRect(-6, -24, 12, 4);
+      ctx.fillRect(-6, -23, 2, 7);
+      ctx.fillRect(4, -23, 2, 7);
+      ctx.fillRect(-4, -26, 3, 3); // Left spike
+      ctx.fillRect(1, -26, 3, 3);  // Right spike
+      ctx.fillRect(-3, -20, 6, 2);  // Bangs
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.fillRect(-3, -24, 6, 1);
     } else if (pal.hairStyle === "wavy") {
+      // Long flowing wavy hair (matches lounge armchair worker)
+      ctx.fillRect(-6, -24, 12, 5);
+      ctx.fillRect(-6, -23, 2, 9);
+      ctx.fillRect(4, -23, 2, 9);
       ctx.fillRect(-4, -20, 3, 2);
       ctx.fillRect(1, -20, 3, 2);
-    } else if (pal.hairStyle === "ponytail") {
-      ctx.fillRect(-4, -20, 8, 2);
-      ctx.fillRect(facing === "left" ? 4 : -6, -24, 2, 6); // Ponytail puff
+      ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.fillRect(-3, -23, 6, 1);
     } else {
-      // Default side-swept bangs
-      ctx.fillRect(-4, -20, 5, 2);
+      // Default neat bangs (matches bottom-right desk worker)
+      ctx.fillRect(-6, -24, 12, 4);
+      ctx.fillRect(-6, -23, 2, 7);
+      ctx.fillRect(4, -23, 2, 7);
+      ctx.fillRect(-4, -20, 8, 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.fillRect(-3, -23, 6, 1);
     }
-
-    // Hair Highlight
-    ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
-    ctx.fillRect(-3, -23, 6, 1);
   }
 
   ctx.restore();

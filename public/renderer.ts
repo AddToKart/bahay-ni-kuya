@@ -237,44 +237,55 @@ export function drawFurniture(
       break;
 
     case 41: // Office Desk with Computer Monitor, Plant & Mug (matching reference image!)
-      // 1. Warm oak desktop surface
-      ctx.fillStyle = "#8c6242"; // Wood top
-      ctx.fillRect(px + 1, py + 4, size - 2, size - 5);
-      ctx.fillStyle = "#a2724f"; // Top surface bevel
-      ctx.fillRect(px + 1, py + 4, size - 2, 2);
-      ctx.fillStyle = "#634327"; // Front apron shadow
-      ctx.fillRect(px + 1, py + size - 2, size - 2, 1);
+      // 1. Warm oak desktop surface (spans 24px width for authentic wide desk)
+      ctx.fillStyle = "#4a280c"; // Dark outer wood outline
+      ctx.fillRect(px - 4, py + 3, size + 8, size - 4);
+      ctx.fillStyle = "#8c5427"; // Rich oak wood top surface
+      ctx.fillRect(px - 3, py + 4, size + 6, size - 6);
+      ctx.fillStyle = "#b07542"; // Top highlight bevel edge
+      ctx.fillRect(px - 3, py + 4, size + 6, 1);
+      ctx.fillStyle = "#5d3312"; // Front apron shadow
+      ctx.fillRect(px - 3, py + size - 3, size + 6, 1);
 
-      // 2. Modern Silver Monitor
-      ctx.fillStyle = "#2c3437"; // Monitor neck
-      ctx.fillRect(px + 7, py + 4, 2, 3);
-      ctx.fillStyle = "#bdc3c7"; // Stand oval base
-      ctx.fillRect(px + 5, py + 7, 6, 2);
-      ctx.fillStyle = "#dcdde1"; // Silver monitor chassis
-      ctx.fillRect(px + 3, py + 1, size - 6, 6);
-      ctx.fillStyle = "#1e272e"; // Display screen
-      ctx.fillRect(px + 4, py + 2, size - 8, 4);
-      // Code syntax highlight lines (green, amber)
-      ctx.fillStyle = "#2ecc71";
-      ctx.fillRect(px + 5, py + 3, 4, 1);
-      ctx.fillStyle = "#f39c12";
-      ctx.fillRect(px + 5, py + 4, 3, 1);
+      // 2. Modern White / Silver Widescreen Monitor
+      ctx.fillStyle = "#ffffff"; // Stand base
+      ctx.fillRect(px + 4, py + 8, 8, 2);
+      ctx.fillStyle = "#cbd5e1"; // Stand neck
+      ctx.fillRect(px + 7, py + 5, 2, 3);
+      ctx.fillStyle = "#ffffff"; // Monitor bezel frame
+      ctx.fillRect(px + 1, py + 1, size - 2, 6);
+      ctx.fillStyle = "#0f172a"; // Dark display screen
+      ctx.fillRect(px + 2, py + 2, size - 4, 4);
+      // Code syntax highlight lines (amber, green, cyan)
+      ctx.fillStyle = "#f59e0b"; ctx.fillRect(px + 3, py + 3, 4, 1);
+      ctx.fillStyle = "#22c55e"; ctx.fillRect(px + 8, py + 3, 3, 1);
+      ctx.fillStyle = "#38bdf8"; ctx.fillRect(px + 3, py + 4, 6, 1);
 
-      // 3. Black keyboard
-      ctx.fillStyle = "#2d3436";
-      ctx.fillRect(px + 5, py + 10, 6, 2);
+      // 3. White keyboard in front of monitor
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(px + 4, py + 10, 8, 2);
+      // White mouse on right
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(px + 13, py + 10, 2, 2);
 
-      // 4. Desk Succulent Plant (right corner)
-      ctx.fillStyle = "#d35400"; // Terracotta pot
-      ctx.fillRect(px + size - 5, py + 6, 3, 3);
-      ctx.fillStyle = "#27ae60"; // Green plant
-      ctx.fillRect(px + size - 5, py + 5, 3, 2);
-
-      // 5. White Coffee Mug (left corner)
+      // 4. White stack of papers / notebook on left
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(px + 2, py + 6, 2, 3);
-      ctx.fillStyle = "#795548"; // Coffee
-      ctx.fillRect(px + 2, py + 6, 2, 1);
+      ctx.fillRect(px - 2, py + 5, 4, 5);
+      ctx.fillStyle = "#cbd5e1"; // Binder / ruled lines
+      ctx.fillRect(px - 1, py + 6, 2, 1);
+      ctx.fillRect(px - 1, py + 8, 2, 1);
+
+      // 5. White Coffee Mug on right
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(px + 16, py + 5, 3, 4);
+      ctx.fillStyle = "#78350f"; // Coffee inside
+      ctx.fillRect(px + 16, py + 5, 3, 1);
+
+      // 6. Succulent plant in white pot (far left corner)
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(px - 3, py + 10, 2, 2);
+      ctx.fillStyle = "#15803d";
+      ctx.fillRect(px - 3, py + 9, 2, 1);
       break;
 
     case 43: // Subagent Compact Desk with green terminal
@@ -341,7 +352,7 @@ export function drawFurniture(
       ctx.fillStyle = "#8d6e63"; // Tabletop surface
       ctx.fillRect(px, py + 3, size, size - 5);
       // Open Silver Laptop on table
-      if (tx % 2 === 0) {
+      if (Math.floor(px / size) % 2 === 0) {
         ctx.fillStyle = "#bdc3c7"; // Laptop base
         ctx.fillRect(px + 5, py + 7, 6, 3);
         ctx.fillStyle = "#3498db"; // Glowing screen
@@ -569,13 +580,14 @@ export class MapRenderer {
 
   constructor(map: HouseMap) {
     this.map = map;
+    // Default to a focused 2.1x zoom centered on the active house life (office & living)
     this.camera = {
-      x: (map.width * map.tilewidth) / 2,
-      y: (map.height * map.tileheight) / 2,
-      zoom: 1,
-      targetX: (map.width * map.tilewidth) / 2,
-      targetY: (map.height * map.tileheight) / 2,
-      targetZoom: 1,
+      x: 350,
+      y: 160,
+      zoom: 2.1,
+      targetX: 350,
+      targetY: 160,
+      targetZoom: 2.1,
       activeCamLabel: "CAM ALL - BAHAY NI KUYA",
     };
   }

@@ -6,14 +6,14 @@ All visual assets, procedural sprite sheets, tilemaps, and audio interfaces used
 
 ## 1. Summary of Licensing
 
-| Category | Source / Author | License | Description |
-| :--- | :--- | :--- | :--- |
-| **Character Sprites** | Original Procedural Canvas 2D (`public/sprites.ts`, `public/anim.ts`) | **CC0 1.0 Universal** | Human chibi pixel art characters with harness motifs (Beaver, Octopus, Hamster, Raccoon, Owl), 4 directions, 13 action animations, 6 emotes, instance variants. |
-| **Tilemap & Furniture** | Original Procedural Canvas 2D (`public/renderer.ts`, `scripts/generate-map.ts`) | **CC0 1.0 Universal** | 16x16 px floor tiles, cutaway navy walls, dual computer desks with monitors, red lounge sofa, green pool table, retro arcade cabinet, water cooler, snack vending machine, conference table, whiteboard. |
-| **Tiled Map Layout** | Generated JSON (`public/map/house.json`) | **CC0 1.0 Universal** | 42x27 orthogonal Tiled map layout covering 7 distinct rooms + connecting checkered hallway. |
-| **Icons & Emotes** | Procedural Vector Canvas (`public/anim.ts`) | **CC0 1.0 Universal** | Emote speech bubbles: thumbs up, facepalm, question, exclamation, sweat drop, heart; Tool indicators for CLI harnesses. |
-| **Audio / Speech** | Browser Web Speech API (`SpeechSynthesisUtterance`) | **System / Native** | Client-side text-to-speech synthesis without external audio files or trademarked assets. |
-| **Fonts** | System monospace stack (`ui-monospace`, `SFMono-Regular`, `Consolas`, monospace) | **System / Native** | Cross-platform monospace pixel rendering with zero external web fonts. |
+| Category                | Source / Author                                                                  | License               | Description                                                                                                                                                                                              |
+| :---------------------- | :------------------------------------------------------------------------------- | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Character Sprites**   | Original Procedural Canvas 2D (`public/sprites.ts`, `public/anim.ts`)            | **CC0 1.0 Universal** | Human chibi pixel art characters with harness motifs (Beaver, Octopus, Hamster, Raccoon, Owl), 4 directions, 13 action animations, 6 emotes, instance variants.                                          |
+| **Tilemap & Furniture** | Original Procedural Canvas 2D (`public/renderer.ts`, `scripts/generate-map.ts`)  | **CC0 1.0 Universal** | 16x16 px floor tiles, cutaway navy walls, dual computer desks with monitors, red lounge sofa, green pool table, retro arcade cabinet, water cooler, snack vending machine, conference table, whiteboard. |
+| **Tiled Map Layout**    | Generated JSON (`public/map/house.json`)                                         | **CC0 1.0 Universal** | 42x27 orthogonal Tiled map layout covering 7 distinct rooms + connecting checkered hallway.                                                                                                              |
+| **Icons & Emotes**      | Procedural Vector Canvas (`public/anim.ts`)                                      | **CC0 1.0 Universal** | Emote speech bubbles: thumbs up, facepalm, question, exclamation, sweat drop, heart; Tool indicators for CLI harnesses.                                                                                  |
+| **Audio / Speech**      | Browser Web Speech API (`SpeechSynthesisUtterance`)                              | **System / Native**   | Client-side text-to-speech synthesis without external audio files or trademarked assets.                                                                                                                 |
+| **Fonts**               | System monospace stack (`ui-monospace`, `SFMono-Regular`, `Consolas`, monospace) | **System / Native**   | Cross-platform monospace pixel rendering with zero external web fonts.                                                                                                                                   |
 
 ---
 
@@ -22,6 +22,7 @@ All visual assets, procedural sprite sheets, tilemaps, and audio interfaces used
 All character sprites are generated dynamically at runtime using Canvas 2D procedural pixel rendering (`public/anim.ts`), guaranteeing crisp integer scaling without asset distortion.
 
 ### Human Chibi Characters & Harness Motifs:
+
 1. **OpenCode (`opencode`)**:
    - **Motif**: Canadian Beaver amber-gold hair (`#e67e22`), fair skin, emerald green button-down shirt (`#27ae60`), khaki slacks, brown oxford shoes.
    - **Traits**: Side-swept bangs, typing at dual monitors in the open office.
@@ -39,6 +40,7 @@ All character sprites are generated dynamically at runtime using Canvas 2D proce
    - **Traits**: Round silver glasses, distinguished demeanor, routes to library reading nook.
 
 ### Animations:
+
 - **Directions**: `down` (facing camera), `up` (facing north), `left`, `right`.
 - **Action States**: `idle`, `walk`, `sit`, `type`, `sleep`, `wash`, `cook`, `tv`, `pool`, `arcade`, `exercise`, `water`, `read`.
 - **Emotes**: `thumbs_up` (👍), `facepalm` (🤦), `question` (❓), `exclamation` (❗), `sweat` (💧), `heart` (❤️).
@@ -49,6 +51,7 @@ All character sprites are generated dynamically at runtime using Canvas 2D proce
 ## 3. Map & Furniture Tileset Specifications
 
 16x16 px tiles generated via `public/renderer.ts`:
+
 - **Floors**:
   - GID 1: Bedroom cool slate wooden planks (`#5a6e85`)
   - GID 2: Blue Lounge deep navy square tiles (`#2b4868` / `#243d59`)
