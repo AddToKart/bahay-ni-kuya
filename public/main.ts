@@ -8,6 +8,7 @@ import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./a
 import { HouseLifeManager, type POI } from "./life.js";
 import { KuyaLayer } from "./kuya.js";
 import { KuyaConsole } from "./console.js";
+import { installLayoutEditor } from "./layout-editor.js";
 import type { SessionState } from "../src/types.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
@@ -1079,6 +1080,7 @@ Promise.all([
     houseMap = map;
     renderer = new MapRenderer(map);
     navGrid = new NavGrid(map.width, map.height, map.collision);
+    installLayoutEditor(map, renderer);
 
     // Ensure all door tiles are explicitly walkable
     for (let i = 0; i < map.doors.length; i++) {
