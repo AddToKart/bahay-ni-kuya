@@ -1,0 +1,167 @@
+:root {
+  --page: #12141c;
+  --frame: #2b2119;
+  --wall-bed: #a9bcce;
+  --wall-liv: #e7d3ac;
+  --wall-off: #c9d3ae;
+  --floor: #a06a45;
+  --floor-2: #8a5a3b;
+  --ink: #2b2119;
+  --muted: #8b8171;
+  --working: #f0a33a;
+  --idle: #7fb069;
+  --sleeping: #6f7f95;
+  --opencode: #e07a5f;
+  --codex: #5b8def;
+  --pi: #b48ead;
+  --omp: #d9a441;
+  --hermes: #6fb1a8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page);
+  color: var(--muted);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-x: hidden;
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 22px 10px 28px;
+}
+
+.house-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: 14px;
+}
+
+h1 {
+  margin: 0;
+  color: var(--wall-liv);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.status {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.conn {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--opencode);
+  align-self: center;
+}
+
+.conn[data-state="on"] {
+  background: var(--idle);
+}
+
+.banner {
+  margin: 0 0 10px;
+  padding: 5px 10px;
+  border: 1px solid var(--frame);
+  background: var(--working);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.banner[hidden] {
+  display: none;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.house-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.chip i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.hint {
+  flex: 1 1 240px;
+  margin: 0;
+  color: var(--muted);
+  text-align: right;
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding: 16px 12px 22px;
+  }
+
+  h1 {
+    font-size: 16px;
+    letter-spacing: 0.14em;
+  }
+
+  .hint {
+    flex-basis: 100%;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conn {
+    transition: none;
+  }
+}

@@ -1,0 +1,20 @@
+# >>> agent-house (managed by scripts/install-adapters.ts — remove this block to uninstall)
+# Hermes outbound webhooks -> Agent House. Verified against hermes 0.21.5:
+#   agent/outbound_webhooks.py (`hooks.outbound` list schema), hermes_cli/plugins.py (VALID_HOOKS).
+# Fire-and-forget, fail-open, queue-bounded; no tool call ever waits on Agent House.
+# Agent House maps this payload shape on POST /event/hermes.
+hooks:
+  outbound:
+    - name: agent-house
+      url: http://127.0.0.1:4777/event/hermes
+      events:
+        - on_session_start
+        - on_session_end
+        - pre_llm_call
+        - post_llm_call
+        - pre_tool_call
+        - post_tool_call
+        - subagent_start
+        - subagent_stop
+      timeout: 2
+# <<< agent-house
