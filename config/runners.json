@@ -1,0 +1,33 @@
+{
+  "runners": {
+    "opencode": {
+      "command": "opencode",
+      "args": ["run", "{prompt}", "--format", "json"],
+      "env": {}
+    },
+    "codex": {
+      "command": "codex",
+      "args": ["exec", "{prompt}", "--json"],
+      "env": {}
+    },
+    "pi": {
+      "command": "pi",
+      "args": ["-p", "{prompt}", "--mode", "json"],
+      "env": {}
+    },
+    "omp": {
+      "command": "omp",
+      "args": ["-p", "{prompt}", "--mode", "json"],
+      "env": {}
+    },
+    "hermes": {
+      "command": "hermes",
+      "args": ["chat", "-q", "{prompt}"],
+      "env": {}
+    }
+  },
+  "allowlistedRoots": [
+    "D:/code_ni_kurt",
+    "D:/code_ni_kurt/pixel-office"
+  ]
+}

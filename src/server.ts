@@ -5,8 +5,16 @@ import { Store } from "./store";
 import { checkInstalled, scanProcesses } from "./scan";
 import { startOpenCodeWatcher } from "./opencode-db";
 import { log, logTail } from "./log";
-import { INSTALLED_REFRESH_MS, SCAN_MS, type IngestEvent } from "./types";
+import { INSTALLED_REFRESH_MS, SCAN_MS, HARNESSES, type IngestEvent } from "./types";
 import { mergeCodexHooks } from "../scripts/install-adapters";
+import {
+  isAllowedHostAndOrigin,
+  isAuthenticated,
+  getOrCreateToken,
+  validateCwd,
+  getAllowlistedRoots,
+} from "./security";
+import { Dispatcher } from "./dispatcher";
 
 const PORT = Number(process.env.BAHAY_NI_KUYA_PORT ?? 4777);
 const HOST = process.env.BAHAY_NI_KUYA_HOST ?? "127.0.0.1";
@@ -86,6 +94,7 @@ function mapHermesPayload(value: unknown): IngestEvent[] {
 }
 
 const store = new Store();
+const dispatcher = new Dispatcher(store);
 const clients = new Set<WsLike>();
 const transpiler = new Bun.Transpiler({ loader: "ts" });
 const jsCache = new Map<string, { mtime: number; js: string }>();
@@ -284,6 +293,79 @@ try {
         return jsonResponse({ ...store.snapshot(Date.now()), log: logTail(80) });
       }
       if (req.method === "GET" && url.pathname === "/favicon.ico") return new Response(null, { status: 204 });
+
+      // --- Security & API Gate ---
+      if (url.pathname.startsWith("/api/")) {
+        // Enforce loopback Host and Origin validation
+        if (!isAllowedHostAndOrigin(req)) {
+          return jsonResponse({ error: "Forbidden: invalid Host or Origin header" }, 403);
+        }
+
+        // Token bootstrap for same-origin browser client
+        if (req.method === "GET" && url.pathname === "/api/auth/token") {
+          return jsonResponse({ token: getOrCreateToken() });
+        }
+
+        // Allowlisted roots for project selection
+        if (req.method === "GET" && url.pathname === "/api/roots") {
+          return jsonResponse({ roots: getAllowlistedRoots() });
+        }
+
+        // Dispatcher endpoints require valid Bearer token
+        if (url.pathname.startsWith("/api/tasks")) {
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+
+          // POST /api/tasks { harness, prompt, cwd }
+          if (req.method === "POST" && url.pathname === "/api/tasks") {
+            let body: any;
+            try {
+              body = await req.json();
+            } catch {
+              return jsonResponse({ error: "Invalid JSON body" }, 400);
+            }
+            const { harness, prompt, cwd } = body;
+            if (!harness || !prompt) {
+              return jsonResponse({ error: "harness and prompt are required" }, 400);
+            }
+            if (!HARNESSES.includes(harness)) {
+              return jsonResponse({ error: `Unknown harness: ${harness}` }, 400);
+            }
+            const cwdValidation = validateCwd(cwd);
+            if (!cwdValidation.ok) {
+              return jsonResponse({ error: cwdValidation.error }, 400);
+            }
+
+            const task = dispatcher.submitTask(harness, prompt, cwdValidation.path!);
+            scheduleBroadcast();
+            return jsonResponse(task, 201);
+          }
+
+          // GET /api/tasks
+          if (req.method === "GET" && url.pathname === "/api/tasks") {
+            return jsonResponse(dispatcher.getTasks());
+          }
+
+          // POST /api/tasks/:id/cancel
+          const cancelMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/cancel$/);
+          if (req.method === "POST" && cancelMatch) {
+            const taskId = cancelMatch[1];
+            const canceled = dispatcher.cancelTask(taskId);
+            scheduleBroadcast();
+            return jsonResponse({ ok: canceled, status: canceled ? "canceled" : "failed_to_cancel" });
+          }
+
+          // GET /api/tasks/:id
+          const taskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
+          if (req.method === "GET" && taskMatch) {
+            const taskId = taskMatch[1];
+            const task = dispatcher.getTask(taskId);
+            if (!task) return jsonResponse({ error: "Task not found" }, 404);
+            return jsonResponse(task);
+          }
+        }
+      }
 
       if (req.method === "GET") {
         const staticResponse = await serveStatic(url.pathname);

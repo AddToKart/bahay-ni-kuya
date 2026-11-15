@@ -426,3 +426,173 @@ canvas {
     transition: none;
   }
 }
+
+/* Kuya Console & Task Dispatcher Styles */
+.kuya-console {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(22, 27, 38, 0.7);
+  border: 1px solid var(--frame);
+  border-radius: 4px;
+}
+
+.console-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.console-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wall-liv);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(127, 176, 105, 0.2);
+  color: #a7f3d0;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  border-radius: 2px;
+}
+
+.console-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #11141d;
+  color: #f1ede4;
+  border: 1px solid var(--frame);
+  border-radius: 2px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.console-form textarea:focus {
+  outline: none;
+  border-color: #e0a93b;
+}
+
+.console-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.console-row select {
+  flex: 1 1 180px;
+  background: #11141d;
+  color: #f1ede4;
+  border: 1px solid var(--frame);
+  border-radius: 2px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.dispatch-btn {
+  background: #e0a93b;
+  color: #1a1612;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 11px;
+  border: none;
+  border-radius: 2px;
+  padding: 6px 14px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.dispatch-btn:hover {
+  background: #f59e0b;
+}
+
+.tasks-container {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(43, 33, 25, 0.25);
+}
+
+.tasks-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #151922;
+  border: 1px solid rgba(43, 33, 25, 0.4);
+  border-radius: 2px;
+  font-size: 11px;
+}
+
+.task-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.task-harness {
+  font-weight: 700;
+}
+
+.task-prompt {
+  color: #d1cbbf;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.task-status {
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.task-status.queued { background: #374151; color: #9ca3af; }
+.task-status.running { background: #854d0e; color: #fef08a; }
+.task-status.done { background: #14532d; color: #86efac; }
+.task-status.failed { background: #7f1d1d; color: #fca5a5; }
+.task-status.canceled { background: #4b5563; color: #d1d5db; }
+
+.task-cancel-btn {
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-family: inherit;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.empty-tasks {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+}

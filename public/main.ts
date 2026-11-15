@@ -7,6 +7,7 @@ import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
 import { KuyaLayer } from "./kuya.js";
+import { KuyaConsole } from "./console.js";
 import type { SessionState } from "../src/types.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
@@ -89,6 +90,7 @@ let navGrid: NavGrid | null = null;
 let renderer: MapRenderer | null = null;
 const lifeManager = new HouseLifeManager();
 const kuya = new KuyaLayer();
+const kuyaConsole = new KuyaConsole();
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
@@ -941,6 +943,10 @@ function applySnapshot(snap: Snapshot): void {
   gotSnapshot = true;
   const sleeping = reconcile(snap, performance.now());
   updateHeader(snap, sleeping);
+  kuyaConsole.updateInstalled(snap.harnesses);
+  for (const s of snap.sessions) {
+    if (s.directory) kuyaConsole.recordDirectory(s.directory);
+  }
 }
 
 function scheduleReconnect(): void {
@@ -1053,6 +1059,7 @@ setConnected(false);
 window.addEventListener("resize", fitCanvas);
 kuya.initDOM();
 kuya.loadLines();
+kuyaConsole.init();
 
 // Load house map & POIs, then initialize renderer, navGrid, and house life
 Promise.all([

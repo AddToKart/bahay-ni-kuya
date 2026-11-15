@@ -109,3 +109,20 @@ Recorded during milestone execution. Kept up to date without interrupting the us
 - **Optional Text-To-Speech (TTS)**:
   - Toggle button in header (`#btn-tts`), off by default.
   - When toggled on, speaks announcements via the Web Speech API (`SpeechSynthesisUtterance`).
+
+## Milestone 7: Dispatcher and Kuya Console
+
+- **Security & Authorization (`src/security.ts` & `docs/dispatch-security.md`)**:
+  - Bound to `127.0.0.1` (`BAHAY_NI_KUYA_HOST`).
+  - Cryptographically secure 64-char hex Bearer token stored in `%USERPROFILE%\.bahay-ni-kuya\token` with `0o600` permissions.
+  - Strict loopback Host and Origin validation: requests with foreign Host or Origin rejected with HTTP 403 Forbidden.
+  - Missing or invalid tokens rejected with HTTP 401 Unauthorized.
+  - Same-origin token bootstrap endpoint (`GET /api/auth/token`) provided for the web browser, eliminating tokens in query strings.
+  - Allowlisted roots check: verifies `cwd` via `realpathSync` against permitted root directories.
+- **Headless Task Dispatcher (`src/dispatcher.ts`)**:
+  - Manages task lifecycle: `queued` → `running` → `done` | `failed` | `canceled`.
+  - Emits Pinoy Big Brother house events to Store (`task_started`, `tool`, `task_completed`, `error`) so visualization animates housemates walking to the office and working even if harness adapter is silent.
+  - Runs tasks in isolated temporary git worktrees (`kuya/{harness}-{id}` at `.kuya-worktrees/{id}`) and captures `git diff --stat` upon completion before automatic worktree pruning.
+  - Endpoints implemented: `POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/:id`, `POST /api/tasks/:id/cancel`.
+- **Kuya Console UI (`public/console.ts`)**:
+  - Task prompt textarea, dropdown with installed harnesses only, project folder dropdown, dispatch button, and live task list with status pills and cancellation controls.

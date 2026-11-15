@@ -75,6 +75,35 @@
         </div>
       </div>
 
+      <section class="kuya-console" id="kuya-console">
+        <div class="console-header">
+          <h2>Kuya Console & Task Dispatcher</h2>
+          <span class="auth-pill" id="auth-status">Authenticated</span>
+        </div>
+        <div class="console-form">
+          <textarea
+            id="task-prompt"
+            placeholder="Assign a task to a housemate (e.g. list the files in this repo, refactor styling)..."
+            rows="2"
+          ></textarea>
+          <div class="console-row">
+            <select id="task-harness" aria-label="Select Housemate Harness">
+              <option value="">Select Housemate...</option>
+            </select>
+            <select id="task-cwd" aria-label="Select Project Directory">
+              <option value="">Select Project Folder...</option>
+            </select>
+            <button id="btn-submit-task" class="dispatch-btn">🚀 Assign Task</button>
+          </div>
+        </div>
+        <div class="tasks-container">
+          <div class="tasks-title">Dispatched Tasks</div>
+          <div id="tasks-list" class="tasks-list">
+            <p class="empty-tasks">No tasks dispatched yet.</p>
+          </div>
+        </div>
+      </section>
+
       <footer class="house-footer">
         <div class="legend" id="legend" aria-label="harness legend"></div>
         <p class="hint">Working sessions sit in the office, idle ones wait in the living room.</p>
