@@ -1,5 +1,6 @@
 // Script to generate public/map/house.json (Tiled-compatible JSON map)
 // 16px tiles, orthogonal, with layers: floor, walls, doors, furniture, collision, pois, props.
+// Designed with clean room layouts, zero overlapping furniture, and no trees inside the house.
 
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -136,7 +137,7 @@ fillRect(floorLayer, 24, 16, 11, 10, TILES.FLOOR_GAME);
 fillRect(floorLayer, 35, 16, 6, 10, TILES.FLOOR_GYM);
 
 // 2. Build Walls & Collisions
-// Outer boundary
+// Outer boundary walls of the house
 for (let x = 0; x < MAP_W; x++) {
   wallsLayer[idx(x, 0)] = TILES.WALL_TOP;
   wallsLayer[idx(x, 26)] = TILES.WALL_TOP;
@@ -181,8 +182,8 @@ for (let y = 16; y <= 25; y++) {
   wallsLayer[idx(23, y)] = TILES.WALL_SIDE;
   collisionLayer[idx(23, y)] = 1;
 }
-// Low divider between Game Room & Gym: x = 34, y: 18..25
-for (let y = 18; y <= 25; y++) {
+// Divider between Game Room & Gym: x = 34, y: 16..25
+for (let y = 16; y <= 25; y++) {
   wallsLayer[idx(34, y)] = TILES.WALL_SIDE;
   collisionLayer[idx(34, y)] = 1;
 }
@@ -221,54 +222,90 @@ function addProp(prop: MapProp): void {
 
 // 4. Place Furniture, Props & POIs
 
-// --- BEDROOM ---
-// 4 Bunk Beds (x: 2, 7, y: 3, 7)
+// ==========================================
+// --- BEDROOM (x: 1..11, y: 1..10) ---
+// ==========================================
+// 4 Bunk beds neatly placed in 2 columns (x: 2..3 and x: 8..9), leaving a wide 4-tile central aisle (x: 4..7)
 for (let i = 0; i < 4; i++) {
-  const bx = i % 2 === 0 ? 2 : 7;
+  const bx = i % 2 === 0 ? 2 : 8;
   const by = i < 2 ? 3 : 7;
   furnitureLayer[idx(bx, by)] = TILES.BED_BUNK_TOP;
   furnitureLayer[idx(bx, by + 1)] = TILES.BED_BUNK_BOTTOM;
   collisionLayer[idx(bx, by)] = 1;
   collisionLayer[idx(bx, by + 1)] = 1;
+  collisionLayer[idx(bx + 1, by)] = 1;
+  collisionLayer[idx(bx + 1, by + 1)] = 1;
+
   addProp({ id: `bunk_${i + 1}`, sprite: "bed-bunk", x: bx, y: by });
   pois.push({
     id: `bed_${i + 1}`,
     name: `Bunk Bed ${i + 1}`,
     room: "bedroom",
-    x: bx + 1,
+    x: bx + (i % 2 === 0 ? 2 : -1),
     y: by + 1,
-    facing: "left",
+    facing: i % 2 === 0 ? "left" : "right",
     action: "sleep",
     tags: ["sleep", "rest"],
   });
 }
-furnitureLayer[idx(5, 2)] = TILES.NIGHTSTAND;
-collisionLayer[idx(5, 2)] = 1;
-addProp({ id: "bedroom_nightstand_1", sprite: "owner-sideboard", x: 5, y: 3 });
+
+// 1-tile nightstands with reading lamps centered on walls (no overlap with bunks!)
+furnitureLayer[idx(5, 3)] = TILES.NIGHTSTAND;
+collisionLayer[idx(5, 3)] = 1;
+addProp({ id: "bedroom_nightstand_1", sprite: "library-side-table", x: 5, y: 3 });
 addProp({ id: "bedroom_lamp_1", sprite: "desk-lamp", x: 5, y: 3 });
-addProp({ id: "bedroom_nightstand_2", sprite: "owner-sideboard", x: 5, y: 7 });
+
+furnitureLayer[idx(5, 7)] = TILES.NIGHTSTAND;
+collisionLayer[idx(5, 7)] = 1;
+addProp({ id: "bedroom_nightstand_2", sprite: "library-side-table", x: 5, y: 7 });
 addProp({ id: "bedroom_lamp_2", sprite: "desk-lamp", x: 5, y: 7 });
-addProp({ id: "bedroom_bookshelf", sprite: "bookshelf", x: 10, y: 3 });
-addProp({ id: "bedroom_rug_1", sprite: "rug", x: 4, y: 4, layer: "floor" });
-addProp({ id: "bedroom_rug_2", sprite: "rug", x: 4, y: 8, layer: "floor" });
-addProp({ id: "bedroom_plant_1", sprite: "plant-small", x: 5, y: 2 });
-addProp({ id: "bedroom_plant_2", sprite: "plant-tall", x: 10, y: 8 });
-addProp({ id: "bedroom_cabinet", sprite: "filing-cabinet", x: 10, y: 6 });
+
+// Bookshelf & wardrobe against perimeter walls
+addProp({ id: "bedroom_bookshelf", sprite: "bookshelf", x: 1, y: 5 });
+collisionLayer[idx(1, 5)] = 1;
+addProp({ id: "bedroom_cabinet", sprite: "filing-cabinet", x: 11, y: 5 });
+collisionLayer[idx(11, 5)] = 1;
+
+// Central runner rugs
+addProp({ id: "bedroom_rug", sprite: "rug", x: 5, y: 5, layer: "floor" });
+
+// Corner plant & wall decor
+addProp({ id: "bedroom_plant", sprite: "plant-tall", x: 1, y: 9 });
+collisionLayer[idx(1, 9)] = 1;
 addProp({ id: "bedroom_clock", sprite: "wall-clock", x: 6, y: 2, layer: "wall" });
-addProp({ id: "bedroom_art_1", sprite: "art-frame", x: 4, y: 2, layer: "wall" });
+addProp({ id: "bedroom_art_1", sprite: "art-frame", x: 3, y: 2, layer: "wall" });
 addProp({ id: "bedroom_art_2", sprite: "art-frame", x: 9, y: 2, layer: "wall" });
 
-// --- LIVING ROOM ---
-// Large sectional sofa (x: 15..19, y: 5)
-furnitureLayer[idx(15, 5)] = TILES.SOFA_LEFT;
-furnitureLayer[idx(16, 5)] = TILES.SOFA_MID;
+
+// ==========================================
+// --- LIVING ROOM / LOUNGE (x: 13..23, y: 1..10) ---
+// ==========================================
+// TV Console centered on the north wall (x: 17..18, y: 2)
+furnitureLayer[idx(17, 2)] = TILES.TV_CONSOLE;
+furnitureLayer[idx(18, 2)] = TILES.TV_CONSOLE;
+collisionLayer[idx(17, 2)] = 1;
+collisionLayer[idx(18, 2)] = 1;
+addProp({ id: "living_tv", sprite: "tv-unit", x: 17, y: 2 });
+pois.push({
+  id: "tv_screen",
+  name: "Living Room TV",
+  room: "living",
+  x: 17,
+  y: 4,
+  facing: "up",
+  action: "tv",
+  tags: ["tv", "entertainment"],
+});
+
+// Large Sectional Sofa centered facing the TV (x: 16..18, y: 5..6)
+furnitureLayer[idx(16, 5)] = TILES.SOFA_LEFT;
 furnitureLayer[idx(17, 5)] = TILES.SOFA_MID;
 furnitureLayer[idx(18, 5)] = TILES.SOFA_RIGHT;
-for (let x = 15; x <= 18; x++) {
+for (let x = 16; x <= 18; x++) {
   collisionLayer[idx(x, 5)] = 1;
   pois.push({
-    id: `sofa_${x - 14}`,
-    name: `Sofa Seat ${x - 14}`,
+    id: `sofa_${x - 15}`,
+    name: `Sofa Seat ${x - 15}`,
     room: "living",
     x,
     y: 6,
@@ -277,69 +314,74 @@ for (let x = 15; x <= 18; x++) {
     tags: ["relax", "chill", "tv"],
   });
 }
-addProp({ id: "living_sofa", sprite: "couch-sectional", x: 15, y: 5 });
-// TV Console at top wall (x: 16..17, y: 2)
-furnitureLayer[idx(16, 2)] = TILES.TV_CONSOLE;
-furnitureLayer[idx(17, 2)] = TILES.TV_CONSOLE;
-collisionLayer[idx(16, 2)] = 1;
-collisionLayer[idx(17, 2)] = 1;
-addProp({ id: "living_tv", sprite: "tv-unit", x: 16, y: 2 });
-pois.push({
-  id: "tv_screen",
-  name: "Living Room TV",
-  room: "living",
-  x: 17,
-  y: 3,
-  facing: "up",
-  action: "tv",
-  tags: ["tv", "entertainment"],
-});
-furnitureLayer[idx(21, 2)] = TILES.LIVING_LAMP;
-collisionLayer[idx(21, 2)] = 1;
-addProp({ id: "living_lamp_top", sprite: "floor-lamp", x: 21, y: 2 });
-addProp({ id: "living_coffee_table", sprite: "break-coffee-table", x: 16, y: 7 });
-addProp({ id: "living_coffee_mug", sprite: "kitchen-coffee", x: 16, y: 7 });
-addProp({ id: "living_armchair_1", sprite: "library-armchair", x: 13, y: 6 });
-addProp({ id: "living_armchair_2", sprite: "library-armchair", x: 21, y: 6 });
-addProp({ id: "living_rug", sprite: "library-rug", x: 15, y: 6, layer: "floor" });
-addProp({ id: "living_bookshelf", sprite: "library-shelf", x: 22, y: 3 });
-addProp({ id: "living_plant_1", sprite: "lobby-plant-big", x: 13, y: 3 });
-addProp({ id: "living_plant_2", sprite: "plant-fern", x: 22, y: 8 });
-addProp({ id: "living_art_1", sprite: "art-frame", x: 14, y: 2, layer: "wall" });
-addProp({ id: "living_art_2", sprite: "art-frame", x: 19, y: 2, layer: "wall" });
+addProp({ id: "living_sofa", sprite: "couch-sectional", x: 16, y: 5 });
 
-// --- OFFICE ---
-// 8 Primary desks (two rows of 4 desks) + 4 Subagent desks
-// Primary Row 1 (y: 3, x: 26, 29, 32, 35)
-// Primary Row 2 (y: 6, x: 26, 29, 32, 35)
-// Subagent Row (y: 9, x: 26, 29, 32, 35)
+// Low Coffee table in front of sofa (x: 17, y: 7)
+furnitureLayer[idx(17, 7)] = TILES.COFFEE_TABLE;
+collisionLayer[idx(17, 7)] = 1;
+addProp({ id: "living_coffee_table", sprite: "break-coffee-table", x: 17, y: 7 });
+
+// Two armchairs facing each other across the coffee table
+furnitureLayer[idx(14, 6)] = TILES.OFFICE_CHAIR;
+collisionLayer[idx(14, 6)] = 1;
+addProp({ id: "living_armchair_1", sprite: "library-armchair", x: 14, y: 6 });
+
+furnitureLayer[idx(21, 6)] = TILES.OFFICE_CHAIR;
+collisionLayer[idx(21, 6)] = 1;
+addProp({ id: "living_armchair_2", sprite: "library-armchair", x: 21, y: 6, flip: true });
+
+// Large Persian accent rug under the seating group
+addProp({ id: "living_rug", sprite: "library-rug", x: 16, y: 6, layer: "floor" });
+
+// Bookshelf along east wall & floor lamp
+addProp({ id: "living_bookshelf", sprite: "library-shelf", x: 23, y: 3 });
+collisionLayer[idx(23, 3)] = 1;
+furnitureLayer[idx(14, 3)] = TILES.LIVING_LAMP;
+collisionLayer[idx(14, 3)] = 1;
+addProp({ id: "living_lamp", sprite: "floor-lamp", x: 14, y: 3 });
+
+// Potted foliage & framed art
+addProp({ id: "living_plant_1", sprite: "lobby-plant-big", x: 13, y: 2 });
+collisionLayer[idx(13, 2)] = 1;
+addProp({ id: "living_plant_2", sprite: "plant-fern", x: 23, y: 8 });
+collisionLayer[idx(23, 8)] = 1;
+addProp({ id: "living_art_1", sprite: "art-frame", x: 15, y: 2, layer: "wall" });
+addProp({ id: "living_art_2", sprite: "art-frame", x: 20, y: 2, layer: "wall" });
+
+
+// ==========================================
+// --- OFFICE (x: 25..40, y: 1..10) ---
+// ==========================================
+// 8 Primary desks (2 rows of 4 desks, with a generous 3-tile central walkway at x: 31..32)
+// Row 1 (y: 3): x = 26, 29, 33, 36
+// Row 2 (y: 6): x = 26, 29, 33, 36
+// Row 3 (y: 9): 4 Subagent desks at x = 26, 29, 33, 36
+const deskXCoords = [26, 29, 33, 36];
 let deskNum = 1;
+
 for (const dy of [3, 6]) {
-  for (const dx of [26, 29, 32, 35]) {
+  for (const dx of deskXCoords) {
     furnitureLayer[idx(dx, dy)] = TILES.DESK_MONITOR;
     collisionLayer[idx(dx, dy)] = 1;
-    const isWalnut = deskNum % 2 === 1;
+    // Desk is 2 tiles wide
+    collisionLayer[idx(dx + 1, dy)] = 1;
+
     addProp({
       id: `office_desk_prop_${deskNum}`,
       sprite: "desk",
-      variant: isWalnut ? "walnut" : "ash",
+      variant: deskNum % 2 === 1 ? "walnut" : "ash",
       x: dx,
       y: dy,
     });
-    // Add lamp or plant prop on desk
-    if (deskNum % 2 === 1) {
-      addProp({ id: `desk_lamp_${deskNum}`, sprite: "desk-lamp", x: dx, y: dy });
-    } else {
-      addProp({ id: `desk_plant_${deskNum}`, sprite: "plant-small", x: dx, y: dy });
-    }
-    // Chair for worker
+    // Chair placed neatly behind desk at (dx, dy + 1)
     addProp({
       id: `desk_chair_${deskNum}`,
       sprite: "chair",
       variant: deskNum % 3 === 0 ? "teal" : deskNum % 3 === 1 ? "rust" : "sage",
-      x: dx + 1,
+      x: dx,
       y: dy + 1,
     });
+
     pois.push({
       id: `office_desk_${deskNum}`,
       name: `Office Desk ${deskNum}`,
@@ -353,11 +395,14 @@ for (const dy of [3, 6]) {
     deskNum++;
   }
 }
-// 4 Subagent desks
+
+// 4 Subagent desks in Row 3 (y: 9)
 let subNum = 1;
-for (const dx of [26, 29, 32, 35]) {
+for (const dx of deskXCoords) {
   furnitureLayer[idx(dx, 9)] = TILES.SUBAGENT_DESK;
   collisionLayer[idx(dx, 9)] = 1;
+  collisionLayer[idx(dx + 1, 9)] = 1;
+
   addProp({
     id: `subagent_desk_prop_${subNum}`,
     sprite: "desk",
@@ -369,9 +414,10 @@ for (const dx of [26, 29, 32, 35]) {
     id: `subagent_chair_${subNum}`,
     sprite: "chair",
     variant: "teal",
-    x: dx + 1,
+    x: dx,
     y: 10,
   });
+
   pois.push({
     id: `subagent_desk_${subNum}`,
     name: `Subagent Desk ${subNum}`,
@@ -384,32 +430,52 @@ for (const dx of [26, 29, 32, 35]) {
   });
   subNum++;
 }
-// Office props
-addProp({ id: "office_whiteboard", sprite: "whiteboard", x: 30, y: 2, layer: "wall" });
-addProp({ id: "office_clock", sprite: "wall-clock", x: 36, y: 2, layer: "wall" });
-addProp({ id: "office_cooler", sprite: "kitchen-cooler", x: 39, y: 3 });
-addProp({ id: "office_cabinet_1", sprite: "filing-cabinet", x: 39, y: 5 });
-addProp({ id: "office_cabinet_2", sprite: "filing-cabinet", x: 39, y: 6 });
-addProp({ id: "office_bin_1", sprite: "bin", x: 25, y: 4 });
-addProp({ id: "office_bin_2", sprite: "bin", x: 38, y: 7 });
-addProp({ id: "office_bookshelf_1", sprite: "bookshelf", x: 25, y: 6 });
-addProp({ id: "office_bookshelf_2", sprite: "bookshelf", x: 25, y: 7 });
-addProp({ id: "office_plant_1", sprite: "lobby-plant-big", x: 25, y: 3 });
-addProp({ id: "office_plant_2", sprite: "lobby-plant-big", x: 39, y: 9 });
-addProp({ id: "office_rug_1", sprite: "rug", x: 28, y: 5, layer: "floor" });
-addProp({ id: "office_rug_2", sprite: "rug", x: 34, y: 5, layer: "floor" });
 
-// --- HALLWAY ---
+// Center whiteboard at north wall centered on the 3-tile walkway
+addProp({ id: "office_whiteboard", sprite: "whiteboard", x: 31, y: 2, layer: "wall" });
+addProp({ id: "office_clock", sprite: "wall-clock", x: 35, y: 2, layer: "wall" });
+
+// Perimeter office amenities
+addProp({ id: "office_cooler", sprite: "kitchen-cooler", x: 40, y: 3 });
+collisionLayer[idx(40, 3)] = 1;
+addProp({ id: "office_cabinet_1", sprite: "filing-cabinet", x: 40, y: 5 });
+collisionLayer[idx(40, 5)] = 1;
+addProp({ id: "office_cabinet_2", sprite: "filing-cabinet", x: 40, y: 7 });
+collisionLayer[idx(40, 7)] = 1;
+
+addProp({ id: "office_bookshelf_1", sprite: "bookshelf", x: 25, y: 4 });
+collisionLayer[idx(25, 4)] = 1;
+addProp({ id: "office_bin_1", sprite: "bin", x: 25, y: 6 });
+collisionLayer[idx(25, 6)] = 1;
+
+// Plants in corners
+addProp({ id: "office_plant_1", sprite: "lobby-plant-big", x: 25, y: 2 });
+collisionLayer[idx(25, 2)] = 1;
+addProp({ id: "office_plant_2", sprite: "lobby-plant-big", x: 40, y: 9 });
+collisionLayer[idx(40, 9)] = 1;
+
+
+// ==========================================
+// --- HALLWAY (x: 1..40, y: 12..14) ---
+// ==========================================
+// Backlit Gold Wall Sign "BAHAY NI KUYA" centered on north wall
 addProp({ id: "hallway_sign", sprite: "house-sign", x: 19, y: 11, layer: "wall" });
-for (const hx of [4, 10, 14, 22, 26, 34, 38]) {
+
+// Wall sconces at regular intervals along hallway walls
+for (const hx of [3, 9, 15, 21, 25, 30, 35, 39]) {
   addProp({ id: `hallway_sconce_${hx}`, sprite: "street-sconce", x: hx, y: 11, layer: "wall" });
 }
-addProp({ id: "hallway_plant_1", sprite: "plant-tall", x: 1, y: 14 });
-addProp({ id: "hallway_plant_2", sprite: "plant-tall", x: 40, y: 14 });
+addProp({ id: "hallway_plant_1", sprite: "plant-tall", x: 1, y: 13 });
+collisionLayer[idx(1, 13)] = 1;
+addProp({ id: "hallway_plant_2", sprite: "plant-tall", x: 40, y: 13 });
+collisionLayer[idx(40, 13)] = 1;
 addProp({ id: "hallway_clock", sprite: "wall-clock", x: 20, y: 15, layer: "wall" });
 
-// --- CONFESSION ROOM ---
-// Dark, solitary chair in spotlight at center (x: 4, y: 20)
+
+// ==========================================
+// --- CONFESSION ROOM (x: 1..8, y: 16..25) ---
+// ==========================================
+// Solitary crimson confessional armchair centered at (4, 20)
 furnitureLayer[idx(4, 20)] = TILES.CONFESSION_CHAIR;
 collisionLayer[idx(4, 20)] = 1;
 addProp({ id: "confession_chair_prop", sprite: "confession-chair", x: 4, y: 20 });
@@ -423,25 +489,40 @@ pois.push({
   action: "sit",
   tags: ["confession", "blocked", "spotlight"],
 });
-furnitureLayer[idx(4, 19)] = TILES.SPOTLIGHT_MARKER;
-addProp({ id: "confession_spotlight_prop", sprite: "confession-spotlight", x: 4, y: 19, layer: "overlay" });
 
-// --- KITCHEN ---
-// Fridge, Stove, Sink along top wall (y: 17, x: 11, 13, 15)
+// Spotlight fixture on wall above chair
+furnitureLayer[idx(4, 19)] = TILES.SPOTLIGHT_MARKER;
+addProp({ id: "confession_spotlight_prop", sprite: "confession-spotlight", x: 4, y: 18, layer: "wall" });
+
+
+// ==========================================
+// --- KITCHEN & DINING (x: 10..22, y: 16..25) ---
+// ==========================================
+// Straight, neat kitchen line along north wall (y: 17)
+// Fridge -> Counter with Microwave -> Stove -> Counter with Sink -> Coffee station -> Water Cooler -> Vending Machine -> Trash bin
 furnitureLayer[idx(11, 17)] = TILES.FRIDGE;
 collisionLayer[idx(11, 17)] = 1;
 addProp({ id: "kitchen_fridge_prop", sprite: "kitchen-fridge", x: 11, y: 17 });
 pois.push({ id: "fridge", name: "Refrigerator", room: "kitchen", x: 11, y: 18, facing: "up", action: "cook", tags: ["kitchen", "food"] });
+
+furnitureLayer[idx(12, 17)] = TILES.SINK;
+collisionLayer[idx(12, 17)] = 1;
+addProp({ id: "kitchen_counter_1", sprite: "kitchen-counter", x: 12, y: 17 });
+addProp({ id: "kitchen_microwave_prop", sprite: "kitchen-microwave", x: 12, y: 17 });
 
 furnitureLayer[idx(13, 17)] = TILES.STOVE;
 collisionLayer[idx(13, 17)] = 1;
 addProp({ id: "kitchen_stove_prop", sprite: "kitchen-stove", x: 13, y: 17 });
 pois.push({ id: "stove", name: "Kitchen Stove", room: "kitchen", x: 13, y: 18, facing: "up", action: "cook", tags: ["kitchen", "cook"] });
 
-furnitureLayer[idx(15, 17)] = TILES.SINK;
+furnitureLayer[idx(14, 17)] = TILES.SINK;
+collisionLayer[idx(14, 17)] = 1;
+addProp({ id: "kitchen_sink_prop", sprite: "kitchen-counter-sink", x: 14, y: 17 });
+pois.push({ id: "sink", name: "Kitchen Sink", room: "kitchen", x: 14, y: 18, facing: "up", action: "wash", tags: ["kitchen", "wash"] });
+
+addProp({ id: "kitchen_counter_end_prop", sprite: "kitchen-counter-end", x: 15, y: 17, flip: true });
 collisionLayer[idx(15, 17)] = 1;
-addProp({ id: "kitchen_sink_prop", sprite: "kitchen-counter-sink", x: 15, y: 17 });
-pois.push({ id: "sink", name: "Kitchen Sink", room: "kitchen", x: 15, y: 18, facing: "up", action: "wash", tags: ["kitchen", "wash"] });
+addProp({ id: "kitchen_coffee_prop", sprite: "kitchen-coffee", x: 15, y: 17 });
 
 furnitureLayer[idx(17, 17)] = TILES.WATER_COOLER;
 collisionLayer[idx(17, 17)] = 1;
@@ -451,107 +532,111 @@ furnitureLayer[idx(19, 17)] = TILES.VENDING_MACHINE;
 collisionLayer[idx(19, 17)] = 1;
 addProp({ id: "kitchen_vending_prop", sprite: "break-vending", x: 19, y: 17 });
 
-// Extra kitchen counters & appliances
-addProp({ id: "kitchen_counter_end_1", sprite: "kitchen-counter-end", x: 10, y: 17 });
-addProp({ id: "kitchen_counter_mid", sprite: "kitchen-counter", x: 12, y: 17 });
-addProp({ id: "kitchen_counter_end_2", sprite: "kitchen-counter-end", x: 16, y: 17, flip: true });
-addProp({ id: "kitchen_microwave_prop", sprite: "kitchen-microwave", x: 12, y: 17 });
-addProp({ id: "kitchen_kettle_prop", sprite: "kitchen-kettle", x: 14, y: 17 });
+addProp({ id: "kitchen_bin_prop", sprite: "bin", x: 21, y: 17 });
+collisionLayer[idx(21, 17)] = 1;
+
+// Wall shelf & clock
 addProp({ id: "kitchen_shelf_prop", sprite: "kitchen-shelf", x: 13, y: 16, layer: "wall" });
-addProp({ id: "kitchen_mat_prop", sprite: "kitchen-mat", x: 13, y: 18, layer: "floor" });
-addProp({ id: "kitchen_bin_prop", sprite: "bin", x: 10, y: 18 });
+addProp({ id: "kitchen_clock", sprite: "wall-clock", x: 16, y: 16, layer: "wall" });
+
+// Kitchen floor mat
+addProp({ id: "kitchen_mat_prop", sprite: "kitchen-mat", x: 14, y: 18, layer: "floor" });
+
+// Dining Table (x: 16..17, y: 21) & 4 Chairs neatly placed adjacent to table
+furnitureLayer[idx(16, 21)] = TILES.DINING_TABLE;
+furnitureLayer[idx(17, 21)] = TILES.DINING_TABLE;
+collisionLayer[idx(16, 21)] = 1;
+collisionLayer[idx(17, 21)] = 1;
+addProp({ id: "kitchen_table_prop", sprite: "kitchen-table", x: 16, y: 21 });
+
+// Chairs adjacent to table
+addProp({ id: "kitchen_chair_1", sprite: "kitchen-chair", x: 15, y: 21, flip: true });
+addProp({ id: "kitchen_chair_2", sprite: "kitchen-chair", x: 18, y: 21 });
+addProp({ id: "kitchen_chair_3", sprite: "kitchen-chair", x: 16, y: 22 });
+addProp({ id: "kitchen_chair_4", sprite: "kitchen-chair", x: 17, y: 22 });
+
+pois.push({ id: "dining_1", name: "Dining Chair 1", room: "kitchen", x: 15, y: 21, facing: "right", action: "sit", tags: ["eat", "social"] });
+pois.push({ id: "dining_2", name: "Dining Chair 2", room: "kitchen", x: 18, y: 21, facing: "left", action: "sit", tags: ["eat", "social"] });
+pois.push({ id: "dining_3", name: "Dining Chair 3", room: "kitchen", x: 16, y: 22, facing: "up", action: "sit", tags: ["eat", "social"] });
+pois.push({ id: "dining_4", name: "Dining Chair 4", room: "kitchen", x: 17, y: 22, facing: "up", action: "sit", tags: ["eat", "social"] });
+
+// Potted corner plants
 addProp({ id: "kitchen_plant_1", sprite: "plant-tall", x: 10, y: 24 });
+collisionLayer[idx(10, 24)] = 1;
 addProp({ id: "kitchen_plant_2", sprite: "plant-tall", x: 22, y: 24 });
+collisionLayer[idx(22, 24)] = 1;
 
-// Dining Table & Chairs (x: 18..19, y: 21..22)
-furnitureLayer[idx(18, 21)] = TILES.DINING_TABLE;
-furnitureLayer[idx(19, 21)] = TILES.DINING_TABLE;
-furnitureLayer[idx(18, 22)] = TILES.DINING_TABLE;
-furnitureLayer[idx(19, 22)] = TILES.DINING_TABLE;
-for (let y = 21; y <= 22; y++) {
-  for (let x = 18; x <= 19; x++) collisionLayer[idx(x, y)] = 1;
-}
-addProp({ id: "kitchen_table_prop", sprite: "kitchen-table", x: 18, y: 21 });
-addProp({ id: "kitchen_chair_1", sprite: "kitchen-chair", x: 17, y: 21, flip: true });
-addProp({ id: "kitchen_chair_2", sprite: "kitchen-chair", x: 20, y: 21 });
-addProp({ id: "kitchen_chair_3", sprite: "kitchen-chair", x: 18, y: 23 });
-addProp({ id: "kitchen_chair_4", sprite: "kitchen-chair", x: 19, y: 23 });
 
-pois.push({ id: "dining_1", name: "Dining Chair 1", room: "kitchen", x: 17, y: 21, facing: "right", action: "sit", tags: ["eat", "social"] });
-pois.push({ id: "dining_2", name: "Dining Chair 2", room: "kitchen", x: 20, y: 21, facing: "left", action: "sit", tags: ["eat", "social"] });
-pois.push({ id: "dining_3", name: "Dining Chair 3", room: "kitchen", x: 18, y: 23, facing: "up", action: "sit", tags: ["eat", "social"] });
-pois.push({ id: "dining_4", name: "Dining Chair 4", room: "kitchen", x: 19, y: 23, facing: "up", action: "sit", tags: ["eat", "social"] });
-
-// --- GAME ROOM ---
-// Pool Table (x: 27..28, y: 20..21)
+// ==========================================
+// --- GAME ROOM (x: 24..34, y: 16..25) ---
+// ==========================================
+// Regulation Billiards Table centered at (27, 20) with wide 2-tile clearance all around
 furnitureLayer[idx(27, 20)] = TILES.POOL_TABLE;
 furnitureLayer[idx(28, 20)] = TILES.POOL_TABLE;
 furnitureLayer[idx(27, 21)] = TILES.POOL_TABLE;
 furnitureLayer[idx(28, 21)] = TILES.POOL_TABLE;
-for (let y = 20; y <= 21; y++) {
-  for (let x = 27; x <= 28; x++) collisionLayer[idx(x, y)] = 1;
-}
+collisionLayer[idx(27, 20)] = 1;
+collisionLayer[idx(28, 20)] = 1;
+collisionLayer[idx(27, 21)] = 1;
+collisionLayer[idx(28, 21)] = 1;
 addProp({ id: "gameroom_pool_prop", sprite: "pool-table", x: 27, y: 20 });
 pois.push({ id: "pool_table", name: "Billiards / Pool Table", room: "gameroom", x: 26, y: 20, facing: "right", action: "pool", tags: ["game", "play"] });
 
-// Arcade Machines (x: 31, 32, y: 17)
-furnitureLayer[idx(31, 17)] = TILES.ARCADE_1;
+// 2 Retro arcade cabinets along north wall
+furnitureLayer[idx(30, 17)] = TILES.ARCADE_1;
+collisionLayer[idx(30, 17)] = 1;
+addProp({ id: "arcade_prop_1", sprite: "arcade-cabinet", x: 30, y: 17 });
+pois.push({ id: "arcade_1", name: "Retro Arcade 1", room: "gameroom", x: 30, y: 18, facing: "up", action: "arcade", tags: ["game", "arcade"] });
+
 furnitureLayer[idx(32, 17)] = TILES.ARCADE_2;
-collisionLayer[idx(31, 17)] = 1;
 collisionLayer[idx(32, 17)] = 1;
-addProp({ id: "arcade_prop_1", sprite: "arcade-cabinet", x: 31, y: 17 });
 addProp({ id: "arcade_prop_2", sprite: "break-arcade", x: 32, y: 17 });
-pois.push({ id: "arcade_1", name: "Retro Arcade 1", room: "gameroom", x: 31, y: 18, facing: "up", action: "arcade", tags: ["game", "arcade"] });
 pois.push({ id: "arcade_2", name: "Retro Arcade 2", room: "gameroom", x: 32, y: 18, facing: "up", action: "arcade", tags: ["game", "arcade"] });
 
-addProp({ id: "game_dartboard", sprite: "break-dartboard", x: 26, y: 16, layer: "wall" });
-addProp({ id: "game_poster", sprite: "break-poster", x: 29, y: 16, layer: "wall" });
-addProp({ id: "game_beanbag_1", sprite: "break-beanbag", x: 25, y: 23 });
-addProp({ id: "game_beanbag_2", sprite: "break-beanbag", x: 33, y: 23 });
+// Wall decorations
+addProp({ id: "game_dartboard", sprite: "break-dartboard", x: 25, y: 16, layer: "wall" });
+addProp({ id: "game_poster", sprite: "break-poster", x: 28, y: 16, layer: "wall" });
+
+// Corner beanbag & plant
+addProp({ id: "game_beanbag", sprite: "break-beanbag", x: 33, y: 23 });
+collisionLayer[idx(33, 23)] = 1;
 addProp({ id: "game_bin", sprite: "bin", x: 33, y: 18 });
+collisionLayer[idx(33, 18)] = 1;
 addProp({ id: "game_plant", sprite: "plant-fern", x: 24, y: 24 });
+collisionLayer[idx(24, 24)] = 1;
 
-// --- GYM & GARDEN ---
-// Treadmill (x: 37, y: 20)
-furnitureLayer[idx(37, 20)] = TILES.TREADMILL;
-collisionLayer[idx(37, 20)] = 1;
-addProp({ id: "gym_treadmill_prop", sprite: "treadmill", x: 37, y: 20 });
-pois.push({ id: "treadmill", name: "Gym Treadmill", room: "gym", x: 37, y: 21, facing: "up", action: "exercise", tags: ["gym", "exercise"] });
 
-// Weights & Gym Equipment
-addProp({ id: "gym_weights_prop", sprite: "weights-rack", x: 38, y: 22 });
-addProp({ id: "gym_bike_prop", sprite: "gym-bike", x: 36, y: 22 });
-addProp({ id: "gym_bench_prop", sprite: "gym-bench", x: 35, y: 19 });
-addProp({ id: "gym_kettlebells_prop", sprite: "gym-kettlebells", x: 39, y: 20 });
-addProp({ id: "gym_bottle_prop", sprite: "gym-bottle", x: 38, y: 19 });
-addProp({ id: "gym_mirror_prop", sprite: "gym-mirror", x: 37, y: 16, layer: "wall" });
-addProp({ id: "gym_poster_prop", sprite: "gym-poster", x: 39, y: 16, layer: "wall" });
+// ==========================================
+// --- GYM & GARDEN CORNER (x: 35..40, y: 16..25) ---
+// ==========================================
+// Cardio & Fitness Equipment lined on rubber gym floor (x: 36)
+furnitureLayer[idx(36, 18)] = TILES.TREADMILL;
+collisionLayer[idx(36, 18)] = 1;
+addProp({ id: "gym_treadmill_prop", sprite: "treadmill", x: 36, y: 18 });
+pois.push({ id: "treadmill", name: "Gym Treadmill", room: "gym", x: 36, y: 19, facing: "up", action: "exercise", tags: ["gym", "exercise"] });
 
-// Garden Plants & Trees
-furnitureLayer[idx(36, 17)] = TILES.PLANT_POT;
-furnitureLayer[idx(39, 17)] = TILES.PLANT_POT;
+addProp({ id: "gym_bike_prop", sprite: "gym-bike", x: 36, y: 21 });
+collisionLayer[idx(36, 21)] = 1;
+
+addProp({ id: "gym_weights_prop", sprite: "weights-rack", x: 36, y: 23 });
+collisionLayer[idx(36, 23)] = 1;
+
+addProp({ id: "gym_mirror_prop", sprite: "gym-mirror", x: 36, y: 16, layer: "wall" });
+
+// Garden greenery on outdoor grass (x: 39)
+furnitureLayer[idx(39, 18)] = TILES.PLANT_POT;
+collisionLayer[idx(39, 18)] = 1;
+addProp({ id: "garden_tree", sprite: "lobby-plant-big", x: 39, y: 18 });
+
+furnitureLayer[idx(39, 21)] = TILES.PLANT_POT;
+collisionLayer[idx(39, 21)] = 1;
+addProp({ id: "garden_flowers", sprite: "park-flowers", x: 39, y: 21 });
+
 furnitureLayer[idx(39, 24)] = TILES.PLANT_POT;
-collisionLayer[idx(36, 17)] = 1;
-collisionLayer[idx(39, 17)] = 1;
 collisionLayer[idx(39, 24)] = 1;
-addProp({ id: "garden_tree", sprite: "park-tree", x: 39, y: 17 });
-addProp({ id: "garden_bush", sprite: "park-bush", x: 36, y: 17 });
-addProp({ id: "garden_flowers", sprite: "park-flowers", x: 40, y: 24 });
-addProp({ id: "garden_fern", sprite: "park-fern", x: 35, y: 24 });
-pois.push({ id: "plants_garden", name: "House Plants", room: "gym", x: 38, y: 18, facing: "up", action: "water", tags: ["garden", "plants"] });
+addProp({ id: "garden_fern", sprite: "park-fern", x: 39, y: 24 });
 
-// --- OUTDOOR PERIMETER PROPS ---
-addProp({ id: "outdoor_tree_1", sprite: "park-tree-large", x: 2, y: 0 });
-addProp({ id: "outdoor_pine_1", sprite: "park-pine", x: 8, y: 0 });
-addProp({ id: "outdoor_tree_2", sprite: "park-tree-large", x: 20, y: 0 });
-addProp({ id: "outdoor_pine_2", sprite: "park-pine", x: 30, y: 0 });
-addProp({ id: "outdoor_tree_3", sprite: "park-tree-large", x: 38, y: 0 });
-addProp({ id: "outdoor_lamp_1", sprite: "street-lamp", x: 5, y: 0 });
-addProp({ id: "outdoor_lamp_2", sprite: "street-lamp", x: 16, y: 0 });
-addProp({ id: "outdoor_lamp_3", sprite: "street-lamp", x: 28, y: 0 });
-addProp({ id: "outdoor_lamp_4", sprite: "street-lamp", x: 37, y: 0 });
-addProp({ id: "outdoor_bench_1", sprite: "street-bench", x: 11, y: 0 });
-addProp({ id: "outdoor_bench_2", sprite: "street-bench", x: 23, y: 0 });
+pois.push({ id: "plants_garden", name: "House Plants", room: "gym", x: 38, y: 19, facing: "right", action: "water", tags: ["garden", "plants"] });
 
 // Assemble Tiled JSON structure
 export const tiledMap = {

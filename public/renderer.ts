@@ -322,8 +322,7 @@ export class MapRenderer {
 
     // 2. North wall interior faces & windows
     // Top rooms: Bedroom (1..11, y=1..2), Living (13..23, y=1..2), Office (25..40, y=1..2)
-    // Bottom rooms: Confession (1..8, y=16..17), Kitchen (10..22, y=16..17), Game (24..34, y=16..17)
-    const windowCols = new Set([3, 4, 8, 9, 14, 15, 21, 22, 27, 28, 33, 34, 38, 39]);
+    const windowCols = new Set([4, 8, 14, 21, 27, 36]);
     for (let tx = 1; tx <= 40; tx++) {
       if (tx === 12 || tx === 24) continue;
       const isWindow = windowCols.has(tx);
@@ -382,38 +381,50 @@ export class MapRenderer {
   }
 
   buildLighting(): void {
-    // 1. Confession Room dark overlay with circular spotlight
-    const spot = new PIXI.Graphics();
-    // Confession room bounds: (1..8, 16..25) => (16..144, 256..416)
-    spot.rect(16, 256, 128, 160);
-    spot.fill({ color: 0x06070a, alpha: 0.72 });
-    // Cutout spotlight over confession chair at (4*16+8, 20*16+8) = (72, 328)
-    spot.circle(72, 328, 32);
-    spot.cut();
-    this.lightingContainer.addChild(spot);
+    // 1. Confession Room dark moody atmosphere
+    const darkMask = new PIXI.Graphics();
+    darkMask.rect(16, 256, 128, 160);
+    darkMask.fill({ color: 0x060810, alpha: 0.65 });
+    this.lightingContainer.addChild(darkMask);
 
-    // Glowing spotlight beam ring
+    // Conical spotlight beam from ceiling down to chair
+    const cone = new PIXI.Graphics();
+    cone.moveTo(68, 288);
+    cone.lineTo(76, 288);
+    cone.lineTo(94, 332);
+    cone.lineTo(50, 332);
+    cone.closePath();
+    cone.fill({ color: 0xfffcf0, alpha: 0.15 });
+    this.lightingContainer.addChild(cone);
+
+    // Concentric soft spotlight pools centered on chair at (72, 328)
     const beam = new PIXI.Graphics();
-    beam.circle(72, 328, 34);
-    beam.stroke({ color: 0xffffff, alpha: 0.25, width: 2 });
-    beam.circle(72, 328, 26);
-    beam.fill({ color: 0xfffae6, alpha: 0.18 });
+    beam.circle(72, 328, 38);
+    beam.fill({ color: 0xfffae6, alpha: 0.08 });
+    beam.circle(72, 328, 28);
+    beam.fill({ color: 0xfffae6, alpha: 0.14 });
+    beam.circle(72, 328, 18);
+    beam.fill({ color: 0xfffdf5, alpha: 0.22 });
+    beam.circle(72, 328, 10);
+    beam.fill({ color: 0xffffff, alpha: 0.35 });
+    beam.circle(72, 328, 30);
+    beam.stroke({ color: 0xffffff, alpha: 0.25, width: 1.5 });
     this.lightingContainer.addChild(beam);
 
     // 2. Room ambient tints
     const ambient = new PIXI.Graphics();
     // Office (warm daylight tint)
     ambient.rect(25 * 16, 1 * 16, 16 * 16, 10 * 16);
-    ambient.fill({ color: 0x64b5f6, alpha: 0.04 });
+    ambient.fill({ color: 0x64b5f6, alpha: 0.03 });
     // Living room (cozy warm amber)
     ambient.rect(13 * 16, 1 * 16, 11 * 16, 10 * 16);
-    ambient.fill({ color: 0xffb74d, alpha: 0.05 });
+    ambient.fill({ color: 0xffb74d, alpha: 0.04 });
     // Bedroom (slate moonlight)
     ambient.rect(1 * 16, 1 * 16, 11 * 16, 10 * 16);
-    ambient.fill({ color: 0x3f51b5, alpha: 0.08 });
+    ambient.fill({ color: 0x3f51b5, alpha: 0.06 });
     // Game room (mauve lounge)
     ambient.rect(24 * 16, 16 * 16, 11 * 16, 10 * 16);
-    ambient.fill({ color: 0xba68c8, alpha: 0.05 });
+    ambient.fill({ color: 0xba68c8, alpha: 0.04 });
     this.lightingContainer.addChild(ambient);
   }
 

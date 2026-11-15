@@ -1,4 +1,6 @@
 // Standalone script to render the complete pixel house scene into a high-res PNG screenshot
+// Uses the clean, uncluttered house plan with zero tree clipping and zero furniture overlap.
+
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -63,12 +65,16 @@ export function renderFullScene(): void {
   const H = 27 * 16; // 432
   const scene = createImage(W, H);
 
-  // Fill background dark
-  for (let i = 0; i < W * H; i++) {
-    scene.data[i * 4] = 12;
-    scene.data[i * 4 + 1] = 14;
-    scene.data[i * 4 + 2] = 20;
-    scene.data[i * 4 + 3] = 255;
+  // Fill outdoor grass perimeter
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      // Natural grass color
+      const isAlt = (x * 7 + y * 13) % 4 === 0;
+      scene.data[(y * W + x) * 4] = isAlt ? 134 : 142;
+      scene.data[(y * W + x) * 4 + 1] = isAlt ? 186 : 194;
+      scene.data[(y * W + x) * 4 + 2] = isAlt ? 96 : 104;
+      scene.data[(y * W + x) * 4 + 3] = 255;
+    }
   }
 
   const getFrameImg = (spriteName: string, frameName = "default", variant?: string): Image | null => {
@@ -96,27 +102,27 @@ export function renderFullScene(): void {
       let frameName = "0";
 
       switch (gid) {
-        case 1: // Bedroom
+        case 1: // Bedroom: parquet oak
           sprName = "floor-oak";
           frameName = String((tx + ty) % 3);
           break;
-        case 2: // Living Room
+        case 2: // Living Room: carpet
           sprName = "floor-carpet";
           frameName = String((tx + ty) % 3);
           break;
-        case 3: // Office
+        case 3: // Office: parquet oak
           sprName = "floor-oak";
           frameName = String((tx + ty) % 4);
           break;
-        case 4: // Kitchen
+        case 4: // Kitchen: ceramic tiles
           sprName = "floor-tile";
           frameName = String((tx + ty) % 4);
           break;
-        case 5: // Game Room
+        case 5: // Game Room: mauve carpet
           sprName = "floor-carpet";
           frameName = "1";
           break;
-        case 6: // Confession
+        case 6: // Confession: dark asphalt
           sprName = "floor-asphalt";
           frameName = "0";
           break;
@@ -125,8 +131,8 @@ export function renderFullScene(): void {
           sprName = "floor-checkered";
           frameName = String((tx + ty) % 2);
           break;
-        case 9: // Gym
-          sprName = tx >= 38 ? "floor-rubber" : "floor-grass";
+        case 9: // Gym / Garden
+          sprName = tx >= 38 ? "floor-grass" : "floor-rubber";
           frameName = "0";
           break;
       }
@@ -167,7 +173,7 @@ export function renderFullScene(): void {
   }
 
   // North wall faces & windows
-  const windowCols = new Set([3, 4, 8, 9, 14, 15, 21, 22, 27, 28, 33, 34, 38, 39]);
+  const windowCols = new Set([4, 8, 14, 21, 27, 36]);
   for (let tx = 1; tx <= 40; tx++) {
     if (tx === 12 || tx === 24) continue;
     const isWin = windowCols.has(tx);
@@ -234,7 +240,7 @@ export function renderFullScene(): void {
     });
   }
 
-  // pi in Kitchen (making snack)
+  // pi in Kitchen (standing at kitchen counter)
   const fPi = getFrameImg("staff", "eat-down-1", "pi");
   if (fPi) {
     yItems.push({
@@ -243,21 +249,30 @@ export function renderFullScene(): void {
     });
   }
 
-  // omp in Game Room (playing billiards)
+  // omp in Game Room (playing billiards at pool table)
   const fOmp = getFrameImg("staff", "play-up-2", "omp");
   if (fOmp) {
     yItems.push({
       footY: 20 * 16 + 14,
-      draw: () => drawImage(scene, fOmp, 26 * 16, 19 * 16),
+      draw: () => drawImage(scene, fOmp, 26 * 16 - 4, 19 * 16),
     });
   }
 
-  // hermes in Living Room (sitting & reading)
+  // hermes in Living Room (sitting in armchair reading)
   const fHermes = getFrameImg("staff", "read-down-1", "hermes");
   if (fHermes) {
     yItems.push({
       footY: 7 * 16 + 14,
-      draw: () => drawImage(scene, fHermes, 13 * 16, 6 * 16),
+      draw: () => drawImage(scene, fHermes, 14 * 16, 6 * 16 - 2),
+    });
+  }
+
+  // Character sleeping in bedroom bunk bed
+  const fSleeping = getFrameImg("staff", "sit-down-0", "theo");
+  if (fSleeping) {
+    yItems.push({
+      footY: 4 * 16 + 14,
+      draw: () => drawImage(scene, fSleeping, 3 * 16, 3 * 16),
     });
   }
 
@@ -266,18 +281,20 @@ export function renderFullScene(): void {
   for (const item of yItems) item.draw();
 
   // 4. Confession Room Spotlight
-  // Dark overlay over confession room (x: 16..144, y: 256..416)
+  // Soft, cinematic circular spotlight centered on chair at (72, 328)
   for (let py = 16 * 16; py < 26 * 16; py++) {
     for (let px = 1 * 16; px < 9 * 16; px++) {
       const dx = px - 72;
       const dy = py - 328;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 32) {
-        // Spotlight cone beam
-        blendPixel(scene, px, py, [255, 250, 230, Math.round((1 - dist / 32) * 55)]);
+      if (dist < 38) {
+        // Spotlight cone beam (smooth falloff)
+        const intensity = Math.max(0, 1 - dist / 38);
+        const alpha = Math.round(intensity * 110);
+        blendPixel(scene, px, py, [255, 252, 235, alpha]);
       } else {
         // Dramatic room darkness
-        blendPixel(scene, px, py, [6, 7, 10, 180]);
+        blendPixel(scene, px, py, [6, 8, 16, 150]);
       }
     }
   }
@@ -287,7 +304,6 @@ export function renderFullScene(): void {
   if (fThumb) drawImage(scene, fThumb, 26 * 16 + 1, 3 * 16 - 22);
 
   // 6. CCTV HUD Overlay
-  // Brackets
   const strokeLine = (x1: number, y1: number, x2: number, y2: number) => {
     const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
     const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
