@@ -100,6 +100,10 @@ export class MapRenderer {
   debugOverlay = false;
   debugContainer: any = null;
 
+  // Layout editor: tracked prop sprites and the selected prop's drawn rect (tiles)
+  propSprites = new Map<string, any[]>();
+  selection: { x: number; y: number; w: number; h: number } | null = null;
+
   constructor(map: HouseMap) {
     this.map = map;
     this.canvas = document.getElementById("scene") as HTMLCanvasElement;
@@ -282,6 +286,10 @@ export class MapRenderer {
     }
 
     // Add floor-layer rugs from props
+    this.addFloorRugs();
+  }
+
+  private addFloorRugs(): void {
     for (const p of this.map.props || []) {
       if (p.layer === "floor") {
         const tex = this.getTexture(p.sprite);
@@ -289,6 +297,7 @@ export class MapRenderer {
           const spr = new PIXI.Sprite(tex);
           spr.position.set(p.x * 16, p.y * 16);
           this.floorContainer.addChild(spr);
+          this.trackProp(p.id, spr);
         }
       }
     }
@@ -341,6 +350,10 @@ export class MapRenderer {
     }
 
     // Wall-mounted props (posters, clocks, whiteboard, house sign, sconces)
+    this.addWallProps();
+  }
+
+  private addWallProps(): void {
     for (const p of this.map.props || []) {
       if (p.layer === "wall") {
         const tex = this.getTexture(p.sprite);
@@ -348,9 +361,62 @@ export class MapRenderer {
           const spr = new PIXI.Sprite(tex);
           spr.position.set(p.x * 16, p.y * 16);
           this.wallContainer.addChild(spr);
+          this.trackProp(p.id, spr);
         }
       }
     }
+  }
+
+  private trackProp(id: string, sprite: any): void {
+    const list = this.propSprites.get(id);
+    if (list) list.push(sprite);
+    else this.propSprites.set(id, [sprite]);
+  }
+
+  /** Screen (client) coordinates -> world pixels, using the live camera transform. */
+  screenToWorld(clientX: number, clientY: number): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = this.canvas.width / dpr;
+    const cssH = this.canvas.height / dpr;
+    const px = (clientX - rect.left) * (cssW / rect.width);
+    const py = (clientY - rect.top) * (cssH / rect.height);
+    const zoom = this.camera.zoom;
+    return { x: (px - cssW / 2) / zoom + this.camera.x, y: (py - cssH / 2) / zoom + this.camera.y };
+  }
+
+  /** Topmost prop whose drawn rect contains the world point. */
+  propAt(worldX: number, worldY: number): MapProp | null {
+    const props = this.map.props ?? [];
+    const metaSprites = (this.meta?.sprites ?? {}) as Record<string, { width: number; height: number }>;
+    for (let i = props.length - 1; i >= 0; i--) {
+      const p = props[i];
+      const m = metaSprites[p.sprite];
+      if (!m) continue;
+      if (worldX >= p.x * 16 && worldX < p.x * 16 + m.width && worldY >= p.y * 16 && worldY < p.y * 16 + m.height) return p;
+    }
+    return null;
+  }
+
+  setSelection(rect: { x: number; y: number; w: number; h: number } | null): void {
+    this.selection = rect;
+    if (this.debugOverlay) this.refreshDebugOverlay();
+  }
+
+  /** Re-create every prop sprite from the (mutated) map data — used by the layout editor. */
+  refreshProps(): void {
+    for (const sprites of this.propSprites.values()) {
+      for (const spr of sprites) {
+        if (spr.parent) spr.parent.removeChild(spr);
+        spr.destroy();
+      }
+    }
+    this.propSprites.clear();
+    this.staticProps = [];
+    if (!this.ready) return;
+    this.addFloorRugs();
+    this.addWallProps();
+    this.buildProps();
   }
 
   buildProps(): void {
@@ -382,6 +448,7 @@ export class MapRenderer {
 
       this.ysortContainer.addChild(spr);
       this.staticProps.push(spr);
+      this.trackProp(p.id, spr);
     }
   }
 
@@ -746,11 +813,13 @@ export class MapRenderer {
     }
     g.addChild(nav);
 
-    // Blocking prop footprints
+    // Blocking prop footprints: full DRAWN rectangle from the atlas meta
     const feet = new PIXI.Graphics();
+    const metaSprites = (this.meta?.sprites ?? {}) as Record<string, { width: number; height: number }>;
     for (const p of this.map.props || []) {
-      if (p.layer !== "object") continue;
-      feet.rect(p.x * T + 1, p.y * T + 1, T - 2, T - 2).stroke({ color: 0xffd60a, width: 1, alpha: 0.8 });
+      const m = metaSprites[p.sprite];
+      if (!m) continue;
+      feet.rect(p.x * T + 1, p.y * T + 1, m.width - 2, m.height - 2).stroke({ color: 0xffd60a, width: 1, alpha: 0.8 });
     }
     g.addChild(feet);
 
@@ -783,7 +852,7 @@ export class MapRenderer {
     // Violations from the validator, in red
     let violations: Violation[] = [];
     try {
-      violations = validateFurniture(this.map);
+      violations = validateFurniture(this.map, (this.meta?.sprites ?? {}) as Record<string, { width: number; height: number; footprint: [number, number]; walkable: boolean; layer?: string }>);
     } catch {
       // validator failure keeps the rest of the overlay alive
     }
@@ -801,6 +870,13 @@ export class MapRenderer {
       }
       g.addChild(bad);
       g.addChild(vLabels);
+    }
+
+    if (this.selection) {
+      const sel = new PIXI.Graphics();
+      sel.rect(this.selection.x * T, this.selection.y * T, this.selection.w * T, this.selection.h * T);
+      sel.stroke({ color: 0x64d2ff, width: 2, alpha: 1 });
+      g.addChild(sel);
     }
   }
 }

@@ -1,10 +1,11 @@
-// Browser-side furniture validator for the G-key debug overlay in renderer.ts.
-// Same rules as scripts/validate-furniture.ts, typed against the loaded HouseMap
-// (map.ts already normalizes props/pois into tile coordinates and plain fields).
+// Browser mirror of scripts/validate-furniture.ts (drawn-bounds rules).
+// The Node script reads house.json + atlas meta from disk; this version validates the
+// already-loaded HouseMap with the atlas meta the renderer holds.
 import type { HouseMap, MapPOI, MapProp } from "./map.js";
 
 export interface Violation {
   prop: string;
+  room: string;
   tile: [number, number];
   rule: string;
   detail: string;
@@ -12,9 +13,17 @@ export interface Violation {
 
 const T = 16;
 
-const WALL_SPRITES: Record<string, true> = {
-  "wall-clock": true,
+interface MetaSprite {
+  width: number;
+  height: number;
+  footprint: [number, number];
+  walkable: boolean;
+  layer?: string;
+}
+
+const WALL_PROPS: Record<string, true> = {
   "art-frame": true,
+  "wall-clock": true,
   whiteboard: true,
   "house-sign": true,
   "street-sconce": true,
@@ -24,226 +33,208 @@ const WALL_SPRITES: Record<string, true> = {
   "break-dartboard": true,
   "break-poster": true,
 };
-const TABLETOP_SPRITES: Record<string, true> = {
+const TABLETOP: Record<string, true> = {
   "desk-lamp": true,
   "kitchen-microwave": true,
   "kitchen-coffee": true,
   "kitchen-fruit-bowl": true,
   "kitchen-kettle": true,
 };
-const SHELF_SPRITES: Record<string, true> = {
-  bookshelf: true,
-  "library-shelf": true,
-  "library-shelf-b": true,
+const CARRIER: Record<string, true> = {
+  "library-side-table": true,
+  "kitchen-counter": true,
+  "kitchen-counter-end": true,
+  "kitchen-counter-sink": true,
+  desk: true,
+  "kitchen-table": true,
+  "break-coffee-table": true,
+  "library-table": true,
 };
-const DESK_SPRITES: Record<string, true> = { desk: true };
-const SEAT_SPRITES: Record<string, true> = { chair: true, "chair-front": true };
+const DESK: Record<string, true> = { desk: true };
+const CLEARANCE: Record<string, true> = {
+  desk: true,
+  "couch-sectional": true,
+  "bed-bunk": true,
+  "kitchen-fridge": true,
+  "kitchen-stove": true,
+  "kitchen-counter-sink": true,
+  "kitchen-counter": true,
+  "kitchen-counter-end": true,
+  "break-vending": true,
+  "kitchen-cooler": true,
+  treadmill: true,
+  "pool-table": true,
+  "kitchen-table": true,
+};
 
-const WIDTH_BY_SPRITE: Record<string, number> = {
-  bookshelf: 2,
-  "library-shelf": 2,
-  "library-shelf-b": 2,
-  whiteboard: 2,
-  "kitchen-shelf": 2,
-  "couch-sectional": 3,
-  "tv-unit": 2,
-  "library-rug": 5,
-  rug: 3,
-  "kitchen-mat": 2,
-  "kitchen-table": 2,
-  "kitchen-chair": 1,
-  "pool-table": 3,
-  "lobby-plant-big": 2,
-  desk: 2,
-  "kitchen-counter-sink": 1,
-  "break-vending": 2,
-  "gym-bike": 2,
-  "weights-rack": 2,
-  "gym-mirror": 3,
-  "bed-bunk": 2,
-};
-const HEIGHT_BY_SPRITE: Record<string, number> = {
-  "bed-bunk": 2,
-  "library-rug": 3,
-  rug: 2,
-  "pool-table": 2,
-};
-const FLOOR_DECOR: Record<string, true> = { rug: true, "library-rug": true, "kitchen-mat": true };
-
-interface CheckedProp {
-  name: string;
-  tile: [number, number];
-  sprite: string;
-  layer: string;
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
-function layerOf(map: HouseMap, name: string): number[] {
-  const raw = (map as unknown as { layers?: Array<{ name: string; data?: number[] }> }).layers;
-  return raw?.find((l) => l.name === name)?.data ?? [];
-}
+const overlaps = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const contains = (outer: Rect, inner: Rect): boolean =>
+  inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
 
-export function validateFurniture(map: HouseMap): Violation[] {
-  const violations: Violation[] = [];
+export function validateFurniture(map: HouseMap, meta: Record<string, MetaSprite>): Violation[] {
   const W = map.width;
   const walls = map.walls;
   const doors = map.doors;
   const collision = map.collision;
-  const furniture = map.furniture;
-
   const at = (data: number[], x: number, y: number): number =>
-    x < 0 || y < 0 || x >= W || y >= map.height ? -1 : data[y * W + x];
-  const isFloor = (x: number, y: number): boolean => at(collision, x, y) === 0;
+    x < 0 || y < 0 || x >= map.width || y >= map.height ? -1 : data[y * W + x];
+  const walkable = (x: number, y: number): boolean => at(collision, x, y) === 0;
+  const rooms = map.rooms as Record<string, { x: number; y: number; w: number; h: number }>;
   const roomAt = (x: number, y: number): string | null => {
-    for (const [name, r] of Object.entries(map.rooms)) {
+    for (const [name, r] of Object.entries(rooms)) {
       if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return name;
     }
     return null;
   };
-
-  const props: CheckedProp[] = map.props.map((p: MapProp) => ({
-    name: p.id,
-    tile: [p.x, p.y] as [number, number],
-    sprite: p.sprite,
-    layer: p.layer ?? "object",
-  }));
-
-  const widthOf = (sprite: string): number => WIDTH_BY_SPRITE[sprite] ?? 1;
-  const heightOf = (sprite: string): number => HEIGHT_BY_SPRITE[sprite] ?? 1;
-  const spanOf = (p: CheckedProp): [number, number][] => {
-    const cells: [number, number][] = [];
-    for (let dy = 0; dy < heightOf(p.sprite); dy++) {
-      for (let dx = 0; dx < widthOf(p.sprite); dx++) cells.push([p.tile[0] + dx, p.tile[1] + dy]);
-    }
-    return cells;
+  const roomOf = (x: number, y: number) => {
+    const name = roomAt(x, y);
+    return name ? rooms[name] : null;
   };
-  const blocking = (p: CheckedProp): boolean => p.layer === "object" && !FLOOR_DECOR[p.sprite];
 
-  // 1. Blocking overlaps + wall/door overlap
-  const tabletopProps = new Set(map.props.filter((p) => p.layer !== "wall" && p.layer !== "floor" && TABLETOP_SPRITES[p.sprite]).map((p) => p.id));
-  const occupied = new Map<string, string>();
+  const props = (map.props ?? []) as MapProp[];
+  const violations: Violation[] = [];
+  const push = (p: { id: string; x: number; y: number }, rule: string, detail: string, tile?: [number, number]): void => {
+    violations.push({ prop: p.id, room: roomAt(p.x, p.y) ?? "outside", tile: tile ?? [p.x, p.y], rule, detail });
+  };
+
+  const drawn = new Map<string, Rect>();
   for (const p of props) {
-    if (!blocking(p)) continue;
-    for (const [x, y] of spanOf(p)) {
-      const key = `${x},${y}`;
-      const other = occupied.get(key);
-      if (other && other !== p.name && !(tabletopProps.has(other) || tabletopProps.has(p.name))) {
-        violations.push({ prop: p.name, tile: [x, y], rule: "overlap", detail: `blocking overlap with ${other}` });
+    const m = meta[p.sprite];
+    if (!m) {
+      push(p, "sprite", `unknown sprite "${p.sprite}"`);
+      continue;
+    }
+    const rect: Rect = { x: p.x, y: p.y, w: m.width / T, h: m.height / T };
+    drawn.set(p.id, rect);
+
+    const anchorRoom = roomOf(p.x, p.y);
+    const hallwayFace = !anchorRoom && (p.y === 11 || p.y === 15) && p.x >= 1 && p.x <= 40;
+    const room = anchorRoom ?? (hallwayFace ? map.rooms.hallway : null);
+    if (!room) {
+      push(p, "room", "drawn prop anchored outside any room");
+      continue;
+    }
+
+    if (p.layer === "wall") {
+      const bandStart = hallwayFace ? p.y : room.y === 1 ? 1 : 15;
+      const inX = p.x >= room.x && p.x + rect.w <= room.x + room.w;
+      const inBand = p.y === bandStart && p.y + rect.h <= bandStart + 2;
+      if (!WALL_PROPS[p.sprite] && m.layer !== "wall" && !p.sprite.startsWith("wall-")) {
+        push(p, "wall-band", `${p.sprite} is not a wall-type sprite`);
       }
-      occupied.set(key, p.name);
-    }
-  }
-  for (const p of props) {
-    if (p.layer !== "object") continue;
-    for (const [x, y] of spanOf(p)) {
-      if (at(walls, x, y) > 0) violations.push({ prop: p.name, tile: [x, y], rule: "wall-overlap", detail: "prop covers a wall tile" });
-      if (at(doors, x, y) > 0) violations.push({ prop: p.name, tile: [x, y], rule: "door-overlap", detail: "prop covers a door tile" });
-    }
-  }
-
-  // 2. Wall props on the north-wall face band or hallway faces
-  for (const p of map.props) {
-    if ((p.layer ?? "object") !== "wall") continue;
-    if (!WALL_SPRITES[p.sprite]) {
-      violations.push({ prop: p.id, tile: [p.x, p.y], rule: "wall-band", detail: `${p.sprite} is not a wall-type sprite` });
+      if (!inBand) push(p, "wall-band", `drawn rect rows ${p.y}..${+(p.y + rect.h).toFixed(2)} not fully on face band rows ${bandStart}..${bandStart + 2}`);
+      if (!inX) push(p, "wall-band", `drawn rect crosses the room x-range`);
+      for (let ty = Math.floor(p.y); ty < p.y + rect.h; ty++) {
+        for (let tx = Math.floor(p.x); tx < p.x + rect.w; tx++) {
+          if (at(doors, tx, ty) > 0) push(p, "door-overlap", `covers door/archway tile (${tx},${ty})`, [tx, ty]);
+        }
+      }
       continue;
     }
-    const x = p.x;
-    const y = p.y;
-    const onHallwayFace = (y === 11 || y === 15) && x >= 1 && x <= 40;
-    const room = roomAt(x, y);
-    let band: number | null = null;
-    if (room) {
-      const r = map.rooms[room as keyof typeof map.rooms];
-      if (r.y === 1) band = 2;
-      else if (r.y === 16) band = 16;
+
+    for (let ty = Math.floor(p.y); ty < Math.ceil(p.y + rect.h); ty++) {
+      for (let tx = Math.floor(p.x); tx < Math.ceil(p.x + rect.w); tx++) {
+        const inRoom = tx >= room.x && tx < room.x + room.w && ty >= room.y && ty < room.y + room.h;
+        if (!inRoom) {
+          push(p, "room-boundary", `drawn rect crosses room boundary at (${tx},${ty})`, [tx, ty]);
+          continue;
+        }
+        if (at(walls, tx, ty) > 0) push(p, "wall-overlap", `drawn rect covers wall tile (${tx},${ty})`, [tx, ty]);
+        if (at(doors, tx, ty) > 0) push(p, "door-overlap", `drawn rect covers door/archway tile (${tx},${ty})`, [tx, ty]);
+      }
     }
-    if (band === null && !onHallwayFace) {
-      violations.push({ prop: p.id, tile: [x, y], rule: "wall-band", detail: "wall prop not on a north-wall face band or hallway face" });
-      continue;
-    }
-    if (band !== null && y !== band) {
-      violations.push({ prop: p.id, tile: [x, y], rule: "wall-band", detail: `expected north-wall face band y=${band} for ${room}` });
-    }
-    if (at(doors, x, y) > 0) violations.push({ prop: p.id, tile: [x, y], rule: "door-overlap", detail: "wall prop over a door" });
   }
 
-  // 3. Tabletop props on furniture tiles
+  const list = props.filter((p) => drawn.has(p.id));
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const a = list[i];
+      const b = list[j];
+      const ra = drawn.get(a.id) as Rect;
+      const rb = drawn.get(b.id) as Rect;
+      if (!overlaps(ra, rb)) continue;
+      const rug = (p: MapProp): boolean => (p.layer ?? "object") === "floor" && /rug|mat/.test(p.sprite);
+      const tabletopOn = (p: MapProp, carrier: MapProp): boolean =>
+        TABLETOP[p.sprite] === true && CARRIER[carrier.sprite] === true && contains(drawn.get(carrier.id) as Rect, drawn.get(p.id) as Rect);
+      const chairOnDesk = (chair: MapProp, desk: MapProp): boolean =>
+        chair.sprite === "chair" && DESK[desk.sprite] === true && chair.y === desk.y + 1 && chair.x >= desk.x && chair.x < desk.x + (meta[desk.sprite]?.width ?? T) / T;
+      if (rug(a) || rug(b)) continue;
+      if (tabletopOn(a, b) || tabletopOn(b, a)) continue;
+      if (chairOnDesk(a, b) || chairOnDesk(b, a)) continue;
+      violations.push({ prop: b.id, room: roomAt(b.x, b.y) ?? "outside", tile: [b.x, b.y], rule: "drawn-overlap", detail: `drawn rect overlaps ${a.id} (${a.sprite})` });
+    }
+  }
+
   for (const p of props) {
-    if (p.layer !== "object" || !TABLETOP_SPRITES[p.sprite]) continue;
-    const [x, y] = p.tile;
-    if (furniture.length > 0 && at(furniture, x, y) === 0) {
-      violations.push({ prop: p.name, tile: [x, y], rule: "tabletop", detail: "tabletop prop with no furniture beneath" });
-    }
+    if (!TABLETOP[p.sprite]) continue;
+    const rect = drawn.get(p.id);
+    if (!rect) continue;
+    const carrier = props.find((c) => CARRIER[c.sprite] && contains(drawn.get(c.id) as Rect, rect));
+    if (!carrier) push(p, "tabletop", "tabletop prop is not fully on a table/desk/counter");
   }
 
-  // 4. Bookshelves flush to a wall
-  for (const p of props) {
-    if (p.layer !== "object" || !SHELF_SPRITES[p.sprite]) continue;
-    const flush = spanOf(p).some(([x, y]) => at(walls, x - 1, y) > 0 || at(walls, x + 1, y) > 0 || at(walls, x, y - 1) > 0 || at(walls, x, y + 1) > 0);
-    if (!flush) violations.push({ prop: p.name, tile: p.tile, rule: "shelf-flush", detail: "bookshelf not flush against a wall" });
-  }
-
-  // 5. Desk chairs on the seat tile, south of (facing) their desk
-  const desks = props.filter((p) => DESK_SPRITES[p.sprite]);
-  const chairs = props.filter((p) => SEAT_SPRITES[p.sprite] && p.layer === "object");
+  const desks = props.filter((p) => DESK[p.sprite]);
+  const chairs = props.filter((p) => p.sprite === "chair");
+  const rowOffsets = new Map<number, number>();
   for (const chair of chairs) {
-    const desk = desks.find(
-      (d) => Math.abs(d.tile[1] - chair.tile[1]) === 1 && chair.tile[0] >= d.tile[0] && chair.tile[0] <= d.tile[0] + widthOf(d.sprite) - 1,
-    );
+    const desk = desks.find((d) => {
+      const w = (meta[d.sprite]?.width ?? T) / T;
+      return chair.y === d.y + 1 && chair.x >= d.x && chair.x < d.x + w;
+    });
     if (!desk) {
-      violations.push({ prop: chair.name, tile: chair.tile, rule: "chair-desk", detail: "chair not on a desk seat tile" });
+      push(chair, "chair-desk", "chair is not on a desk seat tile");
       continue;
     }
-    if (chair.tile[1] < desk.tile[1]) violations.push({ prop: chair.name, tile: chair.tile, rule: "chair-desk", detail: "chair not south of its desk (facing down)" });
+    const offset = chair.x - desk.x;
+    const expected = Math.floor(((meta[desk.sprite]?.width ?? T) / T - 1) / 2);
+    if (offset !== expected) push(chair, "chair-center", `chair offset ${offset} != desk seat offset ${expected}`);
+    const prev = rowOffsets.get(desk.y);
+    if (prev !== undefined && prev !== offset) push(chair, "chair-row", `offset differs from row offset ${prev}`);
+    else rowOffsets.set(desk.y, offset);
   }
-
-  // 6. POIs reachable
-  for (const poi of map.pois) {
-    if (poi.id.startsWith("door_")) {
-      if (!isFloor(poi.x, poi.y)) violations.push({ prop: poi.id, tile: [poi.x, poi.y], rule: "poi-blocked", detail: "door tile is solid" });
-      continue;
-    }
-    if (isFloor(poi.x, poi.y)) continue;
-    const front = frontTileOf(poi);
-    if (!isFloor(front[0], front[1])) {
-      violations.push({ prop: poi.id, tile: [poi.x, poi.y], rule: "poi-blocked", detail: `standing and approach tiles (${front[0]},${front[1]}) are solid` });
+  for (const chair of chairs) {
+    const poi = (map.pois ?? []).find((q: MapPOI) => (q.id.startsWith("office_desk_") || q.id.startsWith("subagent_desk_")) && q.x === chair.x && q.y === chair.y);
+    if (poi && poi.facing !== "up") {
+      violations.push({ prop: poi.id, room: poi.room, tile: [poi.x, poi.y], rule: "chair-facing", detail: `desk POI faces ${poi.facing}, expected up` });
     }
   }
 
-  // 7. Clearance in front of desks, sofas, counters, machines
-  const clearanceSprites: Record<string, true> = {
-    desk: true,
-    "couch-sectional": true,
-    "kitchen-fridge": true,
-    "kitchen-stove": true,
-    "kitchen-counter-sink": true,
-    "kitchen-counter": true,
-    "kitchen-counter-end": true,
-    "break-vending": true,
-    "kitchen-cooler": true,
-    treadmill: true,
-  };
   for (const p of props) {
-    if (p.layer !== "object" || !clearanceSprites[p.sprite]) continue;
-    const w = widthOf(p.sprite);
-    const frontY = p.tile[1] + heightOf(p.sprite);
+    if ((p.layer ?? "object") !== "object" || !CLEARANCE[p.sprite]) continue;
+    const m = meta[p.sprite];
+    if (!m) continue;
+    const frontY = p.y + m.footprint[1];
     let free = false;
-    for (let dx = 0; dx < w; dx++) if (isFloor(p.tile[0] + dx, frontY)) free = true;
-    if (!free) violations.push({ prop: p.name, tile: [p.tile[0], frontY], rule: "clearance", detail: "no free tile in front" });
+    for (let dx = 0; dx < m.footprint[0]; dx++) if (walkable(p.x + dx, frontY)) free = true;
+    if (!free) push(p, "clearance", `no walkable clearance tile in front (row ${frontY})`, [p.x, frontY]);
+  }
+
+  for (const poi of map.pois ?? []) {
+    if (poi.id.startsWith("door_")) {
+      if (!walkable(poi.x, poi.y)) violations.push({ prop: poi.id, room: poi.room, tile: [poi.x, poi.y], rule: "poi-blocked", detail: "door tile is solid" });
+      continue;
+    }
+    if (walkable(poi.x, poi.y)) continue;
+    const front =
+      poi.facing === "up"
+        ? [poi.x, poi.y - 1]
+        : poi.facing === "left"
+          ? [poi.x - 1, poi.y]
+          : poi.facing === "right"
+            ? [poi.x + 1, poi.y]
+            : [poi.x, poi.y + 1];
+    if (!walkable(front[0], front[1])) {
+      violations.push({ prop: poi.id, room: poi.room, tile: [poi.x, poi.y], rule: "poi-blocked", detail: `standing and approach tiles (${front[0]},${front[1]}) are solid` });
+    }
   }
 
   return violations;
-}
-
-function frontTileOf(poi: MapPOI): [number, number] {
-  switch (poi.facing) {
-    case "up":
-      return [poi.x, poi.y - 1];
-    case "left":
-      return [poi.x - 1, poi.y];
-    case "right":
-      return [poi.x + 1, poi.y];
-    default:
-      return [poi.x, poi.y + 1];
-  }
 }
