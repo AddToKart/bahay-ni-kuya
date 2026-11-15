@@ -1,108 +1,118 @@
-# Bahay ni Kuya
+# Bahay ni Kuya 🏠
 
-A local visualizer for every AI coding harness on this PC: characters sleep in the Bedroom,
-hang out in the Living Room, and work at desks in the Office. Subagents appear as smaller
-characters tethered to their parent.
+A local pixel visualizer and headless dispatcher for AI coding harnesses (`opencode`, `codex`, `pi`, `omp`, `hermes`) reimagined as housemates in a Pinoy-Big-Brother-style parody house.
 
-Open **http://localhost:4777** (Bun server, no build step).
+When an AI harness is given a coding task, Kuya announces it over the PA ticker. That housemate drops its chore, walks across the house to the Office, and works at a computer terminal in an isolated git worktree. When blocked on permissions, it sits in the spotlight in the Confession Room. When finished, it returns to house life.
 
-> Le **BAHAY NI KUYA** — every harness lives under one roof. 🏡
+---
 
-| Harness state | Where | Notes |
-| --- | --- | --- |
-| Not running | 🛏️ Bedroom (sleeping) | `where.exe` can't find it on PATH |
-| Running, idle or waiting | 🛋️ Living Room (chilling) | process alive, no recent activity |
-| Thinking / calling tools | 💼 Office (at a desk) | visible tool bubble when known |
+## Architecture & Layout
 
-Harnesses: **opencode**, **codex**, **pi**, **omp** (oh-my-pi), **hermes**.
-
-## Quick start
-
-```powershell
-bun run start            # http://localhost:4777
-bun run install-adapters # optional: real events per harness (backed up, reversible)
-bun run fake             # scripted demo without touching harnesses
+```
++-----------------------------------------------------------------------------------------+
+|                                      BAHAY NI KUYA                                      |
++--------------------------+------------------------------+-------------------------------+
+|       BEDROOM (Bunk beds)|       HALLWAY (Checkered)    |      OFFICE (Desks & Mon.)    |
+|   Zzz sleeping housemates|    Walkable A* navigation    |   8 primary + 4 subagent desks|
++--------------------------+------------------------------+-------------------------------+
+|      LIVING ROOM (Sofa)  |       HALLWAY                |      KITCHEN (Sink & Stove)   |
+|   CRT TV, Bookshelf Nook |   Camera HUD & Ticker        |   Cooking, dishes, dining     |
++--------------------------+------------------------------+-------------------------------+
+|      GAME ROOM (Pool)    |   CONFESSION ROOM (Spotlight)|      GARDEN & GYM (Treadmill) |
+|   Pool table, 2 Arcades  |   Solitary chair, ! emote    |   Potted foliage, workout     |
++--------------------------+------------------------------+-------------------------------+
 ```
 
-Requires Bun (installed) and Windows PowerShell for process scanning. No npm dependencies.
+### Visual Preview & Verification
+For visual walkthroughs, camera channel descriptions, and manual verification steps, see [`docs/screenshots/README.md`](docs/screenshots/README.md).
 
-## How it works
+---
 
-Two detection layers, both server-side:
+## Features
 
-1. **Process scan** every 5 s via `Get-CimInstance Win32_Process`, matched per harness by
-   executable/command line. Installed check via `where.exe` at start + every 60 s.
-   Gives sleeping/running and per-PID pseudo sessions, plus a CPU-delta "busy" guess.
-2. **Adapters** (optional, one per harness) POST real lifecycle/tool events to
-   `POST /event`. Adapter evidence always wins over the CPU guess; harnesses with adapter
-   sessions stop showing scan pseudo-sessions.
+- **3/4 Top-Down Pixel View**: 16px procedural tiles rendered at crisp 3x integer scale via Canvas 2D.
+- **7 Thematic Rooms**: Bedroom (bunks), Living Room (TV & sofa), Office (12 workstations), Kitchen (sink, stove, fridge, dining), Game Room (pool, arcades), Gym & Garden, Confession Room (spotlight beam), and a connecting checkered hallway.
+- **A\* Pathfinding & 4-Direction Animations**: Smooth movement with door navigation, seating reservations, capacity enforcement, and zero wall-clipping.
+- **Autonomous House Life**: Idle housemates cook, wash dishes, watch TV, play pool, read books, work out, and sleep with floating `Zzz` bubbles. Anti-repetition and anti-pileup weighting keep all rooms lively.
+- **Kuya Announcement Layer**: Sequential Taglish banner announcements with template variables (`config/kuya-lines.json`), day counter ("Day N in the house"), room camera presets (`ALL`, `OFFICE`, `LIVING`, `BEDROOM`, `KITCHEN`, `GAME`, `CONFESSION`), and optional Web Speech TTS.
+- **Headless Dispatcher & Worktree Isolation**: Dispatches tasks to local harnesses (`codex`, `opencode`, `pi`, `omp`, `hermes`) in temporary git worktrees (`kuya/{harness}-{id}`) with real-time stdout/stderr log tailing and `git diff --stat` summaries.
+- **Dispatch Security**: Mandatory loopback binding (`127.0.0.1`), 64-char hex Bearer token stored in `%USERPROFILE%\.bahay-ni-kuya\token`, strict Host & Origin validation (rejects foreign hosts/CORS), and allowlisted repository roots.
+- **Model Context Protocol (MCP) Server**: Stdio MCP server (`bun run mcp`) exposing `kuya_list_housemates`, `kuya_assign_task`, `kuya_task_status`, and `kuya_cancel_task` with built-in delegation loop prevention (blocks self-delegation and recursion >2 levels).
 
-The server owns the state machine; adapters only report. Working decays to idle 4 s after
-the last working event; process death clears that harness's sessions immediately; stale
-sessions are swept. Browser gets full snapshots over `/ws` (2 s reconnect) and an initial
-`/state` fetch.
+---
 
-## Adapters
+## Quick Start
 
+### 1. Start the Server
 ```powershell
-bun run install-adapters            # installs/merges codex, omp, pi, hermes (backups first)
+bun run start
+```
+Open **http://localhost:4777** in any modern web browser.
+
+### 2. Install Harness Adapters (Optional but Recommended)
+Injects lightweight, fail-silent event adapters and MCP configurations into your harnesses (backed up automatically):
+```powershell
+bun run install-adapters
+```
+To revert changes completely:
+```powershell
 bun run install-adapters --uninstall
 ```
 
-opencode needs no adapter: the server reads opencode's own SQLite database read-only
-(`src/opencode-db.ts`). Per-harness install locations, verified event mappings, and rollback
-steps: [`docs/adapters.md`](docs/adapters.md).
+### 3. Run Simulated Day in the House
+To see the full Pinoy Big Brother routine (wake up, chores, task dispatch, typing, subagents, confession room, completion, sleep) without running actual harness workloads:
+```powershell
+bun run fake
+```
 
-Hard rule: every adapter is fail-silent. 1500 ms timeout, try/catch around everything, no
-retries, no writes outside the event POST. If the server is down the harness behaves
-exactly as before. Installed files can be deleted or uninstalled in one command.
+### 4. Run MCP Server
+To delegate tasks from an MCP-capable harness (Codex, OpenCode, Hermes):
+```powershell
+bun run mcp
+```
 
-Notes:
-- Codex hook entries are **merged** into the existing Orca-managed `~/.codex/hooks.json`;
-  Orca's entries are preserved.
-- Hermes outbound hooks may prompt for approval on first launch (`hermes --accept-hooks`).
-- Harnesses load adapters at startup: restart them after installing.
-- The installer copies backups to `%USERPROFILE%\.bahay-ni-kuya\backups\<timestamp>\`.
+### 5. Run Verification Test Suite
+```powershell
+bun test
+```
+
+---
+
+## Harness Capabilities & Headless Invocations
+
+| Harness | Version | Headless Command | Worktree Mode | MCP Client | Config Path |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **codex** | `0.166.0` | `codex exec "<prompt>" --json` | `--worktree` | Native | `~/.codex/config.toml` |
+| **opencode** | `1.18.35` | `opencode run "<prompt>" --format json` | Managed worktree | Native | `~/.config/opencode/opencode.json` |
+| **pi** | `0.83.0` | `pi -p "<prompt>" --mode json` | Managed worktree | Extension / Bridge | `~/.pi/agent/settings.json` |
+| **omp** | `18.20.2` | `omp -p "<prompt>" --mode json` | Managed worktree | Extension / Bridge | `~/.omp/agent/config.yml` |
+| **hermes** | `0.21.5` | `hermes chat -q "<prompt>"` | `--worktree` | Native | `AppData\Local\hermes\config.yaml` |
+
+See [`docs/runners-verified.md`](docs/runners-verified.md) for full runner tables and MCP registration snippets.
+
+---
 
 ## Configuration
 
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `BAHAY_NI_KUYA_PORT` | `4777` | server port |
-| `BAHAY_NI_KUYA_HOST` | `127.0.0.1` | bind host |
-| `BAHAY_NI_KUYA_URL` | `http://127.0.0.1:4777/event` | adapter target |
+| Environment Variable | Default | Description |
+| :--- | :--- | :--- |
+| `BAHAY_NI_KUYA_PORT` | `4777` | HTTP & WebSocket server port |
+| `BAHAY_NI_KUYA_HOST` | `127.0.0.1` | Bind host (loopback strictly enforced) |
+| `BAHAY_NI_KUYA_URL` | `http://127.0.0.1:4777/event` | Default adapter ingestion endpoint |
+| `BAHAY_NI_KUYA_BASE_URL` | `http://127.0.0.1:4777` | Base origin for MCP tools |
 
-If the port is taken the server exits with the owning PID and suggests a free port.
+---
 
-## Development
+## Non-Goals
 
-```
-src/        server, store/state machine, process scan
-public/     canvas scene (TS transpiled on request — no bundler)
-adapters/   one adapter per harness
-scripts/    fake-events demo, adapter installer
-plan/       approved implementation plan
-CONTRACT.md wire protocol + file ownership
-DESIGN.md   visual contract
-```
+- **No Remote Access or External Exposure**: Strictly bound to `127.0.0.1`. Requests from non-localhost origins or hosts are rejected with HTTP 403 Forbidden.
+- **No Paid Assets**: All sprites, furniture, rooms, and effects are 100% original procedural pixel art Canvas 2D routines (CC0 / Public Domain). See [`assets/MANIFEST.md`](assets/MANIFEST.md).
+- **No Copyrighted / Trademarked Assets**: Pure parody format. Zero official logos, trademarks, or protected audio.
+- **No Next.js or Bundler Build Step**: Runs directly via Bun with native TypeScript transpilation on demand.
+- **No Overwriting User Configurations**: Never overwrites user files or Orca configs; `~/.codex/hooks.json` is always merged, preserving existing hooks.
 
-```powershell
-bun run dev     # --watch server
-bun run fake    # demo events
-```
+---
 
-Verification checklist lives in `plan/bahay-ni-kuya-plan.md` under each milestone.
+## License
 
-## Troubleshooting
-
-- **Nothing moves, all sleeping** — the scan may be failing; check server output. A failed
-  PowerShell scan keeps the previous state, never marks everything stopped.
-- **A harness never appears** — `where.exe <binary>` must find it; adapters are optional.
-- **Port 4777 busy** — stop the reported PID or `BAHAY_NI_KUYA_PORT=4780 bun run start`.
-- **Adapter doesn't fire** — restart the harness; check the harness's own logs/plugin
-  approval; uninstall and rely on the scan layer.
-
-## Non-goals
-
-No auth or remote access, no persistence/history replay, no paid assets, no Claude Code,
-not an Orca plugin.
+This project is licensed under the [MIT License](LICENSE). All procedural art assets and sprite generation algorithms are dedicated to the public domain under [CC0 1.0 Universal](assets/MANIFEST.md).

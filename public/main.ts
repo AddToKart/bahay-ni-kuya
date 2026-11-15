@@ -1008,7 +1008,29 @@ motionQuery.addEventListener("change", (event) => {
 
 let lastFrame = performance.now();
 
+let isTabVisible = true;
+let animFrameId: number | null = null;
+
+// Pause rendering and animation loop when the tab is hidden to reduce CPU to 0%
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    isTabVisible = false;
+    if (animFrameId !== null) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  } else {
+    isTabVisible = true;
+    lastFrame = performance.now();
+    if (animFrameId === null) {
+      animFrameId = requestAnimationFrame(frame);
+    }
+  }
+});
+
 function frame(now: number): void {
+  if (!isTabVisible) return;
+
   const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
   lastFrame = now;
 
@@ -1048,7 +1070,7 @@ function frame(now: number): void {
   }
 
   paint(now);
-  requestAnimationFrame(frame);
+  animFrameId = requestAnimationFrame(frame);
 }
 
 // ---------------------------------------------------------------- boot
@@ -1095,7 +1117,7 @@ Promise.all([
         /* WS is primary */
       });
 
-    requestAnimationFrame(frame);
+    animFrameId = requestAnimationFrame(frame);
   })
   .catch((err) => {
     console.error("Failed to initialize Bahay ni Kuya map:", err);

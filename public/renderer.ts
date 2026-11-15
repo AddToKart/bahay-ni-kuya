@@ -436,16 +436,18 @@ export class MapRenderer {
       ctx.fillRect(r.x * tw, r.y * th, r.w * tw, r.h * th);
     }
 
-    // Confession Room Spotlight effect
+    // Confession Room Spotlight effect with subtle breathing pulse
+    const spotPulse = 0.95 + 0.05 * Math.sin(now * 0.003);
     const spotX = 4 * tw + tw / 2;
     const spotY = 20 * th + th / 2;
-    const spotGrad = ctx.createRadialGradient(spotX, spotY, 2, spotX, spotY, 28);
-    spotGrad.addColorStop(0, "rgba(255, 248, 220, 0.45)");
-    spotGrad.addColorStop(0.5, "rgba(255, 248, 220, 0.15)");
+    const spotGrad = ctx.createRadialGradient(spotX, spotY, 2, spotX, spotY, 32 * spotPulse);
+    spotGrad.addColorStop(0, "rgba(255, 248, 220, 0.55)");
+    spotGrad.addColorStop(0.4, "rgba(255, 248, 220, 0.25)");
+    spotGrad.addColorStop(0.8, "rgba(255, 248, 220, 0.08)");
     spotGrad.addColorStop(1, "rgba(255, 248, 220, 0)");
     ctx.fillStyle = spotGrad;
     ctx.beginPath();
-    ctx.arc(spotX, spotY, 32, 0, Math.PI * 2);
+    ctx.arc(spotX, spotY, 36 * spotPulse, 0, Math.PI * 2);
     ctx.fill();
 
     // 4. Draw Walls Layer
@@ -480,6 +482,68 @@ export class MapRenderer {
     for (const d of drawables) {
       d.draw(ctx, dpr);
     }
+
+    // --- 5.5 Atmospheric Dynamic Lighting Pass ---
+    // Soft phosphor glows, CRT television flicker, bedroom lamps, and arcade marquees
+    ctx.save();
+
+    // Office Monitor Glows (amber primary CRT, green subagent terminal)
+    for (let y = 1; y < 11; y++) {
+      for (let x = 23; x < 39; x++) {
+        const gid = this.map.furniture[y * this.map.width + x];
+        if (gid === 41 || gid === 43) {
+          const glowColor = gid === 41 ? "rgba(240, 163, 58, 0.14)" : "rgba(127, 176, 105, 0.14)";
+          const gx = x * tw + tw / 2;
+          const gy = y * th + 5;
+          const grad = ctx.createRadialGradient(gx, gy, 1, gx, gy, 15);
+          grad.addColorStop(0, glowColor);
+          grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(gx, gy, 15, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // Living Room CRT TV Glow & Ambient Scanline Pulse
+    const tvFlicker = 0.85 + 0.15 * Math.sin(now * 0.007) * Math.cos(now * 0.011);
+    const tvGrad = ctx.createRadialGradient(19 * tw + 8, 3 * th + 6, 2, 19 * tw + 8, 3 * th + 6, 28);
+    tvGrad.addColorStop(0, `rgba(79, 195, 247, ${0.24 * tvFlicker})`);
+    tvGrad.addColorStop(0.5, `rgba(79, 195, 247, ${0.08 * tvFlicker})`);
+    tvGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = tvGrad;
+    ctx.beginPath();
+    ctx.arc(19 * tw + 8, 3 * th + 6, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bedroom Nightstand warm amber lamps
+    const bedGrad1 = ctx.createRadialGradient(2 * tw + 8, 4 * th + 4, 1, 2 * tw + 8, 4 * th + 4, 18);
+    bedGrad1.addColorStop(0, "rgba(245, 215, 110, 0.22)");
+    bedGrad1.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = bedGrad1;
+    ctx.beginPath();
+    ctx.arc(2 * tw + 8, 4 * th + 4, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    const bedGrad2 = ctx.createRadialGradient(2 * tw + 8, 8 * th + 4, 1, 2 * tw + 8, 8 * th + 4, 18);
+    bedGrad2.addColorStop(0, "rgba(245, 215, 110, 0.22)");
+    bedGrad2.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = bedGrad2;
+    ctx.beginPath();
+    ctx.arc(2 * tw + 8, 8 * th + 4, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Arcade Marquee Neon Glows (x: 24, y: 22 and x: 26, y: 22)
+    const arcGrad1 = ctx.createRadialGradient(24 * tw + 8, 22 * th + 4, 1, 24 * tw + 8, 22 * th + 4, 16);
+    arcGrad1.addColorStop(0, "rgba(255, 238, 88, 0.25)");
+    arcGrad1.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = arcGrad1;
+    ctx.beginPath();
+    ctx.arc(24 * tw + 8, 22 * th + 4, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
 
     ctx.restore();
 
