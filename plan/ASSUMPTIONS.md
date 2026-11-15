@@ -29,3 +29,23 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Added visual differentiation for multiple instances of the same harness: distinct instance color accents from `VARIANT_ACCENTS` and accessory pips on the character frame.
   - Added interactive hover & click info cards (`#char-card`) displaying harness, project folder (`cwd` basename), state, current tool, subagent count, and PID in small gray text. Clicking a character pins the card; clicking outside or on the close button dismisses it.
 
+## Milestone 2: Map and Renderer
+
+- **Tiled Map Generation**: Built generator script `scripts/generate-map.ts` and registered `bun run generate-map` in `package.json`. Generated map stored at `public/map/house.json` with standard Tiled-compatible format (42x27 16px tiles, orthogonal layers: `floor`, `walls`, `doors`, `furniture`, `collision`, `pois`).
+- **Room Architecture**:
+  - `Bedroom`: Cool blue-slate planks, 4 bunk beds, nightstands.
+  - `Living Room`: Warm wood, sectional sofa, CRT TV console with scanlines, lamp.
+  - `Office`: Parquet sage wood, 8 primary desks with CRT monitors + 4 subagent terminal desks (12 total).
+  - `Kitchen`: Ceramic checkered floor, stainless fridge, stove, sink, dining table & chairs.
+  - `Game Room`: Pink/mauve felt floor, green-baize pool table, two arcade cabinets.
+  - `Gym & Garden`: Green rubber turf, exercise treadmill, potted lush foliage.
+  - `Confession Room`: Obsidian dark floor, solitary chair, atmospheric radial spotlight beam.
+  - `Hallway`: Checkered black and white floor connecting all rooms with door openings.
+- **Renderer Engine (`public/renderer.ts`)**:
+  - Pure Canvas 2D procedural pixel art (zero paid assets).
+  - True depth Y-sorting: furniture items and characters are unified in a YSortable array and rendered sorted by ground-foot Y coordinate.
+  - Atmospheric per-room lighting tints and soft radial edge vignette.
+  - Retro CCTV overlay with corner brackets `[ ]`, blinking red `● REC` indicator, live timestamp, and dynamic camera channel header (`CAM 3 - OFFICE`, etc.).
+  - Smooth camera pan & zoom controller.
+
+
