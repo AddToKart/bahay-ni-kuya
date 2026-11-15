@@ -1,0 +1,42 @@
+# Stainless steel kitchen stove and range with oven door window and four burners.
+sprite kitchen-stove
+size 16 32
+layer object
+footprint 1 1
+origin 0 16
+tag kitchen stove cook
+spot cook 0 1 up eat stand
+
+frame default
+..kkkkkkkkkkkk..
+.kmmmmmmmmmmmmk.
+.kmmmmmmmmmmmmk.
+.kMMMMMMMMMMMMk.
+.kMM55555555MMk.
+.k555555555555k.
+.kkkkkkkkkkkkkk.
+.kmmmmmmmmmmmmk.
+.kmkkkmkkmkkmmk.
+.kmk5kmk5kmk5mmk
+.kmkkkmkkmkkmmk.
+.kMMMMMMMMMMMMk.
+.kMMkkkkkkkkMMk.
+.kMMk======kMMk.
+.kMMk======kMMk.
+.kMMk======kMMk.
+.kMMk======kMMk.
+.kMMk======kMMk.
+.kMMkkkkkkkkMMk.
+.kMMMMMMMMMMMMk.
+.kMM55555555MMk.
+.k555555555555k.
+.kmmmmmmmmmmmmk.
+.kMMMMMMMMMMMMk.
+.kMM55555555MMk.
+.k555555555555k.
+.k555555555555k.
+.kkkkkkkkkkkkkk.
+..k55k....k55k..
+..k55k....k55k..
+..kkkk....kkkk..
+................

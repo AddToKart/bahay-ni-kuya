@@ -6,20 +6,21 @@ All visual assets, procedural sprite sheets, tilemaps, and audio interfaces used
 
 ## 1. Summary of Licensing
 
-| Category                | Source / Author                                                                  | License               | Description                                                                                                                                                                                              |
-| :---------------------- | :------------------------------------------------------------------------------- | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Character Sprites**   | Original Procedural Canvas 2D (`public/sprites.ts`, `public/anim.ts`)            | **CC0 1.0 Universal** | Human chibi pixel art characters with harness motifs (Beaver, Octopus, Hamster, Raccoon, Owl), 4 directions, 13 action animations, 6 emotes, instance variants.                                          |
-| **Tilemap & Furniture** | Original Procedural Canvas 2D (`public/renderer.ts`, `scripts/generate-map.ts`)  | **CC0 1.0 Universal** | 16x16 px floor tiles, cutaway navy walls, dual computer desks with monitors, red lounge sofa, green pool table, retro arcade cabinet, water cooler, snack vending machine, conference table, whiteboard. |
-| **Tiled Map Layout**    | Generated JSON (`public/map/house.json`)                                         | **CC0 1.0 Universal** | 42x27 orthogonal Tiled map layout covering 7 distinct rooms + connecting checkered hallway.                                                                                                              |
-| **Icons & Emotes**      | Procedural Vector Canvas (`public/anim.ts`)                                      | **CC0 1.0 Universal** | Emote speech bubbles: thumbs up, facepalm, question, exclamation, sweat drop, heart; Tool indicators for CLI harnesses.                                                                                  |
-| **Audio / Speech**      | Browser Web Speech API (`SpeechSynthesisUtterance`)                              | **System / Native**   | Client-side text-to-speech synthesis without external audio files or trademarked assets.                                                                                                                 |
-| **Fonts**               | System monospace stack (`ui-monospace`, `SFMono-Regular`, `Consolas`, monospace) | **System / Native**   | Cross-platform monospace pixel rendering with zero external web fonts.                                                                                                                                   |
+| Category                       | Source / Author                                                                  | License                   | Description                                                                                                                                                                                                                           |
+| :----------------------------- | :------------------------------------------------------------------------------- | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Oddboro Sprite Library**     | New Altitude, Inc. (`github.com/New-Altitude/Oddboro`)                            | **Apache-2.0**            | Curated 16x16 tile and prop sprites from Oddboro: office desks, chairs, computers, plants, lamps, bookshelves, whiteboards, outdoor trees, grass, streetlamps, wall faces and bitmasked caps. See `assets/third-party/oddboro/`. |
+| **Original House Pixel Art**   | Original Pixel Art (`assets/house/`)                                             | **CC0 1.0 Universal**     | Hand-crafted 16x16 / 32x32 / 48x32 pixel sprites: bunk beds, confession chair, spotlight, pool table, arcade cabinet, kitchen stove, treadmill, weights rack, sectional couch, TV media unit, checkered floor, emotes, house sign. |
+| **Character Sprites**          | Oddboro Base + Original Harness Motifs (`assets/house/`, `public/anim.ts`)       | **Apache-2.0 / CC0**      | Chibi pixel art characters with harness motifs (Beaver, Octopus, Hamster, Raccoon, Owl), 4 directions, walk cycles, typing, sitting, sleeping, and chore animations.                                                                 |
+| **Tilemap & Furniture Layout** | Tiled Map (`public/map/house.json`, `scripts/generate-map.ts`)                  | **CC0 1.0 Universal**     | 42x27 orthogonal Tiled map layout covering 8 distinct rooms + connecting checkered hallway + outdoor perimeter.                                                                                                                      |
+| **Icons & Emotes**             | Original Pixel Art (`assets/house/emotes.px`, `public/anim.ts`)                  | **CC0 1.0 Universal**     | Emote speech bubbles: thumbs up, facepalm, question, exclamation, sweat drop, heart; Tool indicators for CLI harnesses.                                                                                                               |
+| **Audio / Speech**             | Browser Web Speech API (`SpeechSynthesisUtterance`)                              | **System / Native**       | Client-side text-to-speech synthesis without external audio files or trademarked assets. Zero Oddboro audio tracks used.                                                                                                             |
+| **Fonts**                      | System monospace stack (`ui-monospace`, `SFMono-Regular`, `Consolas`, monospace) | **System / Native**       | Cross-platform monospace pixel rendering with zero external web fonts.                                                                                                                                                                |
 
 ---
 
 ## 2. Character Sprite Specifications
 
-All character sprites are generated dynamically at runtime using Canvas 2D procedural pixel rendering (`public/anim.ts`), guaranteeing crisp integer scaling without asset distortion.
+All character sprites are compiled into the texture atlas (`public/atlas/atlas.png`) and rendered via PixiJS with nearest-neighbor integer scaling, guaranteeing crisp pixel aesthetics without blur or distortion.
 
 ### Human Chibi Characters & Harness Motifs:
 
@@ -41,46 +42,58 @@ All character sprites are generated dynamically at runtime using Canvas 2D proce
 
 ### Animations:
 
-- **Directions**: `down` (facing camera), `up` (facing north), `left`, `right`.
+- **Directions**: `down` (facing camera), `up` (facing north), `left` (mirrored side), `right` (side).
 - **Action States**: `idle`, `walk`, `sit`, `type`, `sleep`, `wash`, `cook`, `tv`, `pool`, `arcade`, `exercise`, `water`, `read`.
 - **Emotes**: `thumbs_up` (👍), `facepalm` (🤦), `question` (❓), `exclamation` (❗), `sweat` (💧), `heart` (❤️).
 - **Subagents**: Scaled mini-chibi characters (~16px tall) spawned at parent coordinates with soft tether lines.
 
 ---
 
-## 3. Map & Furniture Tileset Specifications
+## 3. Map & Furniture Atlas Specifications
 
-16x16 px tiles generated via `public/renderer.ts`:
+Compiled atlas (`public/atlas/atlas.png` + `public/atlas/atlas.json`, 172 sprites, 2,142 frames):
 
 - **Floors**:
-  - GID 1: Bedroom cool slate wooden planks (`#5a6e85`)
-  - GID 2: Blue Lounge deep navy square tiles (`#2b4868` / `#243d59`)
-  - GID 3: Open Office warm parquet oak wood (`#785338` / `#6c4930`)
-  - GID 4: Breakroom clean cream ceramic tiles (`#ded5c6` / `#d2c6b4`)
-  - GID 5: Game Room dusty rose / mauve pink tiles (`#a66e85` / `#986278`)
-  - GID 6: Confession Room dark obsidian floor (`#181a22`)
-  - GID 7 & 8: Hallway high-contrast checkered black and white (`#1a1c22`, `#dedcd5`)
-  - GID 9: Conference Room slate steel-blue tiles (`#355474` / `#2d4763`)
-- **Walls & Doors**:
-  - GID 11: Deep navy structural walls (`#161b26`) with beveled blue-gray top rim (`#2c394f`, `#3e4e6c`)
-  - GID 12: Vertical wall column with depth shading
-  - GID 21: Door thresholds where hallway floor connects into rooms
-- **Furniture**:
-  - Oak wood computer desks with silver monitors, keyboard, succulent pot, and white coffee mug (GID 41)
-  - Compact subagent terminal desks with green phosphor screens (GID 43)
-  - Crimson/ruby cushioned sofa and armchairs with wood armrests (GID 34, 35, 36)
-  - Low oak coffee table with ceramic teacups (GID 37)
-  - Regulation pool table with dark mahogany rails, brass corners, green felt, cue ball, and cue stick (GID 50)
-  - Purple retro arcade cabinet with glowing yellow marquee and CRT game graphics (GID 51, 52)
-  - Breakroom water cooler dispenser with blue water jug bottle (GID 47)
-  - Blue snack vending machine with glass display window showing snack packages (GID 57)
-  - Conference table with open silver laptops and dark green swivel chairs (GID 48, 49)
-  - Whiteboard on wall with colorful marker diagrams and sticky notes (GID 55)
-  - Kitchen counter with stainless sink, gooseneck faucet, and white refrigerator (GID 44, 46)
-  - Bunk beds with blue duvets and nightstand lamps (GID 31, 32, 33)
-  - Bookshelves with multi-colored book spines (GID 39)
-  - Indoor potted plants in terracotta pots (GID 54)
-  - Solitary high-backed confession chair under the spotlight beam (GID 56)
+  - `floor-oak`: Parquet oak wood planks (Office, Bedroom)
+  - `floor-tile`: Clean ceramic floor tiles (Kitchen, Dining)
+  - `floor-carpet`: Soft textured carpet (Lounge, Bedrooms)
+  - `floor-checkered`: High-contrast obsidian & cream marble tiles (Hallway)
+  - `floor-grass`: Lush outdoor grass lawn (Garden, Perimeter)
+  - `floor-path`: Garden stone path (Perimeter, Garden)
+  - `floor-sidewalk`: Concrete pavement bordering the street
+  - `floor-asphalt`: Dark street asphalt with crosswalk stripes
+- **Walls & Openings**:
+  - `wall-plaster-face`: 2-tile tall interior wall face with depth shading
+  - `wall-plaster-window`: Interior windows revealing exterior sky and daylight
+  - `wall-plaster-cap`: Complete 16-mask bitmasked wall cap set (`m0` through `m15`)
+  - `street-sconce`: Backlit brass wall sconce fixtures
+  - `house-sign`: Backlit gold wall sign "BAHAY NI KUYA" on dark walnut plaque
+- **Furniture & Dense Props**:
+  - `bed-bunk`: Double-decker wooden bunk bed with ladder, pillows, and blue quilts
+  - `confession-chair`: Solitary high-backed crimson leather confessional armchair
+  - `confession-spotlight`: Ceiling stage spotlight fixture with high-intensity downbeam
+  - `pool-table`: Regulation 48x32 billiards table with emerald baize felt, walnut rails, brass pockets, cue ball, and cue stick
+  - `arcade-cabinet` & `break-arcade`: Retro arcade machines with glowing marquee and CRT game graphics
+  - `kitchen-stove`: Stainless steel stove with 4 burners and glass oven door
+  - `kitchen-fridge` & `break-fridge`: Stainless steel and white refrigerators
+  - `kitchen-counter`, `kitchen-counter-sink`, `kitchen-counter-end`: Modular kitchen counter unit
+  - `kitchen-microwave`, `kitchen-kettle`, `kitchen-coffee`: Small kitchen appliances
+  - `kitchen-table` & `kitchen-chair`: Wooden lunch dining table and matching chairs
+  - `break-vending`: Vending machine with illuminated beverage/snack display
+  - `kitchen-cooler`: Bottled water cooler dispenser with water jug
+  - `treadmill` & `gym-treadmill`: Digital cardio treadmills with running belt
+  - `weights-rack` & `gym-kettlebells`: Heavy iron dumbbells and kettlebells
+  - `gym-bike` & `gym-bench`: Gym exercise cycle and workout bench
+  - `couch-sectional` & `break-couch`: Large rust-crimson sectional sofa and lounge chairs
+  - `tv-unit` & `break-tv`: Widescreen television media console displaying broadcast scanlines
+  - `desk`: Wooden office desks with walnut and ash variants, laptops, monitors, lamps, and mugs
+  - `chair`: Ergonomic office swivel chairs with teal, rust, and sage fabric variants
+  - `bookshelf` & `library-shelf`: Tall multi-tiered oak bookshelves filled with colorful book spines
+  - `whiteboard`: Large collaborative dry-erase whiteboard with colorful marker diagrams
+  - `filing-cabinet` & `bin`: Office storage drawers and wastebaskets
+  - `park-tree`, `park-tree-large`, `park-pine`: Outdoor shade trees and evergreens
+  - `park-bush`, `park-flowers`, `plant-tall`, `plant-small`: Varied indoor and outdoor potted plants
+  - `rug` & `library-rug`: Persian and geometric accent rugs
 
 ---
 
@@ -88,4 +101,5 @@ All character sprites are generated dynamically at runtime using Canvas 2D proce
 
 - **Independent Project**: Bahay ni Kuya is an independent developer visualizer inspired by reality TV house observation formats.
 - **No Trademarked Assets**: Zero official logos, trademarks, copyrighted brand names, or protected audio files are used.
+- **Excluded Assets**: All 25 Oddboro audio tracks and Oddboro trademarked names/branding have been strictly excluded from this repository.
 - **Original Content**: All Taglish announcement lines (`config/kuya-lines.json`) and art assets are 100% original creations.

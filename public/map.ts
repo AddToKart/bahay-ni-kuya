@@ -32,6 +32,18 @@ export interface MapPOI {
   tags: string[];
 }
 
+export interface MapProp {
+  id: string;
+  sprite: string;
+  frame?: string;
+  variant?: string;
+  x: number;
+  y: number;
+  layer?: "floor" | "wall" | "object" | "overlay";
+  flip?: boolean;
+  zbias?: number;
+}
+
 export interface HouseMap {
   width: number;
   height: number;
@@ -44,6 +56,7 @@ export interface HouseMap {
   furniture: number[];
   collision: number[];
   pois: MapPOI[];
+  props: MapProp[];
 }
 
 let loadedMap: HouseMap | null = null;
@@ -88,6 +101,7 @@ export async function loadHouseMap(): Promise<HouseMap> {
       furniture: getLayer("furniture"),
       collision: getLayer("collision"),
       pois,
+      props: json.props || [],
     };
     return loadedMap;
   } catch (err) {

@@ -1,0 +1,25 @@
+# Wall sign for the house: "BAHAY NI KUYA" in backlit gold letters on a dark walnut plate.
+sprite house-sign
+size 64 16
+layer wall
+footprint 4 1
+origin 0 0
+tag wall decor sign kuya
+
+frame default
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk
+kwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwk
+kwW3333333333333333333333333333333333333333333333333333333333Wwk
+kwW3yyy..yyy.y.y...yyy.y...y...y.y.y.y...y.y.y.y...yyy...y...3Ww
+kwW3y..y.y.y.y.y...y.y.y...y...y.y.y.y...y.y.y.y...y.y..y.y..3Ww
+kwW3yyy..yyy.yyy...yyy.yyy.y...y.yyy.y...yy..y.y...yyy..yyy..3Ww
+kwW3y..y.y.y.y.y...y.y...y.y...y...y.y...y.y.y.y...y.y..y.y..3Ww
+kwW3yyy..y.y.y.y...y.y.yyy.y...y...y.y...y.y.yyy...y.y..y.y..3Ww
+kwW3.........................................................3Ww
+kwW3YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY3Ww
+kwW3333333333333333333333333333333333333333333333333333333333Wwk
+kwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwk
+kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+................................................................

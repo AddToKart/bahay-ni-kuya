@@ -1,0 +1,44 @@
+# Living room media entertainment console with widescreen TV displaying broadcast scanlines.
+# Footprint: 2 tiles wide x 1 tile deep.
+sprite tv-unit
+size 32 32
+layer object
+footprint 2 1
+origin 0 16
+tag living tv console entertainment
+light 16 10 40 #63dccf 0.75
+spot watch 0 1 up rest sit
+
+frame default
+..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..
+.k5555555555555555555555555555k.
+.k5gggggggggggggggggggggggggg5k.
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGggGGggGGggGGggGGggGGggGg5k
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGggGGggGGggGGggGGggGGggGg5k
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5gGGggGGggGGggGGggGGggGGggGg5k
+.k5gGGGGGGGGGGGGGGGGGGGGGGGGg5k.
+.k5555555555555555555555555555k.
+.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.
+.......k5555555555555555k.......
+.......k5555555555555555k.......
+.......kMMMMMMMMMMMMMMMMk.......
+.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.
+.kwwwwwwwwwwwwwwwwwwwwwwwwwwwwk.
+.kwWWWWWWWWWWWWWWWWWWWWWWWWWWwk.
+.kwW2222222222222222222222222Wwk
+.kwWWWWWWWWWWWWWWWWWWWWWWWWWWwk.
+.kwW3333333333333333333333333Wwk
+.kWWWWWWWWWWWWWWWWWWWWWWWWWWWWk.
+.kWW333333333333333333333333WWk.
+.kWWk......................kWWk.
+.kWWk......................kWWk.
+.kWWk......................kWWk.
+.kW3k......................k3Wk.
+.kkkk......................kkkk.
+................................

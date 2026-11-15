@@ -1,0 +1,45 @@
+# Billiards pool table with rich emerald green baize felt, walnut rails, brass corner pockets, and cue stick.
+# Footprint: 3 tiles wide x 2 tiles deep.
+sprite pool-table
+size 48 32
+layer object
+footprint 3 2
+origin 0 16
+tag game pool billiards
+spot player-south 1 2 up play stand
+spot player-north 1 -1 down play stand
+spot player-side 0 0 right play stand
+
+frame default
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+kyywwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwyyk
+kyYWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYyk
+kYYW3333333333333333333333333333333333333333WYYk
+kWWk----------------------------------------kWWk
+kWWkvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWkvv==vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvyYRR88RvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvYYrR8vvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvvYYRvvvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWkvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvkWWk
+kWWk!!!!!!!!!!!!!!!o1o1o1o1o1o1!!!!!!!!!!!!!kWWk
+kYYW3333333333333333333333333333333333333333WYYk
+kyYWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYyk
+kyywwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwyyk
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+.kWWkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkWWk.
+.kWWk......................................kWWk.
+.kWWk......................................kWWk.
+.kWWk......................................kWWk.
+.kWWk......................................kWWk.
+.kWWk......................................kWWk.
+.kWWk......................................kWWk.
+.kW3k......................................k3Wk.
+.kkkk......................................kkkk.
+................................................
+................................................
+................................................
+................................................

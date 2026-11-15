@@ -1,0 +1,43 @@
+# Seamless checkered floor tile with polished cream and obsidian marble tiles.
+sprite floor-checkered
+size 16 16
+layer floor
+footprint 1 1
+origin 0 0
+tag floor hallway
+
+frame 0
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+
+frame 1
+========KKKKKKKK
+=m======KKKkKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+========KKKKKKKK
+KKKKKKKK========
+KKKKKKKK===m====
+KKKkKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========
+KKKKKKKK========

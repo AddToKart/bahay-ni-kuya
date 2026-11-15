@@ -1,0 +1,6160 @@
+{
+  "palette": {
+    "name": "oddboro",
+    "colors": {
+      "0": {
+        "hex": "#476941",
+        "name": "sage dark"
+      },
+      "1": {
+        "hex": "#a3774a",
+        "name": "oak dark"
+      },
+      "2": {
+        "hex": "#7e5431",
+        "name": "oak line"
+      },
+      "3": {
+        "hex": "#553321",
+        "name": "walnut dark"
+      },
+      "4": {
+        "hex": "#a68c64",
+        "name": "ash dark"
+      },
+      "5": {
+        "hex": "#585d6d",
+        "name": "metal dark"
+      },
+      "6": {
+        "hex": "#1b5c64",
+        "name": "teal deep"
+      },
+      "7": {
+        "hex": "#112f3a",
+        "name": "teal abyss"
+      },
+      "8": {
+        "hex": "#8d4027",
+        "name": "rust dark"
+      },
+      "9": {
+        "hex": "#a76b1d",
+        "name": "amber dark"
+      },
+      "k": {
+        "hex": "#1c1727",
+        "name": "ink"
+      },
+      "K": {
+        "hex": "#3d3248",
+        "name": "ink soft"
+      },
+      "=": {
+        "hex": "#fbf6ea",
+        "name": "paper white"
+      },
+      "P": {
+        "hex": "#f4ead8",
+        "name": "plaster light"
+      },
+      "p": {
+        "hex": "#e7d9bf",
+        "name": "plaster"
+      },
+      "q": {
+        "hex": "#cdb99b",
+        "name": "plaster shade"
+      },
+      "Q": {
+        "hex": "#a08b6d",
+        "name": "plaster deep"
+      },
+      "o": {
+        "hex": "#deb078",
+        "name": "oak light"
+      },
+      "O": {
+        "hex": "#c6955f",
+        "name": "oak"
+      },
+      "w": {
+        "hex": "#9e6c46",
+        "name": "walnut light"
+      },
+      "W": {
+        "hex": "#7c5034",
+        "name": "walnut"
+      },
+      "a": {
+        "hex": "#ead6b2",
+        "name": "ash light"
+      },
+      "A": {
+        "hex": "#cfb48c",
+        "name": "ash"
+      },
+      "m": {
+        "hex": "#d0d3d9",
+        "name": "metal light"
+      },
+      "M": {
+        "hex": "#8f95a3",
+        "name": "metal"
+      },
+      "t": {
+        "hex": "#62c4ba",
+        "name": "teal light"
+      },
+      "T": {
+        "hex": "#2e8c8c",
+        "name": "teal"
+      },
+      "g": {
+        "hex": "#c0f7ee",
+        "name": "glow aqua",
+        "emissive": true,
+        "off": "K"
+      },
+      "G": {
+        "hex": "#63dccf",
+        "name": "screen aqua",
+        "emissive": true,
+        "off": "K"
+      },
+      "r": {
+        "hex": "#e48f5f",
+        "name": "rust light"
+      },
+      "R": {
+        "hex": "#c2653c",
+        "name": "rust"
+      },
+      "y": {
+        "hex": "#f4c455",
+        "name": "amber light"
+      },
+      "Y": {
+        "hex": "#d8982f",
+        "name": "amber"
+      },
+      "l": {
+        "hex": "#fff0c2",
+        "name": "lamp glow",
+        "emissive": true,
+        "off": "a"
+      },
+      "L": {
+        "hex": "#ffd27a",
+        "name": "lamp warm",
+        "emissive": true,
+        "off": "A"
+      },
+      "s": {
+        "hex": "#adc89e",
+        "name": "sage light"
+      },
+      "S": {
+        "hex": "#72976a",
+        "name": "sage"
+      },
+      "v": {
+        "hex": "#a1d872",
+        "name": "leaf light"
+      },
+      "V": {
+        "hex": "#619e49",
+        "name": "leaf"
+      },
+      "!": {
+        "hex": "#36682f",
+        "name": "leaf dark"
+      },
+      "c": {
+        "hex": "#a7bcb6",
+        "name": "carpet light"
+      },
+      "C": {
+        "hex": "#8ea59f",
+        "name": "carpet"
+      },
+      "%": {
+        "hex": "#728c86",
+        "name": "carpet dark"
+      },
+      "e": {
+        "hex": "#dbe9df",
+        "name": "tile mint"
+      },
+      "E": {
+        "hex": "#b6cfc1",
+        "name": "tile mint shade"
+      },
+      "f": {
+        "hex": "#f5d4b4",
+        "name": "skin fair"
+      },
+      "F": {
+        "hex": "#d9a484",
+        "name": "skin fair shade"
+      },
+      "d": {
+        "hex": "#cf9263",
+        "name": "skin tan"
+      },
+      "D": {
+        "hex": "#a56b43",
+        "name": "skin tan shade"
+      },
+      "b": {
+        "hex": "#7e4b2d",
+        "name": "skin deep"
+      },
+      "B": {
+        "hex": "#562f18",
+        "name": "skin deep shade"
+      },
+      "n": {
+        "hex": "#6c4428",
+        "name": "hair brown"
+      },
+      "N": {
+        "hex": "#916040",
+        "name": "hair brown light"
+      },
+      "i": {
+        "hex": "#2c2636",
+        "name": "hair black"
+      },
+      "I": {
+        "hex": "#4c4259",
+        "name": "hair black light"
+      },
+      "z": {
+        "hex": "#5c90ba",
+        "name": "shirt blue"
+      },
+      "Z": {
+        "hex": "#3c678a",
+        "name": "shirt blue shade"
+      },
+      "^": {
+        "hex": "#3a4062",
+        "name": "trouser navy"
+      },
+      "&": {
+        "hex": "#262b45",
+        "name": "trouser navy shade"
+      },
+      "-": {
+        "hex": "#1c17274d",
+        "name": "shadow"
+      },
+      "_": {
+        "hex": "#1c172726",
+        "name": "shadow soft"
+      },
+      "/": {
+        "hex": "#d7ecf24d",
+        "name": "glass"
+      },
+      "(": {
+        "hex": "#ffffff80",
+        "name": "glass shine"
+      },
+      "$": {
+        "hex": "#ff8a6a",
+        "name": "glow coral",
+        "emissive": true,
+        "off": "K"
+      },
+      ",": {
+        "hex": "#5d626e",
+        "name": "rubber"
+      },
+      ":": {
+        "hex": "#484d58",
+        "name": "rubber dark"
+      },
+      ";": {
+        "hex": "#2f8f66",
+        "name": "emerald"
+      },
+      "J": {
+        "hex": "#1d5e44",
+        "name": "emerald deep"
+      },
+      "j": {
+        "hex": "#8ff0b4",
+        "name": "emerald glow",
+        "emissive": true,
+        "off": "0"
+      },
+      "~": {
+        "hex": "#2a7a94",
+        "name": "water"
+      },
+      "<": {
+        "hex": "#4cb0c0",
+        "name": "water light: caustic ripples and bubbles, emissive so the tank shimmers at night",
+        "emissive": true,
+        "off": "6"
+      },
+      ">": {
+        "hex": "#163f58",
+        "name": "water deep: the bottom of the tank"
+      },
+      "?": {
+        "hex": "#e46f80",
+        "name": "coral"
+      },
+      "@": {
+        "hex": "#ff9fd4",
+        "name": "biolum: anemone tips, a few pixels only",
+        "emissive": true,
+        "off": "r"
+      },
+      "U": {
+        "hex": "#c9b98a",
+        "name": "sand: the tank bed, kraft parcels"
+      },
+      "u": {
+        "hex": "#9c8c62",
+        "name": "sand shade"
+      },
+      "X": {
+        "hex": "#f5d4b4",
+        "name": "glasses: skin fair until a variant swaps it to K"
+      },
+      "x": {
+        "hex": "#d9a484",
+        "name": "beard: skin fair shade until a variant swaps it to a hair key"
+      },
+      "[": {
+        "hex": "#c2653c",
+        "name": "hair tie: rust until a variant swaps it"
+      },
+      "]": {
+        "hex": "#c98160",
+        "name": "brick light: the lit top edge of a brick"
+      },
+      "h": {
+        "hex": "#a85a43",
+        "name": "brick: the facade body"
+      },
+      "H": {
+        "hex": "#7a3d2e",
+        "name": "brick dark: mortar lines, the shadow under the coping"
+      },
+      "*": {
+        "hex": "#d9d3c6",
+        "name": "concrete light: slab edges, coping, curb tops"
+      },
+      "+": {
+        "hex": "#b9b2a4",
+        "name": "concrete: the sidewalk body"
+      },
+      "|": {
+        "hex": "#9a9386",
+        "name": "concrete dark: slab seams, the curb face"
+      },
+      "{": {
+        "hex": "#7fb35b",
+        "name": "grass: the verge across the street"
+      },
+      "}": {
+        "hex": "#5c8f44",
+        "name": "grass dark: tufts and mower lines"
+      },
+      ")": {
+        "hex": "#f6cf86",
+        "name": "window warm: shop glass with the lights on behind it, emissive so the street glows at night",
+        "emissive": true,
+        "off": "K"
+      }
+    }
+  },
+  "sprites": {
+    "arcade-cabinet": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "game",
+        "arcade"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "player",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "play",
+          "pose": "stand"
+        }
+      ],
+      "lights": [
+        {
+          "x": 8,
+          "y": 12,
+          "radius": 36,
+          "color": "#63dccf",
+          "intensity": 0.75
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "bed-bunk": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bed",
+        "sleep",
+        "bedroom"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "sleep-top",
+          "dx": 0,
+          "dy": 0,
+          "facing": "left",
+          "activity": "sleep",
+          "pose": "lie"
+        },
+        {
+          "name": "sleep-bottom",
+          "dx": 0,
+          "dy": 1,
+          "facing": "left",
+          "activity": "sleep",
+          "pose": "lie"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "confession-chair": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "confession",
+        "talk"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "talk",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "confession-spotlight": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "light",
+        "spotlight"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 8,
+          "radius": 56,
+          "color": "#fff8dc",
+          "intensity": 0.95
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "couch-sectional": {
+      "width": 48,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "living",
+        "sofa",
+        "couch",
+        "rest"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat-1",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-2",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-3",
+          "dx": 2,
+          "dy": 1,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "emotes": {
+      "width": 16,
+      "height": 16,
+      "layer": "overlay",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "overlay",
+        "emote"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "thumbs-up",
+        "facepalm",
+        "question",
+        "exclamation",
+        "sweat",
+        "heart"
+      ]
+    },
+    "floor-checkered": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "hallway"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "house-sign": {
+      "width": 64,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        4,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "sign",
+        "kuya"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-stove": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "kitchen",
+        "stove",
+        "cook"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "cook",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "eat",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "pool-table": {
+      "width": 48,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "game",
+        "pool",
+        "billiards"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "player-south",
+          "dx": 1,
+          "dy": 2,
+          "facing": "up",
+          "activity": "play",
+          "pose": "stand"
+        },
+        {
+          "name": "player-north",
+          "dx": 1,
+          "dy": -1,
+          "facing": "down",
+          "activity": "play",
+          "pose": "stand"
+        },
+        {
+          "name": "player-side",
+          "dx": 0,
+          "dy": 0,
+          "facing": "right",
+          "activity": "play",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "treadmill": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "gym",
+        "treadmill",
+        "exercise"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "run",
+          "dx": 0,
+          "dy": 0,
+          "facing": "up",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "tv-unit": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "living",
+        "tv",
+        "console",
+        "entertainment"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "watch",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        }
+      ],
+      "lights": [
+        {
+          "x": 16,
+          "y": 10,
+          "radius": 40,
+          "color": "#63dccf",
+          "intensity": 0.75
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "weights-rack": {
+      "width": 32,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "gym",
+        "weights",
+        "exercise"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "lift",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "portrait-ada": {
+      "width": 48,
+      "height": 48,
+      "layer": "overlay",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "portrait",
+        "staff"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "portrait-juno": {
+      "width": 48,
+      "height": 48,
+      "layer": "overlay",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "portrait",
+        "staff"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "portrait-marshall": {
+      "width": 48,
+      "height": 48,
+      "layer": "overlay",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "portrait",
+        "staff"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "portrait-theo": {
+      "width": 48,
+      "height": 48,
+      "layer": "overlay",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "portrait",
+        "staff"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "staff-b": {
+      "width": 16,
+      "height": 32,
+      "layer": "character",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 4,
+      "tags": [
+        "staff"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "pi",
+        "omp",
+        "codex",
+        "opencode",
+        "hermes",
+        "striped",
+        "white-tee",
+        "black-dress",
+        "variant-4",
+        "ada",
+        "juno",
+        "wren"
+      ],
+      "frames": [
+        "idle-down-0",
+        "idle-down-1",
+        "idle-down-2",
+        "idle-down-3",
+        "idle-up-0",
+        "idle-up-1",
+        "idle-up-2",
+        "idle-up-3",
+        "idle-side-0",
+        "idle-side-1",
+        "idle-side-2",
+        "idle-side-3",
+        "walk-down-0",
+        "walk-down-1",
+        "walk-down-2",
+        "walk-down-3",
+        "walk-up-0",
+        "walk-up-1",
+        "walk-up-2",
+        "walk-up-3",
+        "walk-side-0",
+        "walk-side-1",
+        "walk-side-2",
+        "walk-side-3",
+        "sit-up-0",
+        "sit-up-1",
+        "sit-up-2",
+        "sit-up-3",
+        "sit-down-0",
+        "sit-down-1",
+        "sit-down-2",
+        "read-down-0",
+        "read-down-1",
+        "read-down-2",
+        "eat-down-0",
+        "eat-down-1",
+        "eat-down-2",
+        "play-up-0",
+        "play-up-1",
+        "play-up-2",
+        "play-up-3",
+        "exercise-run-0",
+        "exercise-run-1",
+        "exercise-run-2",
+        "exercise-run-3",
+        "exercise-lift-0",
+        "exercise-lift-1",
+        "exercise-lift-2",
+        "exercise-lift-3",
+        "exercise-stretch-0",
+        "exercise-stretch-1",
+        "exercise-stretch-2",
+        "exercise-stretch-3",
+        "exercise-cycle-0",
+        "exercise-cycle-1",
+        "exercise-cycle-2",
+        "exercise-cycle-3"
+      ]
+    },
+    "staff": {
+      "width": 16,
+      "height": 32,
+      "layer": "character",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 4,
+      "tags": [
+        "staff"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "pi",
+        "omp",
+        "codex",
+        "opencode",
+        "hermes",
+        "striped",
+        "white-tee",
+        "black-dress",
+        "variant-4",
+        "marshall",
+        "ada",
+        "theo",
+        "juno"
+      ],
+      "frames": [
+        "idle-down-0",
+        "idle-down-1",
+        "idle-down-2",
+        "idle-down-3",
+        "idle-up-0",
+        "idle-up-1",
+        "idle-up-2",
+        "idle-up-3",
+        "idle-side-0",
+        "idle-side-1",
+        "idle-side-2",
+        "idle-side-3",
+        "walk-down-0",
+        "walk-down-1",
+        "walk-down-2",
+        "walk-down-3",
+        "walk-up-0",
+        "walk-up-1",
+        "walk-up-2",
+        "walk-up-3",
+        "walk-side-0",
+        "walk-side-1",
+        "walk-side-2",
+        "walk-side-3",
+        "sit-up-0",
+        "sit-up-1",
+        "sit-up-2",
+        "sit-up-3",
+        "sit-down-0",
+        "sit-down-1",
+        "sit-down-2",
+        "read-down-0",
+        "read-down-1",
+        "read-down-2",
+        "eat-down-0",
+        "eat-down-1",
+        "eat-down-2",
+        "play-up-0",
+        "play-up-1",
+        "play-up-2",
+        "play-up-3",
+        "exercise-run-0",
+        "exercise-run-1",
+        "exercise-run-2",
+        "exercise-run-3",
+        "exercise-lift-0",
+        "exercise-lift-1",
+        "exercise-lift-2",
+        "exercise-lift-3",
+        "exercise-stretch-0",
+        "exercise-stretch-1",
+        "exercise-stretch-2",
+        "exercise-stretch-3",
+        "exercise-cycle-0",
+        "exercise-cycle-1",
+        "exercise-cycle-2",
+        "exercise-cycle-3"
+      ]
+    },
+    "fx-pop": {
+      "width": 16,
+      "height": 16,
+      "layer": "overlay",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 8,
+      "tags": [],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "notebook-0",
+        "notebook-1",
+        "notebook-2",
+        "notebook-3",
+        "notebook-4",
+        "notebook-5",
+        "notebook-6",
+        "notebook-7",
+        "notebook-8",
+        "notebook-9",
+        "notebook-10",
+        "notebook-11",
+        "note-0",
+        "note-1",
+        "note-2",
+        "note-3",
+        "note-4",
+        "note-5",
+        "note-6",
+        "note-7",
+        "note-8",
+        "note-9",
+        "note-10",
+        "note-11"
+      ]
+    },
+    "art-frame": {
+      "width": 16,
+      "height": 20,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "bin": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bin",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "bookshelf": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "shelf",
+        "books",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-arcade": {
+      "width": 16,
+      "height": 44,
+      "layer": "object",
+      "origin": [
+        0,
+        28
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 4,
+      "tags": [
+        "arcade",
+        "game",
+        "play"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "play",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "play",
+          "pose": "stand"
+        }
+      ],
+      "lights": [
+        {
+          "x": 8,
+          "y": 12,
+          "radius": 24,
+          "color": "#63dccf",
+          "intensity": 0.5
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "radius": 20,
+          "color": "#ffd27a",
+          "intensity": 0.45
+        }
+      ],
+      "variants": [
+        "rust"
+      ],
+      "frames": [
+        "idle-0",
+        "idle-1",
+        "idle-2",
+        "idle-3"
+      ]
+    },
+    "break-beanbag": {
+      "width": 16,
+      "height": 18,
+      "layer": "object",
+      "origin": [
+        0,
+        2
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "beanbag",
+        "seat",
+        "play"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat",
+          "dx": 0,
+          "dy": 0,
+          "facing": "up",
+          "activity": "play",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "teal",
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-coffee-table": {
+      "width": 32,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "table",
+        "low"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-couch-back": {
+      "width": 48,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "couch",
+        "seat",
+        "rest"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat-0",
+          "dx": 0,
+          "dy": 0,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-1",
+          "dx": 1,
+          "dy": 0,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-2",
+          "dx": 2,
+          "dy": 0,
+          "facing": "up",
+          "activity": "rest",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "teal",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-couch": {
+      "width": 48,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "couch",
+        "seat",
+        "rest"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat-0",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-1",
+          "dx": 1,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-2",
+          "dx": 2,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "teal",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-dartboard": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "play"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-fridge": {
+      "width": 16,
+      "height": 26,
+      "layer": "object",
+      "origin": [
+        0,
+        10
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "fridge",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust",
+        "cream"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-poster": {
+      "width": 16,
+      "height": 20,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "break-tv": {
+      "width": 32,
+      "height": 42,
+      "layer": "object",
+      "origin": [
+        0,
+        26
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 2,
+      "tags": [
+        "tv",
+        "screen",
+        "play",
+        "clear-2"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 16,
+          "y": 8,
+          "radius": 36,
+          "color": "#63dccf",
+          "intensity": 0.6
+        }
+      ],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "idle-0",
+        "idle-1",
+        "idle-2",
+        "idle-3"
+      ]
+    },
+    "break-vending": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "vending",
+        "snacks",
+        "clear-1"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 11,
+          "y": 6,
+          "radius": 26,
+          "color": "#fff0c2",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "chair-front": {
+      "width": 16,
+      "height": 19,
+      "layer": "object",
+      "origin": [
+        0,
+        5
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "seat"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "chair": {
+      "width": 16,
+      "height": 19,
+      "layer": "object",
+      "origin": [
+        0,
+        5
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "seat"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "desk-lamp": {
+      "width": 16,
+      "height": 20,
+      "layer": "object",
+      "origin": [
+        0,
+        20
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 7,
+          "y": 6,
+          "radius": 34,
+          "color": "#ffd27a",
+          "intensity": 1
+        }
+      ],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "desk": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "desk",
+        "work"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "seat",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "work",
+          "pose": "sit"
+        }
+      ],
+      "lights": [
+        {
+          "x": 23,
+          "y": 5,
+          "radius": 28,
+          "color": "#63dccf",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [
+        "walnut",
+        "ash"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "filing-cabinet": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "cabinet",
+        "storage",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default",
+        "side"
+      ]
+    },
+    "floor-lamp": {
+      "width": 16,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light",
+        "any-side"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 8,
+          "radius": 48,
+          "color": "#ffd27a",
+          "intensity": 1.1
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-bench": {
+      "width": 16,
+      "height": 34,
+      "layer": "object",
+      "origin": [
+        0,
+        2
+      ],
+      "footprint": [
+        1,
+        2
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bench",
+        "exercise",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-bike": {
+      "width": 32,
+      "height": 30,
+      "layer": "object",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "bike",
+        "exercise",
+        "gym"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "cycle",
+          "dx": 0,
+          "dy": 0,
+          "facing": "right",
+          "activity": "exercise",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-bottle": {
+      "width": 16,
+      "height": 14,
+      "layer": "object",
+      "origin": [
+        0,
+        -2
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "bottle",
+        "towel",
+        "gym",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-cooler": {
+      "width": 16,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 3,
+      "tags": [
+        "cooler",
+        "water",
+        "gym",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "bubble-0",
+        "bubble-1",
+        "bubble-2"
+      ]
+    },
+    "gym-dumbbells": {
+      "width": 32,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "dumbbells",
+        "weights",
+        "exercise",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "lift",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-kettlebells": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "kettlebell",
+        "weights",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-mat": {
+      "width": 16,
+      "height": 32,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        2
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "mat",
+        "exercise",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "stretch",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-mirror": {
+      "width": 48,
+      "height": 26,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "mirror",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-poster": {
+      "width": 16,
+      "height": 22,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "poster",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-rack": {
+      "width": 48,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rack",
+        "weights",
+        "exercise",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "lift",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "gym-treadmill": {
+      "width": 16,
+      "height": 44,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        1,
+        2
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 8,
+      "tags": [
+        "treadmill",
+        "exercise",
+        "gym"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "run",
+          "dx": 0,
+          "dy": 1,
+          "facing": "up",
+          "activity": "exercise",
+          "pose": "stand"
+        }
+      ],
+      "lights": [
+        {
+          "x": 8,
+          "y": 4,
+          "radius": 16,
+          "color": "#63dccf",
+          "intensity": 0.4
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "belt-0",
+        "belt-1",
+        "belt-2",
+        "belt-3"
+      ]
+    },
+    "gym-wall-light": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "lamp",
+        "light",
+        "gym"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 9,
+          "radius": 64,
+          "color": "#ffd27a",
+          "intensity": 1.1
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-cabinet": {
+      "width": 32,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "kitchen",
+        "cabinet",
+        "light"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 16,
+          "y": 15,
+          "radius": 24,
+          "color": "#ffd27a",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [
+        "cream"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-chair": {
+      "width": 16,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "kitchen",
+        "seat"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal",
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-coffee": {
+      "width": 16,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        26
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 3,
+      "tags": [
+        "kitchen",
+        "coffee",
+        "appliance"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "steam-0",
+        "steam-1",
+        "steam-2",
+        "steam-3"
+      ]
+    },
+    "kitchen-cooler": {
+      "width": 16,
+      "height": 36,
+      "layer": "object",
+      "origin": [
+        0,
+        20
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 3,
+      "tags": [
+        "kitchen",
+        "water",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "bubble-0",
+        "bubble-1",
+        "bubble-2",
+        "bubble-3"
+      ]
+    },
+    "kitchen-counter-end": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "counter",
+        "kitchen"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-counter-sink": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "counter",
+        "kitchen",
+        "sink"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-counter": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "counter",
+        "kitchen"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-fridge": {
+      "width": 16,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "kitchen",
+        "fridge",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal",
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-fruit-bowl": {
+      "width": 16,
+      "height": 12,
+      "layer": "object",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "kitchen",
+        "fruit"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-kettle": {
+      "width": 16,
+      "height": 12,
+      "layer": "object",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "kitchen",
+        "kettle"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal",
+        "cream"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-mat": {
+      "width": 32,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rug",
+        "soft",
+        "kitchen"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust",
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-microwave": {
+      "width": 16,
+      "height": 12,
+      "layer": "object",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "kitchen",
+        "microwave",
+        "appliance"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-pendant": {
+      "width": 16,
+      "height": 15,
+      "layer": "object",
+      "origin": [
+        0,
+        44
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 2,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light",
+        "kitchen"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 12,
+          "radius": 44,
+          "color": "#ffd27a",
+          "intensity": 1
+        }
+      ],
+      "variants": [
+        "teal",
+        "cream"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-shelf": {
+      "width": 32,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "kitchen",
+        "shelf"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "kitchen-table": {
+      "width": 64,
+      "height": 26,
+      "layer": "object",
+      "origin": [
+        0,
+        10
+      ],
+      "footprint": [
+        4,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "table",
+        "kitchen",
+        "eat"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "seat-0",
+          "dx": 0,
+          "dy": -1,
+          "facing": "down",
+          "activity": "eat",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-1",
+          "dx": 1,
+          "dy": -1,
+          "facing": "down",
+          "activity": "eat",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-2",
+          "dx": 2,
+          "dy": -1,
+          "facing": "down",
+          "activity": "eat",
+          "pose": "sit"
+        },
+        {
+          "name": "seat-3",
+          "dx": 3,
+          "dy": -1,
+          "facing": "down",
+          "activity": "eat",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "walnut",
+        "ash"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-armchair": {
+      "width": 24,
+      "height": 36,
+      "layer": "object",
+      "origin": [
+        4,
+        20
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "seat",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "read",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "read",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default",
+        "throw"
+      ]
+    },
+    "library-bankers-lamp": {
+      "width": 16,
+      "height": 20,
+      "layer": "object",
+      "origin": [
+        0,
+        22
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light",
+        "library"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 8,
+          "radius": 36,
+          "color": "#ffd27a",
+          "intensity": 1
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-books": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "books",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-cat": {
+      "width": 16,
+      "height": 12,
+      "layer": "object",
+      "origin": [
+        0,
+        -4
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 1,
+      "tags": [
+        "cat",
+        "library",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "grey"
+      ],
+      "frames": [
+        "sleep-0",
+        "sleep-1"
+      ]
+    },
+    "library-chair": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "seat",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-fireplace": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 6,
+      "tags": [
+        "fireplace",
+        "light",
+        "library"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 16,
+          "y": 34,
+          "radius": 56,
+          "color": "#ff9a4a",
+          "intensity": 1.1
+        },
+        {
+          "x": 5,
+          "y": 15,
+          "radius": 14,
+          "color": "#ffd27a",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "burn-0",
+        "burn-1",
+        "burn-2",
+        "burn-3",
+        "off"
+      ]
+    },
+    "library-globe": {
+      "width": 16,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "globe",
+        "library",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-ladder": {
+      "width": 16,
+      "height": 46,
+      "layer": "object",
+      "origin": [
+        0,
+        30
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "ladder",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-lamp": {
+      "width": 16,
+      "height": 22,
+      "layer": "object",
+      "origin": [
+        0,
+        26
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light",
+        "library"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 8,
+          "radius": 40,
+          "color": "#ffd27a",
+          "intensity": 1
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-map": {
+      "width": 32,
+      "height": 24,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "map",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-rug": {
+      "width": 80,
+      "height": 48,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        5,
+        3
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rug",
+        "soft",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-shelf-b": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "shelf",
+        "books",
+        "library",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-shelf": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "shelf",
+        "books",
+        "library",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-side-table": {
+      "width": 16,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "table",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-table": {
+      "width": 48,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "table",
+        "read",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "read",
+          "dx": 1,
+          "dy": -1,
+          "facing": "down",
+          "activity": "read",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "library-window-seat": {
+      "width": 32,
+      "height": 30,
+      "layer": "object",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "seat",
+        "read",
+        "library"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "read",
+          "dx": 1,
+          "dy": 0,
+          "facing": "down",
+          "activity": "read",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-aquarium": {
+      "width": 64,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        4,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 6,
+      "tags": [
+        "aquarium",
+        "decor",
+        "light"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 32,
+          "y": 20,
+          "radius": 44,
+          "color": "#4cb0c0",
+          "intensity": 0.6
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "swim-0",
+        "swim-1",
+        "swim-2",
+        "swim-3",
+        "swim-4",
+        "swim-5",
+        "swim-6",
+        "swim-7",
+        "swim-8",
+        "swim-9",
+        "swim-10",
+        "swim-11",
+        "swim-12",
+        "swim-13",
+        "swim-14",
+        "swim-15"
+      ]
+    },
+    "lobby-coat-rack": {
+      "width": 16,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rack",
+        "coats",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-couch": {
+      "width": 48,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "couch",
+        "seat",
+        "soft"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "left",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "middle",
+          "dx": 1,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        },
+        {
+          "name": "right",
+          "dx": 2,
+          "dy": 0,
+          "facing": "down",
+          "activity": "rest",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "rust",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-doormat": {
+      "width": 32,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "mat",
+        "soft"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-entrance": {
+      "width": 32,
+      "height": 48,
+      "layer": "wall",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "door",
+        "window",
+        "entrance"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-plant-big": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "plant",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "lobby-reception": {
+      "width": 48,
+      "height": 44,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "desk",
+        "reception",
+        "work"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "seat",
+          "dx": 1,
+          "dy": 0,
+          "facing": "down",
+          "activity": "work",
+          "pose": "sit"
+        }
+      ],
+      "lights": [
+        {
+          "x": 31,
+          "y": 12,
+          "radius": 20,
+          "color": "#63dccf",
+          "intensity": 0.35
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-bench": {
+      "width": 32,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "bench",
+        "seat",
+        "wait"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "left",
+          "dx": 0,
+          "dy": 0,
+          "facing": "down",
+          "activity": "wait",
+          "pose": "sit"
+        },
+        {
+          "name": "right",
+          "dx": 1,
+          "dy": 0,
+          "facing": "down",
+          "activity": "wait",
+          "pose": "sit"
+        }
+      ],
+      "lights": [],
+      "variants": [
+        "teal",
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-door": {
+      "width": 32,
+      "height": 48,
+      "layer": "wall",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "door",
+        "owner"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "closed",
+        "open"
+      ]
+    },
+    "mail-box-stack": {
+      "width": 32,
+      "height": 25,
+      "layer": "object",
+      "origin": [
+        0,
+        9
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "parcel",
+        "mail",
+        "storage"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "mail-cart": {
+      "width": 32,
+      "height": 28,
+      "layer": "object",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "cart",
+        "mail"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "mail-corkboard": {
+      "width": 32,
+      "height": 24,
+      "layer": "wall",
+      "origin": [
+        0,
+        10
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "board"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "mail-parcels": {
+      "width": 16,
+      "height": 20,
+      "layer": "object",
+      "origin": [
+        0,
+        4
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "parcel",
+        "mail"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "mail-pigeonholes": {
+      "width": 48,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "shelf",
+        "mail",
+        "storage",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "oak"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "mail-printer": {
+      "width": 32,
+      "height": 36,
+      "layer": "object",
+      "origin": [
+        0,
+        20
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 2,
+      "tags": [
+        "printer",
+        "scanner",
+        "light"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "blink-0",
+        "blink-1"
+      ]
+    },
+    "mail-sort-table": {
+      "width": 48,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "desk",
+        "mail",
+        "intake"
+      ],
+      "emissive": false,
+      "spots": [
+        {
+          "name": "sort",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "intake",
+          "pose": "stand"
+        }
+      ],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-chair": {
+      "width": 16,
+      "height": 25,
+      "layer": "object",
+      "origin": [
+        0,
+        9
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "chair",
+        "owner"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-desk": {
+      "width": 48,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "desk",
+        "owner",
+        "talk"
+      ],
+      "emissive": true,
+      "spots": [
+        {
+          "name": "talk",
+          "dx": 1,
+          "dy": 1,
+          "facing": "up",
+          "activity": "talk",
+          "pose": "stand"
+        }
+      ],
+      "lights": [
+        {
+          "x": 37,
+          "y": 9,
+          "radius": 28,
+          "color": "#63dccf",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-guitar": {
+      "width": 16,
+      "height": 33,
+      "layer": "object",
+      "origin": [
+        0,
+        17
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "guitar",
+        "decor"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-photos": {
+      "width": 32,
+      "height": 10,
+      "layer": "wall",
+      "origin": [
+        0,
+        12
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "photos"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "owner-sideboard": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "sideboard",
+        "decor",
+        "clear-1"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-bridge-rail": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rail",
+        "bridge",
+        "iron",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default",
+        "end"
+      ]
+    },
+    "park-bush-large": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bush",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "dark"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-bush": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bush",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "flower"
+      ],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "park-ducks": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 2,
+      "tags": [
+        "ducks",
+        "animal",
+        "park",
+        "water"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "bob-0",
+        "bob-1",
+        "bob-2"
+      ]
+    },
+    "park-fern": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "fern",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "park-flowers": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "flowers",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "park-lilypads": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "lilypads",
+        "plant",
+        "park",
+        "water"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "park-log": {
+      "width": 32,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "log",
+        "wood",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-mushrooms": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "mushroom",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "park-picnic-table": {
+      "width": 32,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "table",
+        "picnic",
+        "park",
+        "seat"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-pine-large": {
+      "width": 32,
+      "height": 64,
+      "layer": "object",
+      "origin": [
+        0,
+        48
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "pine",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-pine": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "pine",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-reeds": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 1,
+      "tags": [
+        "reeds",
+        "plant",
+        "park",
+        "water"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "sway-0",
+        "sway-1"
+      ]
+    },
+    "park-rock": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rock",
+        "stone",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-sapling": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "sapling",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "dark"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-stump": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "stump",
+        "wood",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-tree-large": {
+      "width": 48,
+      "height": 64,
+      "layer": "object",
+      "origin": [
+        8,
+        48
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "dark"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-tree-small": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "dark"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-tree": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "dark"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "park-tuft": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "grass",
+        "plant",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "plant-fern": {
+      "width": 16,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "plant",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "plant-small": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "plant",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "plant-tall": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "plant",
+        "any-side"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "rug": {
+      "width": 48,
+      "height": 32,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "rug",
+        "soft"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal",
+        "sage"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-bench": {
+      "width": 32,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": -1,
+      "fps": 0,
+      "tags": [
+        "bench",
+        "seat",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-bike-rack": {
+      "width": 32,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "bike",
+        "rack",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-bus-sign": {
+      "width": 16,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "sign",
+        "street",
+        "stop"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-bus": {
+      "width": 80,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        5,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [],
+      "emissive": true,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "closed-0",
+        "closed-1",
+        "open-0"
+      ]
+    },
+    "street-car": {
+      "width": 48,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        3,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "car",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "rust",
+        "amber",
+        "sage",
+        "silver"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-coffee-cart": {
+      "width": 32,
+      "height": 40,
+      "layer": "object",
+      "origin": [
+        0,
+        24
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "cart",
+        "coffee",
+        "street"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 11,
+          "y": 10,
+          "radius": 28,
+          "color": "#ffd27a",
+          "intensity": 0.5
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-hydrant": {
+      "width": 16,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "hydrant",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-lamp": {
+      "width": 16,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "lamp",
+        "light",
+        "street"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 8,
+          "radius": 60,
+          "color": "#ffd27a",
+          "intensity": 1.2
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-mailbox": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "mailbox",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-manhole": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": true,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "street",
+        "road"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-newsbox": {
+      "width": 16,
+      "height": 32,
+      "layer": "object",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "newsbox",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-planter": {
+      "width": 16,
+      "height": 24,
+      "layer": "object",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "plant",
+        "planter",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "teal"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-sconce": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        8
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 1,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "lamp",
+        "light"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 8,
+          "y": 6,
+          "radius": 44,
+          "color": "#ffd27a",
+          "intensity": 1
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-shop-window": {
+      "width": 32,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "window-front",
+        "decor"
+      ],
+      "emissive": true,
+      "spots": [],
+      "lights": [
+        {
+          "x": 16,
+          "y": 14,
+          "radius": 40,
+          "color": "#ffd27a",
+          "intensity": 0.6
+        }
+      ],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "street-tree": {
+      "width": 32,
+      "height": 48,
+      "layer": "object",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "tree",
+        "plant",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [
+        "autumn",
+        "rust"
+      ],
+      "frames": [
+        "default"
+      ]
+    },
+    "wall-clock": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        13
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "whiteboard": {
+      "width": 32,
+      "height": 24,
+      "layer": "wall",
+      "origin": [
+        0,
+        10
+      ],
+      "footprint": [
+        2,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "winter-wreath": {
+      "width": 16,
+      "height": 18,
+      "layer": "wall",
+      "origin": [
+        0,
+        14
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "decor",
+        "place-wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "floor-asphalt-line": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street",
+        "road"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "floor-asphalt": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street",
+        "road"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "floor-carpet": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "soft"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "floor-crosswalk": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street",
+        "road"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1"
+      ]
+    },
+    "floor-curb-far": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "floor-curb": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "floor-grass": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street",
+        "grass"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    "floor-oak": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "wood"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "floor-path": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "path",
+        "park",
+        "gravel"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "floor-rubber": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "rubber",
+        "gym"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "floor-sidewalk": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "street"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "floor-tile": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "floor",
+        "hard"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "floor-water": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 3,
+      "tags": [
+        "floor",
+        "water",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "flow-0",
+        "flow-1",
+        "flow-2",
+        "flow-3",
+        "glint-0",
+        "glint-1",
+        "glint-2",
+        "glint-3"
+      ]
+    },
+    "fx-edge-water": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "fx",
+        "water",
+        "shore",
+        "park"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "n",
+        "s",
+        "e",
+        "w",
+        "ne",
+        "nw",
+        "se",
+        "sw"
+      ]
+    },
+    "fx-wall-shadow": {
+      "width": 16,
+      "height": 16,
+      "layer": "floor",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "fx"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "wall-brick-cap": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "m0",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5",
+        "m6",
+        "m7",
+        "m8",
+        "m9",
+        "m10",
+        "m11",
+        "m12",
+        "m13",
+        "m14",
+        "m15"
+      ]
+    },
+    "wall-brick-door": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "door",
+        "brick"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "wall-brick-face": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "brick"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "wall-brick-window": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "window",
+        "brick"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "wall-plaster-cap": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "m0",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5",
+        "m6",
+        "m7",
+        "m8",
+        "m9",
+        "m10",
+        "m11",
+        "m12",
+        "m13",
+        "m14",
+        "m15"
+      ]
+    },
+    "wall-plaster-door": {
+      "width": 16,
+      "height": 48,
+      "layer": "wall",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "door"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "through"
+      ]
+    },
+    "wall-plaster-face": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "wall-plaster-window": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "window"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    },
+    "wall-teal-cap": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "m0",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5",
+        "m6",
+        "m7",
+        "m8",
+        "m9",
+        "m10",
+        "m11",
+        "m12",
+        "m13",
+        "m14",
+        "m15"
+      ]
+    },
+    "wall-teal-door": {
+      "width": 16,
+      "height": 48,
+      "layer": "wall",
+      "origin": [
+        0,
+        32
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "door"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default",
+        "through"
+      ]
+    },
+    "wall-teal-face": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "wall-teal-window": {
+      "width": 16,
+      "height": 32,
+      "layer": "wall",
+      "origin": [
+        0,
+        16
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "wall",
+        "window"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "0"
+      ]
+    }
+  }
+}

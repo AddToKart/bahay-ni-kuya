@@ -1,0 +1,46 @@
+# Plush living room sectional sofa in rich rust-crimson upholstery with walnut feet.
+# Footprint: 3 tiles wide x 1 tile deep.
+sprite couch-sectional
+size 48 32
+layer object
+footprint 3 1
+origin 0 16
+zbias -1
+tag living sofa couch rest
+spot seat-1 0 1 up rest sit
+spot seat-2 1 1 up rest sit
+spot seat-3 2 1 up rest sit
+
+frame default
+..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..
+.krrRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrrk.
+.krRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrk.
+.krRR8888RR8888RR8888RR8888RR8888RR8888RR888Rrk.
+.krRR8888RR8888RR8888RR8888RR8888RR8888RR888Rrk.
+.krRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrk.
+.krRR8888RR8888RR8888RR8888RR8888RR8888RR888Rrk.
+.krRR8888RR8888RR8888RR8888RR8888RR8888RR888Rrk.
+.krRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrk.
+.kRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRk.
+.kR888888888888888888888888888888888888888888Rk.
+kkkrrrRRRRRRRRRRkrrrRRRRRRRRRRkrrrRRRRRRRRRRkkk.
+krrkkRRRRRRRRRRkkkkRRRRRRRRRRkkkkRRRRRRRRRRkkrk.
+krrrRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrrrk
+krrrRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrrrk
+krrrRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrrrk
+krrrRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRrrrk
+krrrRR8888888888888888888888888888888888888rrrk.
+krrr888888888888888888888888888888888888888rrrk.
+krrr888888888888888888888888888888888888888rrrk.
+k888888888888888888888888888888888888888888888k.
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+.kwWkkkkkkkkkkkkkkkkkkwWkkkkkkkkkkkkkkkkkkwWk...
+.kwWk.................kwWk................kwWk..
+.kwWk.................kwWk................kwWk..
+.kW3k.................kW3k................kW3k..
+.kkkk.................kkkk................kkkk..
+................................................
+................................................
+................................................
+................................................
+................................................

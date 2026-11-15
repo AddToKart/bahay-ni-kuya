@@ -1,0 +1,35 @@
+# Two-tier iron gym rack holding pairs of cast iron dumbbells.
+# Footprint: 2 tiles wide x 1 tile deep.
+sprite weights-rack
+size 32 24
+layer object
+footprint 2 1
+origin 0 8
+tag gym weights exercise
+spot lift 0 1 up exercise stand
+
+frame default
+..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..
+.kmmmmmmmmmmmmmmmmmmmmmmmmmmmmk.
+.km5m55m55m55m55m55m55m55m55mmk.
+.km5M55M55M55M55M55M55M55M55Mmk.
+.km55555555555555555555555555mk.
+.kMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.
+.k5555555555555555555555555555k.
+.k5k........................k5k.
+.k5k........................k5k.
+.kmmmmmmmmmmmmmmmmmmmmmmmmmmmmk.
+.km5m55m55m55m55m55m55m55m55mmk.
+.km5M55M55M55M55M55M55M55M55Mmk.
+.km55555555555555555555555555mk.
+.kMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.
+.k5555555555555555555555555555k.
+.k5k........................k5k.
+.k5k........................k5k.
+.k5k........................k5k.
+.k5k........................k5k.
+.k5k........................k5k.
+.k5k........................k5k.
+.k5k........................k5k.
+.kkk........................kkk.
+................................

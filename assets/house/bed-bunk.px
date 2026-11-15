@@ -1,0 +1,44 @@
+# Double-decker wooden bunk bed with ladder, pillows, and cozy blue duvet quilts.
+# Footprint: 2 tiles wide x 2 tiles deep.
+sprite bed-bunk
+size 32 32
+layer object
+footprint 2 2
+origin 0 0
+tag bed sleep bedroom
+spot sleep-top 0 0 left sleep lie
+spot sleep-bottom 0 1 left sleep lie
+
+frame default
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+kwWWWWWWWWWWWWWWWWWWWWWWWWWWWWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTT666666666666666666TWwk
+kwW====tTT677777777777777777TWwk
+kwW====tTT677777777777777777TWwk
+kwW33333333333333333333333333Wwk
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWkwWk..................kwWWwk.
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWkwWk..................kwWWwk.
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWWWWWWWWWWWWWWWWWWWWWWWWWWWWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTTTTTTTTTTTTTTTTTTTTTWwk
+kwW====tTT666666666666666666TWwk
+kwW====tTT677777777777777777TWwk
+kwW====tTT677777777777777777TWwk
+kwW33333333333333333333333333Wwk
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWkwWk..................kwWWwk.
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWkwWk..................kwWWwk.
+kwWkwWkkkkkkkkkkkkkkkkkkkkkwWWwk
+kwWkwWk..................kwWWwk.
+kwWkwWk..................kwWWwk.
+kwW33Wk..................kwW33wk
+kkkkkkk..................kkkkkkk
+................................

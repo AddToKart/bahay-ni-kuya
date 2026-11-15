@@ -84,6 +84,902 @@
       "cam": "CAM 8 - GYM"
     }
   },
+  "props": [
+    {
+      "id": "bunk_1",
+      "sprite": "bed-bunk",
+      "x": 2,
+      "y": 3
+    },
+    {
+      "id": "bunk_2",
+      "sprite": "bed-bunk",
+      "x": 7,
+      "y": 3
+    },
+    {
+      "id": "bunk_3",
+      "sprite": "bed-bunk",
+      "x": 2,
+      "y": 7
+    },
+    {
+      "id": "bunk_4",
+      "sprite": "bed-bunk",
+      "x": 7,
+      "y": 7
+    },
+    {
+      "id": "bedroom_nightstand_1",
+      "sprite": "owner-sideboard",
+      "x": 5,
+      "y": 3
+    },
+    {
+      "id": "bedroom_lamp_1",
+      "sprite": "desk-lamp",
+      "x": 5,
+      "y": 3
+    },
+    {
+      "id": "bedroom_nightstand_2",
+      "sprite": "owner-sideboard",
+      "x": 5,
+      "y": 7
+    },
+    {
+      "id": "bedroom_lamp_2",
+      "sprite": "desk-lamp",
+      "x": 5,
+      "y": 7
+    },
+    {
+      "id": "bedroom_bookshelf",
+      "sprite": "bookshelf",
+      "x": 10,
+      "y": 3
+    },
+    {
+      "id": "bedroom_rug_1",
+      "sprite": "rug",
+      "x": 4,
+      "y": 4,
+      "layer": "floor"
+    },
+    {
+      "id": "bedroom_rug_2",
+      "sprite": "rug",
+      "x": 4,
+      "y": 8,
+      "layer": "floor"
+    },
+    {
+      "id": "bedroom_plant_1",
+      "sprite": "plant-small",
+      "x": 5,
+      "y": 2
+    },
+    {
+      "id": "bedroom_plant_2",
+      "sprite": "plant-tall",
+      "x": 10,
+      "y": 8
+    },
+    {
+      "id": "bedroom_cabinet",
+      "sprite": "filing-cabinet",
+      "x": 10,
+      "y": 6
+    },
+    {
+      "id": "bedroom_clock",
+      "sprite": "wall-clock",
+      "x": 6,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "bedroom_art_1",
+      "sprite": "art-frame",
+      "x": 4,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "bedroom_art_2",
+      "sprite": "art-frame",
+      "x": 9,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "living_sofa",
+      "sprite": "couch-sectional",
+      "x": 15,
+      "y": 5
+    },
+    {
+      "id": "living_tv",
+      "sprite": "tv-unit",
+      "x": 16,
+      "y": 2
+    },
+    {
+      "id": "living_lamp_top",
+      "sprite": "floor-lamp",
+      "x": 21,
+      "y": 2
+    },
+    {
+      "id": "living_coffee_table",
+      "sprite": "break-coffee-table",
+      "x": 16,
+      "y": 7
+    },
+    {
+      "id": "living_coffee_mug",
+      "sprite": "kitchen-coffee",
+      "x": 16,
+      "y": 7
+    },
+    {
+      "id": "living_armchair_1",
+      "sprite": "library-armchair",
+      "x": 13,
+      "y": 6
+    },
+    {
+      "id": "living_armchair_2",
+      "sprite": "library-armchair",
+      "x": 21,
+      "y": 6
+    },
+    {
+      "id": "living_rug",
+      "sprite": "library-rug",
+      "x": 15,
+      "y": 6,
+      "layer": "floor"
+    },
+    {
+      "id": "living_bookshelf",
+      "sprite": "library-shelf",
+      "x": 22,
+      "y": 3
+    },
+    {
+      "id": "living_plant_1",
+      "sprite": "lobby-plant-big",
+      "x": 13,
+      "y": 3
+    },
+    {
+      "id": "living_plant_2",
+      "sprite": "plant-fern",
+      "x": 22,
+      "y": 8
+    },
+    {
+      "id": "living_art_1",
+      "sprite": "art-frame",
+      "x": 14,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "living_art_2",
+      "sprite": "art-frame",
+      "x": 19,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "office_desk_prop_1",
+      "sprite": "desk",
+      "variant": "walnut",
+      "x": 26,
+      "y": 3
+    },
+    {
+      "id": "desk_lamp_1",
+      "sprite": "desk-lamp",
+      "x": 26,
+      "y": 3
+    },
+    {
+      "id": "desk_chair_1",
+      "sprite": "chair",
+      "variant": "rust",
+      "x": 27,
+      "y": 4
+    },
+    {
+      "id": "office_desk_prop_2",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 29,
+      "y": 3
+    },
+    {
+      "id": "desk_plant_2",
+      "sprite": "plant-small",
+      "x": 29,
+      "y": 3
+    },
+    {
+      "id": "desk_chair_2",
+      "sprite": "chair",
+      "variant": "sage",
+      "x": 30,
+      "y": 4
+    },
+    {
+      "id": "office_desk_prop_3",
+      "sprite": "desk",
+      "variant": "walnut",
+      "x": 32,
+      "y": 3
+    },
+    {
+      "id": "desk_lamp_3",
+      "sprite": "desk-lamp",
+      "x": 32,
+      "y": 3
+    },
+    {
+      "id": "desk_chair_3",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 33,
+      "y": 4
+    },
+    {
+      "id": "office_desk_prop_4",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 35,
+      "y": 3
+    },
+    {
+      "id": "desk_plant_4",
+      "sprite": "plant-small",
+      "x": 35,
+      "y": 3
+    },
+    {
+      "id": "desk_chair_4",
+      "sprite": "chair",
+      "variant": "rust",
+      "x": 36,
+      "y": 4
+    },
+    {
+      "id": "office_desk_prop_5",
+      "sprite": "desk",
+      "variant": "walnut",
+      "x": 26,
+      "y": 6
+    },
+    {
+      "id": "desk_lamp_5",
+      "sprite": "desk-lamp",
+      "x": 26,
+      "y": 6
+    },
+    {
+      "id": "desk_chair_5",
+      "sprite": "chair",
+      "variant": "sage",
+      "x": 27,
+      "y": 7
+    },
+    {
+      "id": "office_desk_prop_6",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 29,
+      "y": 6
+    },
+    {
+      "id": "desk_plant_6",
+      "sprite": "plant-small",
+      "x": 29,
+      "y": 6
+    },
+    {
+      "id": "desk_chair_6",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 30,
+      "y": 7
+    },
+    {
+      "id": "office_desk_prop_7",
+      "sprite": "desk",
+      "variant": "walnut",
+      "x": 32,
+      "y": 6
+    },
+    {
+      "id": "desk_lamp_7",
+      "sprite": "desk-lamp",
+      "x": 32,
+      "y": 6
+    },
+    {
+      "id": "desk_chair_7",
+      "sprite": "chair",
+      "variant": "rust",
+      "x": 33,
+      "y": 7
+    },
+    {
+      "id": "office_desk_prop_8",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 35,
+      "y": 6
+    },
+    {
+      "id": "desk_plant_8",
+      "sprite": "plant-small",
+      "x": 35,
+      "y": 6
+    },
+    {
+      "id": "desk_chair_8",
+      "sprite": "chair",
+      "variant": "sage",
+      "x": 36,
+      "y": 7
+    },
+    {
+      "id": "subagent_desk_prop_1",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 26,
+      "y": 9
+    },
+    {
+      "id": "subagent_chair_1",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 27,
+      "y": 10
+    },
+    {
+      "id": "subagent_desk_prop_2",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 29,
+      "y": 9
+    },
+    {
+      "id": "subagent_chair_2",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 30,
+      "y": 10
+    },
+    {
+      "id": "subagent_desk_prop_3",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 32,
+      "y": 9
+    },
+    {
+      "id": "subagent_chair_3",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 33,
+      "y": 10
+    },
+    {
+      "id": "subagent_desk_prop_4",
+      "sprite": "desk",
+      "variant": "ash",
+      "x": 35,
+      "y": 9
+    },
+    {
+      "id": "subagent_chair_4",
+      "sprite": "chair",
+      "variant": "teal",
+      "x": 36,
+      "y": 10
+    },
+    {
+      "id": "office_whiteboard",
+      "sprite": "whiteboard",
+      "x": 30,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "office_clock",
+      "sprite": "wall-clock",
+      "x": 36,
+      "y": 2,
+      "layer": "wall"
+    },
+    {
+      "id": "office_cooler",
+      "sprite": "kitchen-cooler",
+      "x": 39,
+      "y": 3
+    },
+    {
+      "id": "office_cabinet_1",
+      "sprite": "filing-cabinet",
+      "x": 39,
+      "y": 5
+    },
+    {
+      "id": "office_cabinet_2",
+      "sprite": "filing-cabinet",
+      "x": 39,
+      "y": 6
+    },
+    {
+      "id": "office_bin_1",
+      "sprite": "bin",
+      "x": 25,
+      "y": 4
+    },
+    {
+      "id": "office_bin_2",
+      "sprite": "bin",
+      "x": 38,
+      "y": 7
+    },
+    {
+      "id": "office_bookshelf_1",
+      "sprite": "bookshelf",
+      "x": 25,
+      "y": 6
+    },
+    {
+      "id": "office_bookshelf_2",
+      "sprite": "bookshelf",
+      "x": 25,
+      "y": 7
+    },
+    {
+      "id": "office_plant_1",
+      "sprite": "lobby-plant-big",
+      "x": 25,
+      "y": 3
+    },
+    {
+      "id": "office_plant_2",
+      "sprite": "lobby-plant-big",
+      "x": 39,
+      "y": 9
+    },
+    {
+      "id": "office_rug_1",
+      "sprite": "rug",
+      "x": 28,
+      "y": 5,
+      "layer": "floor"
+    },
+    {
+      "id": "office_rug_2",
+      "sprite": "rug",
+      "x": 34,
+      "y": 5,
+      "layer": "floor"
+    },
+    {
+      "id": "hallway_sign",
+      "sprite": "house-sign",
+      "x": 19,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_4",
+      "sprite": "street-sconce",
+      "x": 4,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_10",
+      "sprite": "street-sconce",
+      "x": 10,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_14",
+      "sprite": "street-sconce",
+      "x": 14,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_22",
+      "sprite": "street-sconce",
+      "x": 22,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_26",
+      "sprite": "street-sconce",
+      "x": 26,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_34",
+      "sprite": "street-sconce",
+      "x": 34,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_sconce_38",
+      "sprite": "street-sconce",
+      "x": 38,
+      "y": 11,
+      "layer": "wall"
+    },
+    {
+      "id": "hallway_plant_1",
+      "sprite": "plant-tall",
+      "x": 1,
+      "y": 14
+    },
+    {
+      "id": "hallway_plant_2",
+      "sprite": "plant-tall",
+      "x": 40,
+      "y": 14
+    },
+    {
+      "id": "hallway_clock",
+      "sprite": "wall-clock",
+      "x": 20,
+      "y": 15,
+      "layer": "wall"
+    },
+    {
+      "id": "confession_chair_prop",
+      "sprite": "confession-chair",
+      "x": 4,
+      "y": 20
+    },
+    {
+      "id": "confession_spotlight_prop",
+      "sprite": "confession-spotlight",
+      "x": 4,
+      "y": 19,
+      "layer": "overlay"
+    },
+    {
+      "id": "kitchen_fridge_prop",
+      "sprite": "kitchen-fridge",
+      "x": 11,
+      "y": 17
+    },
+    {
+      "id": "kitchen_stove_prop",
+      "sprite": "kitchen-stove",
+      "x": 13,
+      "y": 17
+    },
+    {
+      "id": "kitchen_sink_prop",
+      "sprite": "kitchen-counter-sink",
+      "x": 15,
+      "y": 17
+    },
+    {
+      "id": "kitchen_cooler_prop",
+      "sprite": "kitchen-cooler",
+      "x": 17,
+      "y": 17
+    },
+    {
+      "id": "kitchen_vending_prop",
+      "sprite": "break-vending",
+      "x": 19,
+      "y": 17
+    },
+    {
+      "id": "kitchen_counter_end_1",
+      "sprite": "kitchen-counter-end",
+      "x": 10,
+      "y": 17
+    },
+    {
+      "id": "kitchen_counter_mid",
+      "sprite": "kitchen-counter",
+      "x": 12,
+      "y": 17
+    },
+    {
+      "id": "kitchen_counter_end_2",
+      "sprite": "kitchen-counter-end",
+      "x": 16,
+      "y": 17,
+      "flip": true
+    },
+    {
+      "id": "kitchen_microwave_prop",
+      "sprite": "kitchen-microwave",
+      "x": 12,
+      "y": 17
+    },
+    {
+      "id": "kitchen_kettle_prop",
+      "sprite": "kitchen-kettle",
+      "x": 14,
+      "y": 17
+    },
+    {
+      "id": "kitchen_shelf_prop",
+      "sprite": "kitchen-shelf",
+      "x": 13,
+      "y": 16,
+      "layer": "wall"
+    },
+    {
+      "id": "kitchen_mat_prop",
+      "sprite": "kitchen-mat",
+      "x": 13,
+      "y": 18,
+      "layer": "floor"
+    },
+    {
+      "id": "kitchen_bin_prop",
+      "sprite": "bin",
+      "x": 10,
+      "y": 18
+    },
+    {
+      "id": "kitchen_plant_1",
+      "sprite": "plant-tall",
+      "x": 10,
+      "y": 24
+    },
+    {
+      "id": "kitchen_plant_2",
+      "sprite": "plant-tall",
+      "x": 22,
+      "y": 24
+    },
+    {
+      "id": "kitchen_table_prop",
+      "sprite": "kitchen-table",
+      "x": 18,
+      "y": 21
+    },
+    {
+      "id": "kitchen_chair_1",
+      "sprite": "kitchen-chair",
+      "x": 17,
+      "y": 21,
+      "flip": true
+    },
+    {
+      "id": "kitchen_chair_2",
+      "sprite": "kitchen-chair",
+      "x": 20,
+      "y": 21
+    },
+    {
+      "id": "kitchen_chair_3",
+      "sprite": "kitchen-chair",
+      "x": 18,
+      "y": 23
+    },
+    {
+      "id": "kitchen_chair_4",
+      "sprite": "kitchen-chair",
+      "x": 19,
+      "y": 23
+    },
+    {
+      "id": "gameroom_pool_prop",
+      "sprite": "pool-table",
+      "x": 27,
+      "y": 20
+    },
+    {
+      "id": "arcade_prop_1",
+      "sprite": "arcade-cabinet",
+      "x": 31,
+      "y": 17
+    },
+    {
+      "id": "arcade_prop_2",
+      "sprite": "break-arcade",
+      "x": 32,
+      "y": 17
+    },
+    {
+      "id": "game_dartboard",
+      "sprite": "break-dartboard",
+      "x": 26,
+      "y": 16,
+      "layer": "wall"
+    },
+    {
+      "id": "game_poster",
+      "sprite": "break-poster",
+      "x": 29,
+      "y": 16,
+      "layer": "wall"
+    },
+    {
+      "id": "game_beanbag_1",
+      "sprite": "break-beanbag",
+      "x": 25,
+      "y": 23
+    },
+    {
+      "id": "game_beanbag_2",
+      "sprite": "break-beanbag",
+      "x": 33,
+      "y": 23
+    },
+    {
+      "id": "game_bin",
+      "sprite": "bin",
+      "x": 33,
+      "y": 18
+    },
+    {
+      "id": "game_plant",
+      "sprite": "plant-fern",
+      "x": 24,
+      "y": 24
+    },
+    {
+      "id": "gym_treadmill_prop",
+      "sprite": "treadmill",
+      "x": 37,
+      "y": 20
+    },
+    {
+      "id": "gym_weights_prop",
+      "sprite": "weights-rack",
+      "x": 38,
+      "y": 22
+    },
+    {
+      "id": "gym_bike_prop",
+      "sprite": "gym-bike",
+      "x": 36,
+      "y": 22
+    },
+    {
+      "id": "gym_bench_prop",
+      "sprite": "gym-bench",
+      "x": 35,
+      "y": 19
+    },
+    {
+      "id": "gym_kettlebells_prop",
+      "sprite": "gym-kettlebells",
+      "x": 39,
+      "y": 20
+    },
+    {
+      "id": "gym_bottle_prop",
+      "sprite": "gym-bottle",
+      "x": 38,
+      "y": 19
+    },
+    {
+      "id": "gym_mirror_prop",
+      "sprite": "gym-mirror",
+      "x": 37,
+      "y": 16,
+      "layer": "wall"
+    },
+    {
+      "id": "gym_poster_prop",
+      "sprite": "gym-poster",
+      "x": 39,
+      "y": 16,
+      "layer": "wall"
+    },
+    {
+      "id": "garden_tree",
+      "sprite": "park-tree",
+      "x": 39,
+      "y": 17
+    },
+    {
+      "id": "garden_bush",
+      "sprite": "park-bush",
+      "x": 36,
+      "y": 17
+    },
+    {
+      "id": "garden_flowers",
+      "sprite": "park-flowers",
+      "x": 40,
+      "y": 24
+    },
+    {
+      "id": "garden_fern",
+      "sprite": "park-fern",
+      "x": 35,
+      "y": 24
+    },
+    {
+      "id": "outdoor_tree_1",
+      "sprite": "park-tree-large",
+      "x": 2,
+      "y": 0
+    },
+    {
+      "id": "outdoor_pine_1",
+      "sprite": "park-pine",
+      "x": 8,
+      "y": 0
+    },
+    {
+      "id": "outdoor_tree_2",
+      "sprite": "park-tree-large",
+      "x": 20,
+      "y": 0
+    },
+    {
+      "id": "outdoor_pine_2",
+      "sprite": "park-pine",
+      "x": 30,
+      "y": 0
+    },
+    {
+      "id": "outdoor_tree_3",
+      "sprite": "park-tree-large",
+      "x": 38,
+      "y": 0
+    },
+    {
+      "id": "outdoor_lamp_1",
+      "sprite": "street-lamp",
+      "x": 5,
+      "y": 0
+    },
+    {
+      "id": "outdoor_lamp_2",
+      "sprite": "street-lamp",
+      "x": 16,
+      "y": 0
+    },
+    {
+      "id": "outdoor_lamp_3",
+      "sprite": "street-lamp",
+      "x": 28,
+      "y": 0
+    },
+    {
+      "id": "outdoor_lamp_4",
+      "sprite": "street-lamp",
+      "x": 37,
+      "y": 0
+    },
+    {
+      "id": "outdoor_bench_1",
+      "sprite": "street-bench",
+      "x": 11,
+      "y": 0
+    },
+    {
+      "id": "outdoor_bench_2",
+      "sprite": "street-bench",
+      "x": 23,
+      "y": 0
+    }
+  ],
   "layers": [
     {
       "id": 1,
@@ -4339,7 +5235,7 @@
         0,
         0,
         0,
-        null,
+        58,
         0,
         0,
         0,
@@ -7300,6 +8196,5055 @@
               "name": "tags",
               "type": "string",
               "value": "garden,plants"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "props",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        {
+          "id": 1001,
+          "name": "bunk_1",
+          "type": "prop",
+          "x": 32,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bed-bunk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1002,
+          "name": "bunk_2",
+          "type": "prop",
+          "x": 112,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bed-bunk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1003,
+          "name": "bunk_3",
+          "type": "prop",
+          "x": 32,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bed-bunk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1004,
+          "name": "bunk_4",
+          "type": "prop",
+          "x": 112,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bed-bunk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1005,
+          "name": "bedroom_nightstand_1",
+          "type": "prop",
+          "x": 80,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "owner-sideboard"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1006,
+          "name": "bedroom_lamp_1",
+          "type": "prop",
+          "x": 80,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1007,
+          "name": "bedroom_nightstand_2",
+          "type": "prop",
+          "x": 80,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "owner-sideboard"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1008,
+          "name": "bedroom_lamp_2",
+          "type": "prop",
+          "x": 80,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1009,
+          "name": "bedroom_bookshelf",
+          "type": "prop",
+          "x": 160,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bookshelf"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1010,
+          "name": "bedroom_rug_1",
+          "type": "prop",
+          "x": 64,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "rug"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1011,
+          "name": "bedroom_rug_2",
+          "type": "prop",
+          "x": 64,
+          "y": 128,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "rug"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1012,
+          "name": "bedroom_plant_1",
+          "type": "prop",
+          "x": 80,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-small"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1013,
+          "name": "bedroom_plant_2",
+          "type": "prop",
+          "x": 160,
+          "y": 128,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-tall"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1014,
+          "name": "bedroom_cabinet",
+          "type": "prop",
+          "x": 160,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "filing-cabinet"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1015,
+          "name": "bedroom_clock",
+          "type": "prop",
+          "x": 96,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "wall-clock"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1016,
+          "name": "bedroom_art_1",
+          "type": "prop",
+          "x": 64,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "art-frame"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1017,
+          "name": "bedroom_art_2",
+          "type": "prop",
+          "x": 144,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "art-frame"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1018,
+          "name": "living_sofa",
+          "type": "prop",
+          "x": 240,
+          "y": 80,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "couch-sectional"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1019,
+          "name": "living_tv",
+          "type": "prop",
+          "x": 256,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "tv-unit"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1020,
+          "name": "living_lamp_top",
+          "type": "prop",
+          "x": 336,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "floor-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1021,
+          "name": "living_coffee_table",
+          "type": "prop",
+          "x": 256,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-coffee-table"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1022,
+          "name": "living_coffee_mug",
+          "type": "prop",
+          "x": 256,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-coffee"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1023,
+          "name": "living_armchair_1",
+          "type": "prop",
+          "x": 208,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "library-armchair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1024,
+          "name": "living_armchair_2",
+          "type": "prop",
+          "x": 336,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "library-armchair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1025,
+          "name": "living_rug",
+          "type": "prop",
+          "x": 240,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "library-rug"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1026,
+          "name": "living_bookshelf",
+          "type": "prop",
+          "x": 352,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "library-shelf"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1027,
+          "name": "living_plant_1",
+          "type": "prop",
+          "x": 208,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "lobby-plant-big"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1028,
+          "name": "living_plant_2",
+          "type": "prop",
+          "x": 352,
+          "y": 128,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-fern"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1029,
+          "name": "living_art_1",
+          "type": "prop",
+          "x": 224,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "art-frame"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1030,
+          "name": "living_art_2",
+          "type": "prop",
+          "x": 304,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "art-frame"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1031,
+          "name": "office_desk_prop_1",
+          "type": "prop",
+          "x": 416,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "walnut"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1032,
+          "name": "desk_lamp_1",
+          "type": "prop",
+          "x": 416,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1033,
+          "name": "desk_chair_1",
+          "type": "prop",
+          "x": 432,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "rust"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1034,
+          "name": "office_desk_prop_2",
+          "type": "prop",
+          "x": 464,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1035,
+          "name": "desk_plant_2",
+          "type": "prop",
+          "x": 464,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-small"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1036,
+          "name": "desk_chair_2",
+          "type": "prop",
+          "x": 480,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "sage"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1037,
+          "name": "office_desk_prop_3",
+          "type": "prop",
+          "x": 512,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "walnut"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1038,
+          "name": "desk_lamp_3",
+          "type": "prop",
+          "x": 512,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1039,
+          "name": "desk_chair_3",
+          "type": "prop",
+          "x": 528,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1040,
+          "name": "office_desk_prop_4",
+          "type": "prop",
+          "x": 560,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1041,
+          "name": "desk_plant_4",
+          "type": "prop",
+          "x": 560,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-small"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1042,
+          "name": "desk_chair_4",
+          "type": "prop",
+          "x": 576,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "rust"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1043,
+          "name": "office_desk_prop_5",
+          "type": "prop",
+          "x": 416,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "walnut"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1044,
+          "name": "desk_lamp_5",
+          "type": "prop",
+          "x": 416,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1045,
+          "name": "desk_chair_5",
+          "type": "prop",
+          "x": 432,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "sage"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1046,
+          "name": "office_desk_prop_6",
+          "type": "prop",
+          "x": 464,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1047,
+          "name": "desk_plant_6",
+          "type": "prop",
+          "x": 464,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-small"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1048,
+          "name": "desk_chair_6",
+          "type": "prop",
+          "x": 480,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1049,
+          "name": "office_desk_prop_7",
+          "type": "prop",
+          "x": 512,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "walnut"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1050,
+          "name": "desk_lamp_7",
+          "type": "prop",
+          "x": 512,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1051,
+          "name": "desk_chair_7",
+          "type": "prop",
+          "x": 528,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "rust"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1052,
+          "name": "office_desk_prop_8",
+          "type": "prop",
+          "x": 560,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1053,
+          "name": "desk_plant_8",
+          "type": "prop",
+          "x": 560,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-small"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1054,
+          "name": "desk_chair_8",
+          "type": "prop",
+          "x": 576,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "sage"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1055,
+          "name": "subagent_desk_prop_1",
+          "type": "prop",
+          "x": 416,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1056,
+          "name": "subagent_chair_1",
+          "type": "prop",
+          "x": 432,
+          "y": 160,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1057,
+          "name": "subagent_desk_prop_2",
+          "type": "prop",
+          "x": 464,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1058,
+          "name": "subagent_chair_2",
+          "type": "prop",
+          "x": 480,
+          "y": 160,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1059,
+          "name": "subagent_desk_prop_3",
+          "type": "prop",
+          "x": 512,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1060,
+          "name": "subagent_chair_3",
+          "type": "prop",
+          "x": 528,
+          "y": 160,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1061,
+          "name": "subagent_desk_prop_4",
+          "type": "prop",
+          "x": 560,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "desk"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "ash"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1062,
+          "name": "subagent_chair_4",
+          "type": "prop",
+          "x": 576,
+          "y": 160,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "teal"
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1063,
+          "name": "office_whiteboard",
+          "type": "prop",
+          "x": 480,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "whiteboard"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1064,
+          "name": "office_clock",
+          "type": "prop",
+          "x": 576,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "wall-clock"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1065,
+          "name": "office_cooler",
+          "type": "prop",
+          "x": 624,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-cooler"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1066,
+          "name": "office_cabinet_1",
+          "type": "prop",
+          "x": 624,
+          "y": 80,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "filing-cabinet"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1067,
+          "name": "office_cabinet_2",
+          "type": "prop",
+          "x": 624,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "filing-cabinet"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1068,
+          "name": "office_bin_1",
+          "type": "prop",
+          "x": 400,
+          "y": 64,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bin"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1069,
+          "name": "office_bin_2",
+          "type": "prop",
+          "x": 608,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bin"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1070,
+          "name": "office_bookshelf_1",
+          "type": "prop",
+          "x": 400,
+          "y": 96,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bookshelf"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1071,
+          "name": "office_bookshelf_2",
+          "type": "prop",
+          "x": 400,
+          "y": 112,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bookshelf"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1072,
+          "name": "office_plant_1",
+          "type": "prop",
+          "x": 400,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "lobby-plant-big"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1073,
+          "name": "office_plant_2",
+          "type": "prop",
+          "x": 624,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "lobby-plant-big"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1074,
+          "name": "office_rug_1",
+          "type": "prop",
+          "x": 448,
+          "y": 80,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "rug"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1075,
+          "name": "office_rug_2",
+          "type": "prop",
+          "x": 544,
+          "y": 80,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "rug"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1076,
+          "name": "hallway_sign",
+          "type": "prop",
+          "x": 304,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "house-sign"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1077,
+          "name": "hallway_sconce_4",
+          "type": "prop",
+          "x": 64,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1078,
+          "name": "hallway_sconce_10",
+          "type": "prop",
+          "x": 160,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1079,
+          "name": "hallway_sconce_14",
+          "type": "prop",
+          "x": 224,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1080,
+          "name": "hallway_sconce_22",
+          "type": "prop",
+          "x": 352,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1081,
+          "name": "hallway_sconce_26",
+          "type": "prop",
+          "x": 416,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1082,
+          "name": "hallway_sconce_34",
+          "type": "prop",
+          "x": 544,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1083,
+          "name": "hallway_sconce_38",
+          "type": "prop",
+          "x": 608,
+          "y": 176,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-sconce"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1084,
+          "name": "hallway_plant_1",
+          "type": "prop",
+          "x": 16,
+          "y": 224,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-tall"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1085,
+          "name": "hallway_plant_2",
+          "type": "prop",
+          "x": 640,
+          "y": 224,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-tall"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1086,
+          "name": "hallway_clock",
+          "type": "prop",
+          "x": 320,
+          "y": 240,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "wall-clock"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1087,
+          "name": "confession_chair_prop",
+          "type": "prop",
+          "x": 64,
+          "y": 320,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "confession-chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1088,
+          "name": "confession_spotlight_prop",
+          "type": "prop",
+          "x": 64,
+          "y": 304,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "confession-spotlight"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "overlay"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1089,
+          "name": "kitchen_fridge_prop",
+          "type": "prop",
+          "x": 176,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-fridge"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1090,
+          "name": "kitchen_stove_prop",
+          "type": "prop",
+          "x": 208,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-stove"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1091,
+          "name": "kitchen_sink_prop",
+          "type": "prop",
+          "x": 240,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-counter-sink"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1092,
+          "name": "kitchen_cooler_prop",
+          "type": "prop",
+          "x": 272,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-cooler"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1093,
+          "name": "kitchen_vending_prop",
+          "type": "prop",
+          "x": 304,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-vending"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1094,
+          "name": "kitchen_counter_end_1",
+          "type": "prop",
+          "x": 160,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-counter-end"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1095,
+          "name": "kitchen_counter_mid",
+          "type": "prop",
+          "x": 192,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-counter"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1096,
+          "name": "kitchen_counter_end_2",
+          "type": "prop",
+          "x": 256,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-counter-end"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 1097,
+          "name": "kitchen_microwave_prop",
+          "type": "prop",
+          "x": 192,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-microwave"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1098,
+          "name": "kitchen_kettle_prop",
+          "type": "prop",
+          "x": 224,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-kettle"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1099,
+          "name": "kitchen_shelf_prop",
+          "type": "prop",
+          "x": 208,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-shelf"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1100,
+          "name": "kitchen_mat_prop",
+          "type": "prop",
+          "x": 208,
+          "y": 288,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-mat"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "floor"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1101,
+          "name": "kitchen_bin_prop",
+          "type": "prop",
+          "x": 160,
+          "y": 288,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bin"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1102,
+          "name": "kitchen_plant_1",
+          "type": "prop",
+          "x": 160,
+          "y": 384,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-tall"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1103,
+          "name": "kitchen_plant_2",
+          "type": "prop",
+          "x": 352,
+          "y": 384,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-tall"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1104,
+          "name": "kitchen_table_prop",
+          "type": "prop",
+          "x": 288,
+          "y": 336,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-table"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1105,
+          "name": "kitchen_chair_1",
+          "type": "prop",
+          "x": 272,
+          "y": 336,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 1106,
+          "name": "kitchen_chair_2",
+          "type": "prop",
+          "x": 320,
+          "y": 336,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1107,
+          "name": "kitchen_chair_3",
+          "type": "prop",
+          "x": 288,
+          "y": 368,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1108,
+          "name": "kitchen_chair_4",
+          "type": "prop",
+          "x": 304,
+          "y": 368,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "kitchen-chair"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1109,
+          "name": "gameroom_pool_prop",
+          "type": "prop",
+          "x": 432,
+          "y": 320,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "pool-table"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1110,
+          "name": "arcade_prop_1",
+          "type": "prop",
+          "x": 496,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "arcade-cabinet"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1111,
+          "name": "arcade_prop_2",
+          "type": "prop",
+          "x": 512,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-arcade"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1112,
+          "name": "game_dartboard",
+          "type": "prop",
+          "x": 416,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-dartboard"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1113,
+          "name": "game_poster",
+          "type": "prop",
+          "x": 464,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-poster"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1114,
+          "name": "game_beanbag_1",
+          "type": "prop",
+          "x": 400,
+          "y": 368,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-beanbag"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1115,
+          "name": "game_beanbag_2",
+          "type": "prop",
+          "x": 528,
+          "y": 368,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "break-beanbag"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1116,
+          "name": "game_bin",
+          "type": "prop",
+          "x": 528,
+          "y": 288,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "bin"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1117,
+          "name": "game_plant",
+          "type": "prop",
+          "x": 384,
+          "y": 384,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "plant-fern"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1118,
+          "name": "gym_treadmill_prop",
+          "type": "prop",
+          "x": 592,
+          "y": 320,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "treadmill"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1119,
+          "name": "gym_weights_prop",
+          "type": "prop",
+          "x": 608,
+          "y": 352,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "weights-rack"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1120,
+          "name": "gym_bike_prop",
+          "type": "prop",
+          "x": 576,
+          "y": 352,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-bike"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1121,
+          "name": "gym_bench_prop",
+          "type": "prop",
+          "x": 560,
+          "y": 304,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-bench"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1122,
+          "name": "gym_kettlebells_prop",
+          "type": "prop",
+          "x": 624,
+          "y": 320,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-kettlebells"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1123,
+          "name": "gym_bottle_prop",
+          "type": "prop",
+          "x": 608,
+          "y": 304,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-bottle"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1124,
+          "name": "gym_mirror_prop",
+          "type": "prop",
+          "x": 592,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-mirror"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1125,
+          "name": "gym_poster_prop",
+          "type": "prop",
+          "x": 624,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "gym-poster"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "wall"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1126,
+          "name": "garden_tree",
+          "type": "prop",
+          "x": 624,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-tree"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1127,
+          "name": "garden_bush",
+          "type": "prop",
+          "x": 576,
+          "y": 272,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-bush"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1128,
+          "name": "garden_flowers",
+          "type": "prop",
+          "x": 640,
+          "y": 384,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-flowers"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1129,
+          "name": "garden_fern",
+          "type": "prop",
+          "x": 560,
+          "y": 384,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-fern"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1130,
+          "name": "outdoor_tree_1",
+          "type": "prop",
+          "x": 32,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-tree-large"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1131,
+          "name": "outdoor_pine_1",
+          "type": "prop",
+          "x": 128,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-pine"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1132,
+          "name": "outdoor_tree_2",
+          "type": "prop",
+          "x": 320,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-tree-large"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1133,
+          "name": "outdoor_pine_2",
+          "type": "prop",
+          "x": 480,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-pine"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1134,
+          "name": "outdoor_tree_3",
+          "type": "prop",
+          "x": 608,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "park-tree-large"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1135,
+          "name": "outdoor_lamp_1",
+          "type": "prop",
+          "x": 80,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1136,
+          "name": "outdoor_lamp_2",
+          "type": "prop",
+          "x": 256,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1137,
+          "name": "outdoor_lamp_3",
+          "type": "prop",
+          "x": 448,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1138,
+          "name": "outdoor_lamp_4",
+          "type": "prop",
+          "x": 592,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-lamp"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1139,
+          "name": "outdoor_bench_1",
+          "type": "prop",
+          "x": 176,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-bench"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": 1140,
+          "name": "outdoor_bench_2",
+          "type": "prop",
+          "x": 368,
+          "y": 0,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "street-bench"
+            },
+            {
+              "name": "frame",
+              "type": "string",
+              "value": "default"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "layer",
+              "type": "string",
+              "value": "object"
+            },
+            {
+              "name": "flip",
+              "type": "bool",
+              "value": false
             }
           ]
         }

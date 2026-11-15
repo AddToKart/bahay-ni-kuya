@@ -113,6 +113,15 @@ See [`docs/runners-verified.md`](docs/runners-verified.md) for full runner table
 
 ---
 
+## Credits & Third-Party Art
+
+- **Oddboro**: Core pixel art tiles and office props adapted from the open-source [Oddboro](https://github.com/New-Altitude/Oddboro) project by **New Altitude, Inc.**, licensed under the [Apache License 2.0](assets/third-party/oddboro/LICENSE). See [`NOTICE`](NOTICE) and [`docs/oddboro-license-audit.md`](docs/oddboro-license-audit.md).
+- **House-Specific Art**: Bunk beds, confessional chair and spotlight, pool table, arcade cabinet, kitchen stove, treadmill, weights rack, TV console, and sectional sofa are original works authored for Bahay ni Kuya following Oddboro's art conventions and shared palette.
+- **Zero Protected Audio or Trademarks**: Audio tracks and Oddboro brand trademarks are strictly excluded.
+
+---
+
 ## License
 
-This project is licensed under the [MIT License](LICENSE). All procedural art assets and sprite generation algorithms are dedicated to the public domain under [CC0 1.0 Universal](assets/MANIFEST.md).
+This project is licensed under the [MIT License](LICENSE).
+Third-party pixel art assets from Oddboro are licensed under [Apache License 2.0](assets/third-party/oddboro/LICENSE). Original house assets are dedicated to the public domain under [CC0 1.0 Universal](assets/MANIFEST.md).

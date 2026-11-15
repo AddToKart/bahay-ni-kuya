@@ -1,0 +1,43 @@
+# Solitary high-backed mahogany confessional armchair with crimson leather tufting.
+sprite confession-chair
+size 16 32
+layer object
+footprint 1 1
+origin 0 16
+zbias -1
+tag chair confession talk
+spot seat 0 0 down talk sit
+
+frame default
+................
+................
+.....kkkkkk.....
+....kwWWWWwk....
+...kwWRRRRRRwk..
+..kwWRRRRRRRRwk.
+..kwWRR88RRR8Rwk
+..kwWRRR8RRR8Rwk
+..kwWRRRRRRRRRwk
+..kwWR8RRRR8RRwk
+..kwWR8RRRR8RRwk
+..kwWRRR8RRRRRwk
+..kwWRRRRRRRRRwk
+..kWWWWWWWWWWWWk
+.kwwWWWWWWWWWWww
+.kwkrrRRRRRRrrkw
+.kwkrrRRRRRRrrkw
+.kwkRRRRRRRRRRkw
+.kwkRR88RR88RRkw
+.kwkRR88RR88RRkw
+.kwk8888888888kw
+.kWWWWWWWWWWWWWW
+..kwWkkkkkkkkWwk
+..kwWk......kWwk
+..kwWk......kWwk
+..kwWk......kWwk
+..kw3k......k3wk
+..kkkk......kkkk
+................
+................
+................
+................

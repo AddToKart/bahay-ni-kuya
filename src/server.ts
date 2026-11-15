@@ -374,9 +374,14 @@ try {
         }
       }
 
-      if (req.method === "GET") {
+      if (req.method === "GET" || req.method === "HEAD") {
         const staticResponse = await serveStatic(url.pathname);
-        if (staticResponse) return staticResponse;
+        if (staticResponse) {
+          if (req.method === "HEAD") {
+            return new Response(null, { headers: staticResponse.headers, status: staticResponse.status });
+          }
+          return staticResponse;
+        }
       }
       return new Response("not found", { status: 404 });
     },

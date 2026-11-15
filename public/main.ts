@@ -2,7 +2,7 @@
 
 import { HARNESS_ORDER, MONO, PALETTE, accentFor, VARIANT_ACCENTS } from "./sprites.js";
 import { loadHouseMap, type HouseMap, type RoomId } from "./map.js";
-import { MapRenderer, type YSortable } from "./renderer.js";
+import { MapRenderer } from "./renderer.js";
 import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
@@ -571,69 +571,7 @@ function drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: n
 
 function paint(now: number): void {
   if (!renderer) return;
-
-  // Prepare YSortable entities for depth-ordered drawing
-  const entities: YSortable[] = [];
-
-  // 1. Subagent dashed tethers
-  for (const c of chars.values()) {
-    if (!c.parentKey) continue;
-    const parent = chars.get(c.parentKey);
-    if (!parent) continue;
-    entities.push({
-      y: Math.min(c.y, parent.y) - 20,
-      draw: (renderCtx) => {
-        drawParentLink(
-          renderCtx,
-          c.x,
-          c.y - (c.sub ? 12 : 22),
-          parent.x,
-          parent.y - (parent.sub ? 12 : 22),
-        );
-      },
-    });
-  }
-
-  // 2. Housemate characters
-  for (const c of chars.values()) {
-    entities.push({
-      y: c.y,
-      draw: (renderCtx, dpr) => {
-        const size = c.sub ? 22 : 34;
-
-        drawAnimatedCharacter(
-          renderCtx,
-          {
-            harness: c.harness,
-            x: Math.round(c.x),
-            y: Math.round(c.y),
-            size,
-            facing: c.facing,
-            action: c.action,
-            emote: c.emoteUntil && now > c.emoteUntil ? null : c.emote,
-            instanceIndex: c.instanceIndex,
-            highlighted: hoveredKey === c.key || pinnedKey === c.key,
-            nominated: c.nominated,
-            errorState: c.errorState,
-          },
-          now,
-          dpr,
-        );
-
-        // Tool icon / typing bubble for active tasks
-        if (!c.sleeping && c.working) {
-          const text = c.tool && now < c.bubbleUntil ? c.tool : typingDots(now);
-          const anchor = Math.round(c.y - size - 8);
-          drawBubble(renderCtx, text, Math.round(c.x), anchor);
-        } else if (c.blocked) {
-          // Blocked bubble in Confession Room
-          drawBubble(renderCtx, "!", Math.round(c.x), Math.round(c.y - size - 8), true);
-        }
-      },
-    });
-  }
-
-  renderer.render(ctx, SCENE_W, SCENE_H, entities, spriteDpr, now);
+  renderer.render(chars as any, now);
 }
 
 // ---------------------------------------------------------------- dom & interaction
@@ -642,7 +580,6 @@ let hoveredKey: string | null = null;
 let pinnedKey: string | null = null;
 
 const canvas = document.getElementById("scene") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d", { alpha: false })!;
 const statusEl = document.getElementById("status") as HTMLElement;
 const connEl = document.getElementById("conn") as HTMLElement;
 const bannerEl = document.getElementById("banner") as HTMLElement;
@@ -938,16 +875,7 @@ if (btnTestWalk) {
 let spriteDpr = 1;
 
 function fitCanvas(): void {
-  const dpr = Math.max(1, Math.min(3, Math.ceil(window.devicePixelRatio || 1)));
-  spriteDpr = dpr;
-  const w = SCENE_W * dpr;
-  const h = SCENE_H * dpr;
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-  }
+  if (renderer) renderer.resize();
 }
 
 function buildLegend(): void {
