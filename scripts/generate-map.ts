@@ -53,7 +53,7 @@ export const TILES = {
   FRIDGE: 44,
   STOVE: 45,
   SINK: 46,
-  KITCHEN_COUNTER: 47,
+  WATER_COOLER: 47,
   DINING_TABLE: 48,
   DINING_CHAIR: 49,
 
@@ -63,10 +63,10 @@ export const TILES = {
 
   TREADMILL: 53,
   PLANT_POT: 54,
-  GYM_WEIGHTS: 55,
+  WHITEBOARD: 55,
 
   CONFESSION_CHAIR: 56,
-  SPOTLIGHT_MARKER: 57,
+  VENDING_MACHINE: 57,
 };
 
 export interface MapPOI {
@@ -338,6 +338,12 @@ pois.push({ id: "stove", name: "Kitchen Stove", room: "kitchen", x: 13, y: 18, f
 furnitureLayer[idx(15, 17)] = TILES.SINK;
 collisionLayer[idx(15, 17)] = 1;
 pois.push({ id: "sink", name: "Kitchen Sink", room: "kitchen", x: 15, y: 18, facing: "up", action: "wash", tags: ["kitchen", "wash"] });
+
+furnitureLayer[idx(17, 17)] = TILES.WATER_COOLER;
+collisionLayer[idx(17, 17)] = 1;
+
+furnitureLayer[idx(19, 17)] = TILES.VENDING_MACHINE;
+collisionLayer[idx(19, 17)] = 1;
 
 // Dining Table & Chairs (x: 18..19, y: 21..22)
 furnitureLayer[idx(18, 21)] = TILES.DINING_TABLE;

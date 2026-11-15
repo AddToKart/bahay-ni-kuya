@@ -1,4 +1,6 @@
 // Sprite Animation and Emote System for Bahay ni Kuya
+// Renders human chibi pixel art characters, 4-direction walk cycles,
+// interactive action poses (sit, type, pool, arcade, etc.), and floating emotes.
 
 import { MONO, PALETTE, accentFor, VARIANT_ACCENTS } from "./sprites.js";
 
@@ -38,11 +40,11 @@ export const EMOTE_GLYPHS: Record<string, string> = {
 };
 
 export const HARNESS_SPECIES: Record<string, string> = {
-  opencode: "🦫", // Beaver
-  codex: "🐙",    // Octopus
-  pi: "🐹",       // Hamster
-  omp: "🦝",      // Raccoon
-  hermes: "🦉",   // Owl
+  opencode: "🦫", // Beaver theme (Green/Orange)
+  codex: "🐙",    // Octopus theme (Purple/Violet)
+  pi: "🐹",       // Hamster theme (Red Hoodie)
+  omp: "🦝",      // Raccoon theme (Charcoal/Cyan)
+  hermes: "🦉",   // Owl theme (Silver Hair/Scholar)
 };
 
 export interface AnimatedSpriteState {
@@ -60,7 +62,125 @@ export interface AnimatedSpriteState {
   errorState?: boolean;
 }
 
-/** Draws an animated housemate character at (x, y) with action frame, species icon, ring, and active emote. */
+interface ChibiPalette {
+  hair: string;
+  hairShadow: string;
+  hairStyle: "wavy" | "bangs" | "spiky" | "slick" | "spectacles" | "ponytail";
+  skin: string;
+  skinShadow: string;
+  shirt: string;
+  shirtDetail?: string;
+  pants: string;
+  shoes: string;
+}
+
+const CHIBI_PALETTES: Record<string, ChibiPalette> = {
+  codex: {
+    hair: "#7d44aa",
+    hairShadow: "#5b327d",
+    hairStyle: "wavy",
+    skin: "#fde8d7",
+    skinShadow: "#ecc8b2",
+    shirt: "#4834d4",
+    shirtDetail: "#686de0",
+    pants: "#2d3436",
+    shoes: "#f5f6fa",
+  },
+  opencode: {
+    hair: "#e67e22",
+    hairShadow: "#d35400",
+    hairStyle: "bangs",
+    skin: "#fbe9dd",
+    skinShadow: "#ebd1c1",
+    shirt: "#27ae60",
+    shirtDetail: "#2ecc71",
+    pants: "#795548",
+    shoes: "#3e2723",
+  },
+  pi: {
+    hair: "#2c3e50",
+    hairShadow: "#1a252f",
+    hairStyle: "spiky",
+    skin: "#fae3d9",
+    skinShadow: "#e8c5b6",
+    shirt: "#e74c3c",
+    shirtDetail: "#ffffff",
+    pants: "#2980b9",
+    shoes: "#fdfefe",
+  },
+  omp: {
+    hair: "#34495e",
+    hairShadow: "#2c3e50",
+    hairStyle: "spiky",
+    skin: "#f5cba7",
+    skinShadow: "#e0ad85",
+    shirt: "#2c3e50",
+    shirtDetail: "#00cec9",
+    pants: "#17202a",
+    shoes: "#212f3d",
+  },
+  hermes: {
+    hair: "#dfe6e9",
+    hairShadow: "#b2bec3",
+    hairStyle: "spectacles",
+    skin: "#fbf3eb",
+    skinShadow: "#ebd8cb",
+    shirt: "#636e72",
+    shirtDetail: "#f5f6fa",
+    pants: "#2c3e50",
+    shoes: "#3e2723",
+  },
+};
+
+// Alternate human character palettes for multiple instances of a harness
+const VARIANT_PALETTES: ChibiPalette[] = [
+  {
+    hair: "#f1c40f",
+    hairShadow: "#f39c12",
+    hairStyle: "ponytail",
+    skin: "#fceade",
+    skinShadow: "#eecdb9",
+    shirt: "#e84393",
+    shirtDetail: "#fd79a8",
+    pants: "#0984e3",
+    shoes: "#dfe6e9",
+  },
+  {
+    hair: "#c0392b",
+    hairShadow: "#962d22",
+    hairStyle: "wavy",
+    skin: "#fbe8dc",
+    skinShadow: "#ecc6b3",
+    shirt: "#00b894",
+    shirtDetail: "#55efc4",
+    pants: "#636e72",
+    shoes: "#2d3436",
+  },
+  {
+    hair: "#ecf0f1",
+    hairShadow: "#bdc3c7",
+    hairStyle: "bangs",
+    skin: "#f8e0cf",
+    skinShadow: "#e4beaa",
+    shirt: "#8e44ad",
+    shirtDetail: "#9b59b6",
+    pants: "#2c3e50",
+    shoes: "#111111",
+  },
+  {
+    hair: "#8d6e63",
+    hairShadow: "#6d4c41",
+    hairStyle: "slick",
+    skin: "#fcefe6",
+    skinShadow: "#e9d5c8",
+    shirt: "#f5f6fa",
+    shirtDetail: "#2980b9",
+    pants: "#2d3436",
+    shoes: "#3e2723",
+  },
+];
+
+/** Draws a human chibi pixel art character matching the reference pixel visualizer aesthetic. */
 export function drawAnimatedCharacter(
   ctx: CanvasRenderingContext2D,
   state: AnimatedSpriteState,
@@ -68,152 +188,292 @@ export function drawAnimatedCharacter(
   dpr = 1,
 ): void {
   const { harness, x, y, size, facing, action, emote, instanceIndex = 0, highlighted } = state;
+  const feetX = Math.round(x);
   const feetY = Math.round(y);
+  const isSubagent = size < 24;
 
-  // 1. Action-dependent bob and posture
+  // Select human chibi palette
+  let pal = CHIBI_PALETTES[harness] || CHIBI_PALETTES.codex;
+  if (instanceIndex > 0) {
+    pal = VARIANT_PALETTES[(instanceIndex - 1) % VARIANT_PALETTES.length];
+  }
+
+  // 1. Action-dependent bob, posture, and arm movement
   let bob = 0;
-  let handMotion = 0;
-  let particle = "";
+  let legCycle = 0;
+  let typingCycle = 0;
 
   switch (action) {
     case "walk":
-      bob = Math.floor(timeMs / 120) % 2 === 0 ? 0 : -3;
+      legCycle = Math.floor(timeMs / 140) % 4; // 0, 1, 2, 3
+      bob = legCycle % 2 === 1 ? -1 : 0;
       break;
     case "type":
-      bob = Math.floor(timeMs / 150) % 2 === 0 ? 0 : -1;
-      handMotion = Math.sin(timeMs / 80) * 2;
+      bob = 1; // seated slightly lower
+      typingCycle = Math.floor(timeMs / 100) % 2;
       break;
     case "sit":
-      bob = 2; // slightly seated lower
-      break;
-    case "exercise":
-      bob = Math.floor(timeMs / 90) % 2 === 0 ? -1 : -4;
-      if (Math.floor(timeMs / 300) % 2 === 0) particle = "💧";
-      break;
-    case "cook":
-      handMotion = Math.sin(timeMs / 120) * 3;
-      if (Math.floor(timeMs / 400) % 2 === 0) particle = "♨️";
-      break;
-    case "wash":
-      handMotion = Math.sin(timeMs / 100) * 2;
-      if (Math.floor(timeMs / 350) % 2 === 0) particle = "🫧";
-      break;
     case "pool":
       bob = 1;
       break;
-    case "arcade":
-      handMotion = Math.sin(timeMs / 70) * 3;
-      break;
-    case "water":
-      if (Math.floor(timeMs / 300) % 2 === 0) particle = "💧";
+    case "exercise":
+      legCycle = Math.floor(timeMs / 90) % 4;
+      bob = legCycle % 2 === 1 ? -2 : 0;
       break;
     case "sleep":
-      bob = 3;
+      bob = 2;
       break;
     default:
       // idle subtle breathing
-      bob = Math.floor(timeMs / 600) % 2 === 0 ? 0 : -1;
+      bob = Math.floor(timeMs / 700) % 2 === 0 ? 0 : -1;
       break;
   }
 
-  const cy = Math.round(feetY + bob - size / 2);
-  const variant = instanceIndex > 0 ? VARIANT_ACCENTS[(instanceIndex - 1) % VARIANT_ACCENTS.length] : null;
-  const accent = variant ?? accentFor(harness);
-
-  // 2. Floor Shadow
-  ctx.fillStyle = "rgba(43, 33, 25, 0.35)";
+  // 2. Soft Floor Shadow
+  ctx.fillStyle = "rgba(18, 22, 32, 0.4)";
   ctx.beginPath();
-  ctx.ellipse(Math.round(x), feetY, size * 0.35, 3.5, 0, 0, Math.PI * 2);
+  const shadowRadiusX = isSubagent ? 4.5 : 6;
+  const shadowRadiusY = isSubagent ? 2 : 2.5;
+  ctx.ellipse(feetX, feetY, shadowRadiusX, shadowRadiusY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 3. Selection / Highlight Ring
-  const half = Math.round(size / 2 + 4);
-  const side = half * 2;
-  const rx = Math.round(x) - half;
-  const ry = cy - half;
-
+  // 3. Selection Halo / Glow (clean circular highlight, no bulky square borders)
   if (highlighted) {
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(rx - 1.5, ry - 1.5, side + 3, side + 3);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(feetX, feetY, 9, 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = pal.shirt;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(feetX, feetY, 11, 5, 0, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
-  // 4. Character Frame Ring
-  ctx.strokeStyle = PALETTE.frame;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(rx + 0.5, ry + 0.5, side - 1, side - 1);
-  ctx.strokeStyle = state.errorState ? "#ef4444" : accent;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(rx + 3, ry + 3, side - 6, side - 6);
+  // 4. Draw Human Chibi Character
+  ctx.save();
+  ctx.translate(feetX, feetY + bob);
 
-  // Instance pips (for multiple processes of same harness)
-  if (instanceIndex > 0) {
-    const pips = Math.min(3, instanceIndex);
-    ctx.fillStyle = accent;
-    for (let i = 0; i < pips; i++) {
-      ctx.fillRect(rx + side - 4 - i * 4, ry + 2, 3, 3);
+  const scale = isSubagent ? 0.75 : 1.0;
+  if (scale !== 1.0) ctx.scale(scale, scale);
+
+  const py = -24; // top of head relative to feet
+
+  // --- LEGS & SHOES ---
+  const leftLegOffset = action === "walk" ? (legCycle === 1 ? -2 : legCycle === 3 ? 2 : 0) : 0;
+  const rightLegOffset = action === "walk" ? (legCycle === 1 ? 2 : legCycle === 3 ? -2 : 0) : 0;
+
+  if (action === "sleep") {
+    // Sleeping: curled horizontally
+    ctx.fillStyle = pal.pants;
+    ctx.fillRect(-5, -6, 10, 4);
+    ctx.fillStyle = pal.shoes;
+    ctx.fillRect(5, -6, 3, 4);
+  } else if (action === "sit" || action === "type") {
+    // Seated pose: thighs forward
+    ctx.fillStyle = pal.pants;
+    ctx.fillRect(-4, -6, 8, 4);
+    ctx.fillStyle = pal.shoes;
+    ctx.fillRect(-3, -2, 3, 2);
+    ctx.fillRect(1, -2, 3, 2);
+  } else {
+    // Standing / Walking legs
+    if (facing === "left") {
+      ctx.fillStyle = pal.pants;
+      ctx.fillRect(-2 + leftLegOffset, -7, 4, 5);
+      ctx.fillStyle = pal.shoes;
+      ctx.fillRect(-3 + leftLegOffset, -2, 5, 2);
+    } else if (facing === "right") {
+      ctx.fillStyle = pal.pants;
+      ctx.fillRect(-2 + rightLegOffset, -7, 4, 5);
+      ctx.fillStyle = pal.shoes;
+      ctx.fillRect(-2 + rightLegOffset, -2, 5, 2);
+    } else {
+      // Facing Down or Up
+      // Left leg
+      ctx.fillStyle = pal.pants;
+      ctx.fillRect(-4, -7 + leftLegOffset, 3, 5);
+      ctx.fillStyle = pal.shoes;
+      ctx.fillRect(-4, -2 + leftLegOffset, 3, 2);
+
+      // Right leg
+      ctx.fillStyle = pal.pants;
+      ctx.fillRect(1, -7 + rightLegOffset, 3, 5);
+      ctx.fillStyle = pal.shoes;
+      ctx.fillRect(1, -2 + rightLegOffset, 3, 2);
     }
   }
 
-  // 5. Render Species Glyph
-  const glyph = HARNESS_SPECIES[harness] ?? "🐾";
-  ctx.save();
-  ctx.translate(Math.round(x), cy);
-  // Facing horizontal flip
-  const flip = facing === "left" ? -1 : 1;
-  ctx.scale(flip, 1);
+  // --- TORSO & SHIRT ---
+  ctx.fillStyle = pal.shirt;
+  ctx.fillRect(-4, -14, 8, 7);
 
-  ctx.font = `${Math.round(size * 0.85)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(glyph, 0, 1);
-
-  // Hand / tool activity indicator
-  if (handMotion !== 0) {
-    ctx.fillStyle = accent;
-    ctx.fillRect(flip * 10, 6 + handMotion, 3, 3);
+  // Shirt detail (collar / jacket inner)
+  if (pal.shirtDetail && facing === "down") {
+    ctx.fillStyle = pal.shirtDetail;
+    ctx.fillRect(-1, -14, 2, 4);
   }
+
+  // Arms
+  if (action === "type") {
+    // Typing: arms extended forward with hands tapping
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(-5, -13, 3, 3);
+    ctx.fillRect(2, -13, 3, 3);
+    ctx.fillStyle = pal.skin;
+    ctx.fillRect(-5, -10 + typingCycle, 3, 2);
+    ctx.fillRect(2, -11 + typingCycle, 3, 2);
+  } else if (action === "pool") {
+    // Pool player: holding cue stick
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(-5, -13, 3, 4);
+    ctx.fillRect(2, -13, 3, 4);
+    ctx.fillStyle = "#8d6e63"; // Cue stick
+    ctx.fillRect(-7, -11, 14, 2);
+  } else if (facing === "left") {
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(-4, -13, 3, 5);
+    ctx.fillStyle = pal.skin;
+    ctx.fillRect(-4, -8, 2, 2);
+  } else if (facing === "right") {
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(1, -13, 3, 5);
+    ctx.fillStyle = pal.skin;
+    ctx.fillRect(2, -8, 2, 2);
+  } else {
+    // Left & Right arms at sides
+    ctx.fillStyle = pal.shirt;
+    ctx.fillRect(-6, -13, 2, 5);
+    ctx.fillRect(4, -13, 2, 5);
+    ctx.fillStyle = pal.skin;
+    ctx.fillRect(-6, -8, 2, 2);
+    ctx.fillRect(4, -8, 2, 2);
+  }
+
+  // --- HEAD & FACE ---
+  // Skin base
+  ctx.fillStyle = pal.skin;
+  ctx.fillRect(-5, -23, 10, 9);
+
+  // Back of head if facing UP
+  if (facing === "up") {
+    ctx.fillStyle = pal.hair;
+    ctx.fillRect(-5, -24, 10, 10);
+    ctx.fillStyle = pal.hairShadow;
+    ctx.fillRect(-5, -16, 10, 2);
+  } else {
+    // Face features (Eyes, Cheeks, Hair)
+    // Subtle peach blush
+    ctx.fillStyle = "rgba(235, 77, 75, 0.25)";
+    ctx.fillRect(-4, -17, 2, 1);
+    ctx.fillRect(2, -17, 2, 1);
+
+    // Eyes
+    if (action === "sleep") {
+      // Closed sleepy eyes: - _ -
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(-4, -18, 2, 1);
+      ctx.fillRect(2, -18, 2, 1);
+    } else if (facing === "left") {
+      // Profile eye (left)
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(-4, -19, 2, 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-4, -19, 1, 1);
+    } else if (facing === "right") {
+      // Profile eye (right)
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(2, -19, 2, 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(3, -19, 1, 1);
+    } else {
+      // Facing Down: 2 expressive anime eyes with white catchlight
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(-4, -19, 2, 2);
+      ctx.fillRect(2, -19, 2, 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-4, -19, 1, 1);
+      ctx.fillRect(2, -19, 1, 1);
+    }
+
+    // Spectacles (for Hermes / scholar style)
+    if (pal.hairStyle === "spectacles" && facing === "down") {
+      ctx.strokeStyle = "#485460";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-4.5, -19.5, 3, 3);
+      ctx.strokeRect(1.5, -19.5, 3, 3);
+      ctx.fillStyle = "#485460";
+      ctx.fillRect(-1.5, -18.5, 3, 1); // Bridge
+    }
+
+    // Hair Cap & Bangs
+    ctx.fillStyle = pal.hair;
+    ctx.fillRect(-5, -24, 10, 4); // Top volume
+    ctx.fillRect(-6, -23, 2, 7); // Left sideburn
+    ctx.fillRect(4, -23, 2, 7);  // Right sideburn
+
+    if (pal.hairStyle === "bangs") {
+      ctx.fillRect(-3, -20, 6, 2);
+    } else if (pal.hairStyle === "spiky") {
+      ctx.fillRect(-3, -25, 2, 2);
+      ctx.fillRect(1, -25, 2, 2);
+      ctx.fillRect(-2, -20, 4, 1);
+    } else if (pal.hairStyle === "wavy") {
+      ctx.fillRect(-4, -20, 3, 2);
+      ctx.fillRect(1, -20, 3, 2);
+    } else if (pal.hairStyle === "ponytail") {
+      ctx.fillRect(-4, -20, 8, 2);
+      ctx.fillRect(facing === "left" ? 4 : -6, -24, 2, 6); // Ponytail puff
+    } else {
+      // Default side-swept bangs
+      ctx.fillRect(-4, -20, 5, 2);
+    }
+
+    // Hair Highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.fillRect(-3, -23, 6, 1);
+  }
+
   ctx.restore();
 
-  // 6. Action Particle (steam, water, sweat)
-  if (particle) {
-    ctx.font = "10px sans-serif";
-    ctx.fillText(particle, Math.round(x) + 12, ry + 4);
-  }
-
-  // 7. Sleeping Zzz
+  // 5. Floating Sleeping Zzz
   if (action === "sleep") {
     const drift = ((timeMs / 1000) % 2) / 2;
     ctx.font = `bold 10px ${MONO}`;
     ctx.fillStyle = PALETTE.sleeping;
-    ctx.fillText("z", Math.round(x) + 8 + drift * 4, ry - 4 - drift * 8);
+    ctx.fillText("z", feetX + 8 + drift * 4, feetY - 22 - drift * 8);
     ctx.font = `bold 12px ${MONO}`;
-    ctx.fillText("Z", Math.round(x) + 14 + drift * 6, ry - 12 - drift * 10);
+    ctx.fillText("Z", feetX + 14 + drift * 6, feetY - 30 - drift * 10);
   }
 
-  // 8. Floating Emote Bubble
+  // 6. Floating Emote Speech Bubble
   if (emote && EMOTE_GLYPHS[emote]) {
     const emoteIcon = EMOTE_GLYPHS[emote];
     const bw = 22;
     const bh = 18;
-    const bx = Math.round(x) - bw / 2;
-    const by = ry - bh - 6;
+    const bx = feetX - bw / 2;
+    const by = feetY + bob - 38;
 
-    ctx.fillStyle = "#fffdf7";
+    // Rounded speech bubble with shadow
+    ctx.fillStyle = "rgba(18, 22, 32, 0.3)";
+    ctx.fillRect(bx + 1, by + 1, bw, bh);
+
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeStyle = PALETTE.frame;
+    ctx.strokeStyle = "#2d3436";
     ctx.lineWidth = 1;
     ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
 
-    // Tail
-    ctx.fillStyle = "#fffdf7";
+    // Pointer tail
+    ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.moveTo(bx + bw / 2 - 2, by + bh);
     ctx.lineTo(bx + bw / 2 + 2, by + bh);
     ctx.lineTo(bx + bw / 2, by + bh + 3);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
 
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
@@ -221,12 +481,12 @@ export function drawAnimatedCharacter(
     ctx.fillText(emoteIcon, bx + bw / 2, by + bh / 2 + 1);
   }
 
-  // 9. Nominated Marker
+  // 7. Nominated Banner
   if (state.nominated) {
     const nw = 56;
     const nh = 11;
-    const nx = Math.round(x) - nw / 2;
-    const ny = ry - (emote ? 32 : 14);
+    const nx = feetX - nw / 2;
+    const ny = feetY + bob - (emote ? 52 : 36);
     ctx.fillStyle = Math.floor(timeMs / 400) % 2 === 0 ? "#dc2626" : "#b91c1c";
     ctx.fillRect(nx, ny, nw, nh);
     ctx.strokeStyle = "#fef08a";
