@@ -1,20 +1,25 @@
-// Scripted Bahay ni Kuya demo: posts contract events at realistic timings so the house fills up
-// and empties out. Usage:
-//   bun run scripts/fake-events.ts            # one ~18s pass
+// Scripted Bahay ni Kuya demo: posts contract events at realistic timings to play a full
+// "Day in the House": wake up, chores, task given, office, subagents, confession room,
+// error and recovery, nomination, completion, chores, sleep.
+//
+// Usage:
+//   bun run scripts/fake-events.ts            # one ~19s pass
 //   bun run scripts/fake-events.ts --loop     # repeat forever
 //   BAHAY_NI_KUYA_URL=http://127.0.0.1:4781/event bun run scripts/fake-events.ts
-//
-// Exits non-zero when the server cannot be reached within 3 seconds.
+
+import type { EventType, Harness, SessionState } from "../src/types";
 
 interface DemoEvent {
-  harness: "opencode" | "codex" | "pi" | "omp" | "hermes";
+  harness: Harness;
   sessionId: string;
   parentSessionId?: string;
-  type: "session_start" | "session_end" | "state" | "tool" | "error";
-  state?: "working" | "idle";
+  type: EventType;
+  state?: SessionState;
   title?: string;
   tool?: string;
   directory?: string;
+  reason?: string;
+  error?: string;
 }
 
 interface Step {
@@ -28,39 +33,70 @@ const ENDPOINT = (process.env.BAHAY_NI_KUYA_URL || DEFAULT_ENDPOINT).replace(/\/
 const ORIGIN = ENDPOINT.replace(/\/event(?:\/.*)?$/, "");
 const DIRECTORY = process.cwd().replace(/\\/g, "/");
 const LOOP = process.argv.includes("--loop");
+const TIME_SCALE = Number(process.env.FAKE_SCALE || 1);
 
-const ROOT_OPENCODE = "ses_demo_opencode_root";
-const ROOT_CODEX = "ses_demo_codex_root";
-const ROOT_HERMES = "ses_demo_hermes_root";
-const HERMES_A = "ses_demo_hermes_child_a";
-const HERMES_B = "ses_demo_hermes_child_b";
+const SES_OPENCODE = "ses_demo_opencode";
+const SES_CODEX = "ses_demo_codex";
+const SES_PI = "ses_demo_pi";
+const SES_OMP = "ses_demo_omp";
+const SES_HERMES = "ses_demo_hermes";
+const SES_SUBAGENT = "ses_demo_opencode_sub";
 
 const steps: Step[] = [
-  { at: 0, label: "opencode root appears", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "session_start", state: "idle", title: "refactor the layout engine" } },
-  { at: 350, label: "opencode edit", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "tool", tool: "edit" } },
-  { at: 1100, label: "opencode bash", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "tool", tool: "bash" } },
-  { at: 1800, label: "codex root idles in", event: { harness: "codex", sessionId: ROOT_CODEX, type: "session_start", state: "idle", title: "waiting for review" } },
-  { at: 3000, label: "hermes root appears", event: { harness: "hermes", sessionId: ROOT_HERMES, type: "session_start", state: "idle", title: "delegate the review" } },
-  { at: 3200, label: "hermes working", event: { harness: "hermes", sessionId: ROOT_HERMES, type: "state", state: "working" } },
-  { at: 3400, label: "hermes child A spawns", event: { harness: "hermes", sessionId: HERMES_A, parentSessionId: ROOT_HERMES, type: "session_start", state: "working", title: "lint sweep" } },
-  { at: 3600, label: "hermes child B spawns", event: { harness: "hermes", sessionId: HERMES_B, parentSessionId: ROOT_HERMES, type: "session_start", state: "working", title: "docs check" } },
-  { at: 4200, label: "child A grep", event: { harness: "hermes", sessionId: HERMES_A, type: "tool", tool: "grep" } },
-  { at: 5200, label: "child A edit", event: { harness: "hermes", sessionId: HERMES_A, type: "tool", tool: "edit" } },
-  { at: 6000, label: "child A idle", event: { harness: "hermes", sessionId: HERMES_A, type: "state", state: "idle" } },
-  { at: 6200, label: "child B read", event: { harness: "hermes", sessionId: HERMES_B, type: "tool", tool: "read" } },
-  { at: 8000, label: "child B idle", event: { harness: "hermes", sessionId: HERMES_B, type: "state", state: "idle" } },
-  { at: 8200, label: "hermes bash", event: { harness: "hermes", sessionId: ROOT_HERMES, type: "tool", tool: "bash" } },
-  { at: 9500, label: "hermes idle", event: { harness: "hermes", sessionId: ROOT_HERMES, type: "state", state: "idle" } },
-  { at: 10500, label: "opencode write", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "tool", tool: "write" } },
-  { at: 11500, label: "opencode idle", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "state", state: "idle" } },
-  { at: 12500, label: "codex wakes up", event: { harness: "codex", sessionId: ROOT_CODEX, type: "state", state: "working", title: "review the diff" } },
-  { at: 12800, label: "codex read", event: { harness: "codex", sessionId: ROOT_CODEX, type: "tool", tool: "read" } },
-  { at: 14000, label: "codex idle", event: { harness: "codex", sessionId: ROOT_CODEX, type: "state", state: "idle" } },
-  { at: 15500, label: "hermes ends (children go with it)", event: { harness: "hermes", sessionId: ROOT_HERMES, type: "session_end" } },
-  { at: 16500, label: "opencode test run", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "tool", tool: "test" } },
-  { at: 17200, label: "opencode idle", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "state", state: "idle" } },
-  { at: 17800, label: "opencode ends", event: { harness: "opencode", sessionId: ROOT_OPENCODE, type: "session_end" } },
-  { at: 18300, label: "codex ends", event: { harness: "codex", sessionId: ROOT_CODEX, type: "session_end" } },
+  // 1. WAKE UP & MORNING HOUSE LIFE
+  { at: 0, label: "opencode wakes up for morning chores", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "session_start", state: "idle", title: "Morning routine" } },
+  { at: 300, label: "codex wakes up, joins house life", event: { harness: "codex", sessionId: SES_CODEX, type: "session_start", state: "idle", title: "Having coffee" } },
+  { at: 600, label: "pi wakes up, heading to kitchen", event: { harness: "pi", sessionId: SES_PI, type: "session_start", state: "idle", title: "Making breakfast" } },
+  { at: 900, label: "omp wakes up, heading to gameroom", event: { harness: "omp", sessionId: SES_OMP, type: "session_start", state: "idle", title: "Playing pool" } },
+  { at: 1200, label: "hermes wakes up, reading in living room", event: { harness: "hermes", sessionId: SES_HERMES, type: "session_start", state: "idle", title: "Morning newspaper" } },
+
+  // 2. TASK GIVEN & OFFICE CALL
+  { at: 2500, label: "KUYA: opencode has task, called to office", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "task_started", title: "Refactor A* pathfinding and animation" } },
+  { at: 3200, label: "opencode starts reading code", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "tool", tool: "read_file" } },
+  { at: 4000, label: "opencode edits file", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "tool", tool: "edit_file" } },
+
+  // 3. HERMES RESEARCH IN READING NOOK
+  { at: 4500, label: "KUYA: hermes has research task, visits library reading nook", event: { harness: "hermes", sessionId: SES_HERMES, type: "task_started", title: "Survey agent architectures" } },
+  { at: 5000, label: "hermes reading book", event: { harness: "hermes", sessionId: SES_HERMES, type: "tool", tool: "search_papers" } },
+
+  // 4. SUBAGENT SPAWNED
+  { at: 5800, label: "opencode spawns lint auditor subagent", event: { harness: "opencode", sessionId: SES_SUBAGENT, parentSessionId: SES_OPENCODE, type: "subagent_started", title: "AST & lint checker" } },
+  { at: 6500, label: "subagent checks syntax", event: { harness: "opencode", sessionId: SES_SUBAGENT, parentSessionId: SES_OPENCODE, type: "tool", tool: "ast_grep" } },
+
+  // 5. BLOCKED (PERMISSION ASKED) -> CONFESSION ROOM
+  { at: 7500, label: "codex gets task", event: { harness: "codex", sessionId: SES_CODEX, type: "task_started", title: "Deploy schema migration" } },
+  { at: 8200, label: "codex blocked on permission -> Confession Room", event: { harness: "codex", sessionId: SES_CODEX, type: "blocked", reason: "Needs user permission for production write" } },
+
+  // 6. CONFESSION ROOM RESOLUTION
+  { at: 9800, label: "Kuya grants permission: codex resumes task in office", event: { harness: "codex", sessionId: SES_CODEX, type: "task_started", title: "Applying migration" } },
+  { at: 10400, label: "codex runs migration tool", event: { harness: "codex", sessionId: SES_CODEX, type: "tool", tool: "run_migration" } },
+
+  // 7. ERROR AND RECOVERY (PI)
+  { at: 11000, label: "pi called to office", event: { harness: "pi", sessionId: SES_PI, type: "task_started", title: "Compile native assets" } },
+  { at: 11600, label: "pi encounters compiler error (facepalm)", event: { harness: "pi", sessionId: SES_PI, type: "error", error: "CompileError: missing symbol" } },
+  { at: 12400, label: "pi recovers and fixes error", event: { harness: "pi", sessionId: SES_PI, type: "tool", tool: "patch_header" } },
+
+  // 8. NOMINATED MARKER DEMO (OMP: 3 REPEATED ERRORS)
+  { at: 13000, label: "omp gets test runner task", event: { harness: "omp", sessionId: SES_OMP, type: "task_started", title: "Run end-to-end integration tests" } },
+  { at: 13500, label: "omp error 1", event: { harness: "omp", sessionId: SES_OMP, type: "error", error: "Test 1 Failed" } },
+  { at: 13900, label: "omp error 2", event: { harness: "omp", sessionId: SES_OMP, type: "error", error: "Test 2 Failed" } },
+  { at: 14300, label: "omp error 3 -> NOMINATED!", event: { harness: "omp", sessionId: SES_OMP, type: "error", error: "Test 3 Failed" } },
+
+  // 9. TASK COMPLETION & RETURN TO HOUSE LIFE
+  { at: 15000, label: "subagent completes and poofs away", event: { harness: "opencode", sessionId: SES_SUBAGENT, parentSessionId: SES_OPENCODE, type: "subagent_ended" } },
+  { at: 15500, label: "opencode completes task (thumbs up)", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "task_completed" } },
+  { at: 16000, label: "codex completes task", event: { harness: "codex", sessionId: SES_CODEX, type: "task_completed" } },
+  { at: 16400, label: "pi completes task", event: { harness: "pi", sessionId: SES_PI, type: "task_completed" } },
+  { at: 16800, label: "hermes completes research", event: { harness: "hermes", sessionId: SES_HERMES, type: "task_completed" } },
+  { at: 17200, label: "omp finishes run", event: { harness: "omp", sessionId: SES_OMP, type: "task_completed" } },
+
+  // 10. EVENING CHORES & NIGHT SLEEP
+  { at: 17800, label: "housemates enjoy evening dinner and games", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "state", state: "idle" } },
+  { at: 18500, label: "night falls: opencode goes to bed", event: { harness: "opencode", sessionId: SES_OPENCODE, type: "session_end" } },
+  { at: 18700, label: "night falls: codex goes to bed", event: { harness: "codex", sessionId: SES_CODEX, type: "session_end" } },
+  { at: 18900, label: "night falls: pi goes to bed", event: { harness: "pi", sessionId: SES_PI, type: "session_end" } },
+  { at: 19100, label: "night falls: omp goes to bed", event: { harness: "omp", sessionId: SES_OMP, type: "session_end" } },
+  { at: 19300, label: "night falls: hermes goes to bed (all sleeping Zzz)", event: { harness: "hermes", sessionId: SES_HERMES, type: "session_end" } },
 ];
 
 function sleep(ms: number): Promise<void> {
@@ -100,97 +136,28 @@ async function post(event: DemoEvent): Promise<void> {
   }
 }
 
-interface LiveSession {
-  harness: DemoEvent["harness"];
-  sessionId: string;
-  parentSessionId?: string;
-  title?: string;
-  state: "working" | "idle";
-}
-
-const live = new Map<string, LiveSession>();
-
-// The server drops adapter sessions for harnesses whose process scan finds nothing, so a
-// process-less demo re-asserts its cast every 1.5 s (well under the 5 s scan interval).
-function remember(event: DemoEvent): void {
-  if (event.type === "session_end") {
-    // Mirror the server: ending a session deletes its descendants too.
-    live.delete(event.sessionId);
-    for (const [id, session] of live) {
-      if (session.parentSessionId === event.sessionId) live.delete(id);
-    }
-    return;
-  }
-  const existing = live.get(event.sessionId);
-  if (event.type === "session_start") {
-    live.set(event.sessionId, {
-      harness: event.harness,
-      sessionId: event.sessionId,
-      parentSessionId: event.parentSessionId ?? existing?.parentSessionId,
-      title: event.title ?? existing?.title,
-      state: event.state ?? "idle",
-    });
-    return;
-  }
-  if (!existing) return;
-  if (event.type === "tool") existing.state = "working";
-  else if (event.state) existing.state = event.state;
-  if (event.title) existing.title = event.title;
-}
-
-function keepAlive(): void {
-  for (const session of live.values()) {
-    const event: DemoEvent = {
-      harness: session.harness,
-      sessionId: session.sessionId,
-      type: "session_start",
-      state: session.state,
-      title: session.title,
-    };
-    if (session.parentSessionId) event.parentSessionId = session.parentSessionId;
-    void post(event).catch(() => {});
+async function runPass(): Promise<void> {
+  const start = Date.now();
+  for (const step of steps) {
+    const target = start + Math.round(step.at * TIME_SCALE);
+    const delay = target - Date.now();
+    if (delay > 0) await sleep(delay);
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    console.log(`[+${elapsed.padStart(5, " ")}s] ${step.label}`);
+    await post(step.event);
   }
 }
 
-function stamp(ms: number): string {
-  return `${(ms / 1000).toFixed(1)}s`.padStart(6);
-}
-
-async function runOnce(pass: number): Promise<void> {
-  live.clear();
-  const started = performance.now();
-  console.log(`Bahay ni Kuya demo pass ${pass} -> ${ENDPOINT}`);
-  const heartbeat = setInterval(keepAlive, 1500);
-  try {
-    for (const step of steps) {
-      const wait = step.at - (performance.now() - started);
-      if (wait > 0) await sleep(wait);
-      await post(step.event);
-      remember(step.event);
-      console.log(`[${stamp(performance.now() - started)}] ${step.label}`);
-    }
-  } finally {
-    clearInterval(heartbeat);
-  }
-  console.log(`[${stamp(performance.now() - started)}] demo complete`);
-}
-
-async function main(): Promise<void> {
-  const up = await waitForServer();
-  if (!up) {
-    console.error(`Bahay ni Kuya server unreachable at ${ORIGIN} (tried /healthz for 3s).`);
-    console.error("Start it with: bun run src/server.ts   (or set BAHAY_NI_KUYA_URL)");
-    process.exit(1);
-  }
-  let pass = 1;
-  do {
-    await runOnce(pass);
-    pass += 1;
-    if (LOOP) await sleep(1000);
-  } while (LOOP);
-}
-
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
+console.log(`Bahay ni Kuya fake event player -> ${ENDPOINT}`);
+if (!(await waitForServer())) {
+  console.error(`ERROR: server at ${ORIGIN} is not responding within 3s. Start it with 'bun run start'.`);
   process.exit(1);
-});
+}
+
+do {
+  await runPass();
+  if (LOOP) {
+    console.log("--- loop pause 2s ---");
+    await sleep(2000);
+  }
+} while (LOOP);

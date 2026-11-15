@@ -50,13 +50,13 @@ export function setupOpenCode(ctx) {
       } else if (type === "session.execution.started") {
         postEvent({
           sessionId,
-          type: "state",
+          type: "task_started",
           state: "working",
         });
       } else if (type === "session.execution.succeeded" || type === "session.idle") {
         postEvent({
           sessionId,
-          type: "state",
+          type: "task_completed",
           state: "idle",
         });
       } else if (type === "session.execution.failed") {
@@ -76,7 +76,7 @@ export function setupOpenCode(ctx) {
       } else if (type === "permission.asked") {
         postEvent({
           sessionId,
-          type: "state",
+          type: "blocked",
           state: "blocked",
           title: "Waiting for permission",
         });

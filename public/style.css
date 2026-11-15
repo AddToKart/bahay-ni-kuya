@@ -95,6 +95,52 @@ h1 {
   display: none;
 }
 
+.kuya-banner {
+  margin: 0 0 10px;
+  padding: 8px 14px;
+  border: 2px solid #e0a93b;
+  background: #181d29;
+  color: #fff6e5;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(224, 169, 59, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kuya-banner[hidden] {
+  display: none;
+}
+
+.kuya-badge {
+  background: #e0a93b;
+  color: #1b1610;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+}
+
+.kuya-msg {
+  flex: 1;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .stage {
   position: relative;
   display: flex;

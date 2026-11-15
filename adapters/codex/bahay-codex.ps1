@@ -57,7 +57,7 @@ try {
     }
     'UserPromptSubmit' {
       $events += @{
-        type = 'state'; state = 'working'; sessionId = $sessionId; directory = $directory
+        type = 'task_started'; state = 'working'; sessionId = $sessionId; directory = $directory
         title = (Clip-Value $payload.prompt 80)
       }
     }
@@ -68,14 +68,13 @@ try {
       $events += @{ type = 'tool'; state = 'working'; sessionId = $sessionId; tool = $tool; directory = $directory }
     }
     'PermissionRequest' {
-      # Permissions are not modelled in Bahay ni Kuya; keep the character working.
-      $events += @{ type = 'tool'; state = 'working'; sessionId = $sessionId; tool = $tool; directory = $directory }
+      $events += @{ type = 'blocked'; state = 'blocked'; sessionId = $sessionId; tool = $tool; directory = $directory; reason = 'permission' }
     }
     'Stop' {
-      $events += @{ type = 'state'; state = 'idle'; sessionId = $sessionId; directory = $directory }
+      $events += @{ type = 'task_completed'; state = 'idle'; sessionId = $sessionId; directory = $directory }
     }
     'Interrupt' {
-      $events += @{ type = 'state'; state = 'idle'; sessionId = $sessionId; directory = $directory }
+      $events += @{ type = 'task_completed'; state = 'idle'; sessionId = $sessionId; directory = $directory }
     }
     'SessionEnd' {
       $events += @{ type = 'session_end'; sessionId = $sessionId }
@@ -85,7 +84,7 @@ try {
       if (-not $child) { $child = 'sub-' + [string]$sessionId }
       if ($child -and $child -ne 'sub-') {
         $events += @{
-          type = 'session_start'; state = 'working'; sessionId = $child
+          type = 'subagent_started'; state = 'working'; sessionId = $child
           parentSessionId = $sessionId; directory = $directory
           title = (Clip-Value $payload.last_assistant_message 80)
         }
@@ -95,7 +94,7 @@ try {
       $child = Get-SessionIdFromPath $payload.agent_transcript_path
       if (-not $child) { $child = 'sub-' + [string]$sessionId }
       if ($child -and $child -ne 'sub-') {
-        $events += @{ type = 'session_end'; sessionId = $child }
+        $events += @{ type = 'subagent_ended'; sessionId = $child }
       }
     }
     default {

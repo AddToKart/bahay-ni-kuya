@@ -31,17 +31,25 @@ Three slices depend on this file: server (`src/`), frontend (`public/`), adapter
   "harness": "opencode",        // opencode | codex | pi | omp | hermes
   "sessionId": "ses_abc",       // harness-scoped; server namespaces by harness
   "parentSessionId": null,      // child session id → subagent; null/omitted for root
-  "type": "session_start",      // session_start | session_end | state | tool | error
-  "state": "working",           // working | idle   (honoured on session_start/state)
+  "type": "session_start",      // session_start | session_end | state | tool | error |
+                                // task_started | task_completed | blocked | subagent_started | subagent_ended
+  "state": "working",           // working | idle | blocked | error (honoured on session_start/state/task_*)
   "title": "fix lint errors",   // optional, clipped 80 chars
   "tool": "edit",               // optional, clipped 60 chars (type=tool keeps working)
   "directory": "D:/repo",       // optional, clipped 200 chars
+  "reason": "permission",       // optional reason for blocked/error
   "ts": 1731739200000           // optional; server clock is authoritative
 }
 ```
 
 Semantics:
 - `session_start` creates the session. `parentSessionId` marks a subagent.
+- `task_started` marks task begun, calls housemate to Office, sets state Working.
+- `task_completed` marks task finished, sets state Idle, returns housemate to house life.
+- `blocked` marks session waiting on user permission/confirmation; character walks to Confession Room.
+- `error` marks tool/turn failure; facepalm emote, increments error count (3 errors = nominated).
+- `subagent_started` creates a subagent tethered to parentSessionId, takes subagent desk.
+- `subagent_ended` closes subagent session; character poofs away.
 - `state:working` keeps the session Working for 4 s; `state:idle` ends it immediately.
 - `type:"tool"` sets `tool` and keeps Working for 4 s.
 - `type:"session_end"` deletes the session and all its descendants.
@@ -59,10 +67,12 @@ env override (default `http://127.0.0.1:4777/event`). No adapter may throw into 
   "harnesses": [ { "name": "opencode", "installed": true, "running": false, "procs": 0 } ],
   "sessions": [ {
     "harness": "opencode", "sessionId": "ses_abc", "parentId": null,
-    "state": "working",                 // idle | working (never "sleeping")
+    "state": "working",                 // idle | working | blocked | error (never "sleeping")
     "title": "…", "tool": "edit", "directory": "D:/repo", "pid": 1234,
     "since": 1731739100000, "lastEventTs": 1731739199000,
-    "source": "adapter"                 // adapter | scan
+    "source": "adapter",                // adapter | scan
+    "errorCount": 0,                    // incremented on error
+    "nominated": false                  // true when errorCount >= 3
   } ]
 }
 ```

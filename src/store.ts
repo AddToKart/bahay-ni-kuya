@@ -16,6 +16,7 @@ interface SessionRec {
   harness: Harness;
   sessionId: string;
   parentId: string | null;
+  state?: SessionState;
   title?: string;
   tool?: string;
   directory?: string;
@@ -24,6 +25,8 @@ interface SessionRec {
   lastEventTs: number;
   since: number;
   source: "adapter" | "scan";
+  errorCount: number;
+  nominated?: boolean;
 }
 
 interface HarnessState {
@@ -68,10 +71,22 @@ export class Store {
     const sessionId = clip(event.sessionId, 160);
     if (!sessionId) return { ok: false, reason: "sessionId required" };
     const type = event.type;
-    if (type !== "session_start" && type !== "session_end" && type !== "state" && type !== "tool" && type !== "error") {
+    const validTypes = [
+      "session_start",
+      "session_end",
+      "state",
+      "tool",
+      "error",
+      "task_started",
+      "task_completed",
+      "blocked",
+      "subagent_started",
+      "subagent_ended",
+    ];
+    if (!validTypes.includes(type)) {
       return { ok: false, reason: `bad type: ${String(type)}` };
     }
-    if (type === "session_end") {
+    if (type === "session_end" || type === "subagent_ended") {
       this.deleteTree(harness, sessionId);
       return { ok: true };
     }
@@ -87,6 +102,7 @@ export class Store {
         lastEventTs: now,
         since: now,
         source: "adapter",
+        errorCount: 0,
       };
       this.sessions.set(key, rec);
     }
@@ -98,15 +114,31 @@ export class Store {
     const directory = clip(event.directory, 200);
     if (directory) rec.directory = directory;
 
-    if (type === "session_start") {
-      if (event.state === "working") rec.workingUntil = now + IDLE_MS;
+    if (type === "session_start" || type === "subagent_started") {
+      rec.state = event.state ?? (rec.parentId ? "working" : "idle");
+      rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+    } else if (type === "task_started") {
+      rec.state = "working";
+      rec.workingUntil = now + IDLE_MS;
+    } else if (type === "task_completed") {
+      rec.state = "idle";
+      rec.workingUntil = 0;
+      rec.tool = undefined;
+    } else if (type === "blocked") {
+      rec.state = "blocked";
+      rec.workingUntil = now + 60_000;
+    } else if (type === "error") {
+      rec.state = "error";
+      rec.errorCount = (rec.errorCount || 0) + 1;
+      if (rec.errorCount >= 3) rec.nominated = true;
+      rec.workingUntil = now + IDLE_MS;
     } else if (type === "state") {
-      rec.workingUntil = event.state === "working" ? now + IDLE_MS : 0;
+      rec.state = event.state ?? "idle";
+      rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
     } else if (type === "tool") {
       const tool = clip(event.tool, 60);
       if (tool) rec.tool = tool;
-      rec.workingUntil = now + IDLE_MS;
-    } else if (type === "error") {
+      rec.state = "working";
       rec.workingUntil = now + IDLE_MS;
     }
 
@@ -224,11 +256,20 @@ export class Store {
   snapshot(now = Date.now()): Snapshot {
     const sessions: SessionView[] = [];
     for (const rec of this.sessions.values()) {
+      let state: SessionState = "idle";
+      if (rec.state === "blocked") {
+        state = now < rec.workingUntil ? "blocked" : "idle";
+      } else if (rec.state === "error") {
+        state = now < rec.workingUntil ? "error" : "idle";
+      } else {
+        state = now < rec.workingUntil ? "working" : "idle";
+      }
+
       sessions.push({
         harness: rec.harness,
         sessionId: rec.sessionId,
         parentId: rec.parentId,
-        state: (now < rec.workingUntil ? "working" : "idle") as SessionState,
+        state,
         title: rec.title,
         tool: rec.tool,
         directory: rec.directory,
@@ -236,6 +277,8 @@ export class Store {
         since: rec.since,
         lastEventTs: rec.lastEventTs,
         source: rec.source,
+        errorCount: rec.errorCount,
+        nominated: rec.nominated,
       });
     }
     sessions.sort((a, b) => {

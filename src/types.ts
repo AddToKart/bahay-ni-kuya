@@ -7,8 +7,18 @@ export const HARD_TTL_MS = 24 * 60 * 60 * 1000;
 export const SCAN_MS = 5_000;
 export const INSTALLED_REFRESH_MS = 60_000;
 
-export type SessionState = "idle" | "working";
-export type EventType = "session_start" | "session_end" | "state" | "tool" | "error";
+export type SessionState = "idle" | "working" | "blocked" | "error";
+export type EventType =
+  | "session_start"
+  | "session_end"
+  | "state"
+  | "tool"
+  | "error"
+  | "task_started"
+  | "task_completed"
+  | "blocked"
+  | "subagent_started"
+  | "subagent_ended";
 
 export interface IngestEvent {
   harness: string;
@@ -19,6 +29,8 @@ export interface IngestEvent {
   title?: string;
   tool?: string;
   directory?: string;
+  reason?: string;
+  error?: string;
   ts?: number;
 }
 
@@ -34,6 +46,8 @@ export interface SessionView {
   since: number;
   lastEventTs: number;
   source: "adapter" | "scan";
+  errorCount?: number;
+  nominated?: boolean;
 }
 
 export interface HarnessView {

@@ -1,4 +1,4 @@
-// Bahay ni Kuya scene controller: snapshot reconciliation, A* navigation, autonomous house life, 4-direction animation, CCTV & WS.
+// Bahay ni Kuya scene controller: snapshot reconciliation, A* navigation, autonomous house life, task flow & Kuya layer, 4-direction animation, CCTV & WS.
 
 import { HARNESS_ORDER, MONO, PALETTE, accentFor, VARIANT_ACCENTS } from "./sprites.js";
 import { loadHouseMap, type HouseMap, type RoomId } from "./map.js";
@@ -6,6 +6,7 @@ import { MapRenderer, type YSortable } from "./renderer.js";
 import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
+import type { SessionState } from "../src/types.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
 const SCENE_W = 672;
@@ -26,7 +27,7 @@ interface SessionView {
   harness: string;
   sessionId: string;
   parentId: string | null;
-  state: "idle" | "working";
+  state: SessionState;
   title?: string;
   tool?: string;
   directory?: string;
@@ -34,6 +35,8 @@ interface SessionView {
   since: number;
   lastEventTs: number;
   source: "adapter" | "scan";
+  errorCount?: number;
+  nominated?: boolean;
 }
 
 interface Snapshot {
@@ -53,7 +56,12 @@ interface Char {
   sleeping: boolean;
   room: RoomId;
   label: string;
+  state: SessionState;
   working: boolean;
+  blocked: boolean;
+  errorState: boolean;
+  errorCount: number;
+  nominated: boolean;
   tool: string | null;
   lastTool: string | null;
   bubbleUntil: number;
@@ -82,6 +90,23 @@ const lifeManager = new HouseLifeManager();
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
+}
+
+// ---------------------------------------------------------------- Kuya Banner
+
+let kuyaBannerTimer: number | null = null;
+
+function showKuyaBanner(msg: string, durationMs = 5000): void {
+  const banner = document.getElementById("kuya-banner");
+  const text = document.getElementById("kuya-msg");
+  if (!banner || !text) return;
+  text.textContent = msg;
+  banner.hidden = false;
+  if (kuyaBannerTimer !== null) window.clearTimeout(kuyaBannerTimer);
+  kuyaBannerTimer = window.setTimeout(() => {
+    banner.hidden = true;
+    kuyaBannerTimer = null;
+  }, durationMs);
 }
 
 // Convert world coords to tile coords and compute orthogonal A* path
@@ -114,9 +139,14 @@ interface Desired {
   parentKey: string | null;
   sub: boolean;
   sleeping: boolean;
+  state: SessionState;
   room: RoomId;
   label: string;
   working: boolean;
+  blocked: boolean;
+  errorState: boolean;
+  errorCount: number;
+  nominated: boolean;
   tool: string | null;
   directory?: string;
   pid?: number;
@@ -158,15 +188,31 @@ function reconcile(snap: Snapshot, now: number): number {
       harnessInstances.set(s.harness, instanceIndex + 1);
     }
 
+    const isWorking = s.state === "working";
+    const isBlocked = s.state === "blocked";
+    const isError = s.state === "error";
+
+    let room: RoomId = "living";
+    if (isBlocked) {
+      room = "confession";
+    } else if (isWorking) {
+      room = s.harness === "hermes" ? "living" : "office";
+    }
+
     desired.set(key, {
       key,
       harness: s.harness,
       parentKey,
       sub,
       sleeping: false,
-      room: s.state === "working" ? "office" : "living",
+      state: s.state,
+      room,
       label,
-      working: s.state === "working",
+      working: isWorking,
+      blocked: isBlocked,
+      errorState: isError,
+      errorCount: s.errorCount || 0,
+      nominated: s.nominated || false,
       tool: s.tool ?? null,
       directory: s.directory,
       pid: s.pid,
@@ -185,9 +231,14 @@ function reconcile(snap: Snapshot, now: number): number {
         parentKey: null,
         sub: false,
         sleeping: true,
+        state: "idle",
         room: "bedroom",
         label: h.name,
         working: false,
+        blocked: false,
+        errorState: false,
+        errorCount: 0,
+        nominated: false,
         tool: null,
         instanceIndex: 0,
       });
@@ -198,9 +249,14 @@ function reconcile(snap: Snapshot, now: number): number {
         parentKey: null,
         sub: false,
         sleeping: false,
+        state: "idle",
         room: "living",
         label: `${h.name} (ambient)`,
         working: false,
+        blocked: false,
+        errorState: false,
+        errorCount: 0,
+        nominated: false,
         tool: null,
         instanceIndex: 0,
       });
@@ -221,10 +277,21 @@ function reconcile(snap: Snapshot, now: number): number {
 
     if (d.sleeping) {
       poi = lifeManager.pickBedPOI(d.key);
+    } else if (d.blocked) {
+      // Confession room for blocked / permission required
+      poi = lifeManager.getPOI("confession_chair") || null;
+      if (poi) lifeManager.reservePOI(d.key, poi.id);
     } else if (d.working) {
-      poi = lifeManager.pickDeskPOI(d.key, d.sub);
+      // Hermes special research rule: uses reading nook / bookshelf in living room
+      if (d.harness === "hermes") {
+        poi = lifeManager.getPOI("living_bookshelf") || null;
+        if (poi) lifeManager.reservePOI(d.key, poi.id);
+      }
+      if (!poi) {
+        poi = lifeManager.pickDeskPOI(d.key, d.sub);
+      }
     } else {
-      // Idle housemate: if previously sleeping or unassigned, wake up and pick an idle POI
+      // Idle housemate
       const prevState = lifeManager.states.get(d.key);
       if (!prevState || prevState.isSleeping || !prevState.currentPoiId) {
         poi = lifeManager.pickIdlePOI(d.key, now);
@@ -246,9 +313,20 @@ function reconcile(snap: Snapshot, now: number): number {
     const targetRoom: RoomId = poi ? poi.room : d.room;
 
     if (!c) {
-      // Spawn at bedroom if sleeping, or bedroom door waking up
-      const spawnX = d.sleeping ? targetX : 6 * 16 + 8;
-      const spawnY = d.sleeping ? targetY : 11 * 16 + 14;
+      // Determine spawn location
+      let spawnX = 6 * 16 + 8;
+      let spawnY = 11 * 16 + 14;
+
+      if (d.sleeping) {
+        spawnX = targetX;
+        spawnY = targetY;
+      } else if (d.sub && d.parentKey && chars.has(d.parentKey)) {
+        // Subagents spawn directly at their parent
+        const parent = chars.get(d.parentKey)!;
+        spawnX = parent.x;
+        spawnY = parent.y;
+      }
+
       c = {
         key: d.key,
         harness: d.harness,
@@ -257,7 +335,12 @@ function reconcile(snap: Snapshot, now: number): number {
         sleeping: d.sleeping,
         room: targetRoom,
         label: d.label,
+        state: d.state,
         working: d.working,
+        blocked: d.blocked,
+        errorState: d.errorState,
+        errorCount: d.errorCount,
+        nominated: d.nominated,
         tool: d.tool,
         lastTool: null,
         bubbleUntil: 0,
@@ -272,14 +355,34 @@ function reconcile(snap: Snapshot, now: number): number {
         path: d.sleeping ? [] : calculateAStarPath(spawnX, spawnY, targetX, targetY),
         facing: poiFacing,
         action: d.sleeping ? "sleep" : "walk",
-        emote: null,
+        emote: d.working ? "exclamation" : null,
+        emoteUntil: d.working ? now + 2500 : undefined,
         walking: !d.sleeping,
         poiId: poi ? poi.id : null,
       };
       chars.set(d.key, c);
+
+      // Initial task Kuya banner if starting directly into work
+      if (d.working) {
+        if (d.harness === "hermes") {
+          showKuyaBanner("KUYA: hermes, pumunta po kayo sa reading nook. May research task po kayo.");
+        } else {
+          showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa office. May task po kayo.`);
+        }
+      }
     } else {
+      // Handle state transitions and Kuya announcements
+      const prevState = c.state;
+      const prevWorking = c.working;
+      const prevBlocked = c.blocked;
+
       c.label = d.label;
+      c.state = d.state;
       c.working = d.working;
+      c.blocked = d.blocked;
+      c.errorState = d.errorState;
+      c.errorCount = d.errorCount;
+      c.nominated = d.nominated;
       c.tool = d.tool;
       c.directory = d.directory;
       c.pid = d.pid;
@@ -287,11 +390,42 @@ function reconcile(snap: Snapshot, now: number): number {
       c.parentKey = d.parentKey;
       c.sub = d.sub;
 
-      // Wake up event
-      if (c.sleeping && !d.sleeping) {
+      // 1. Task Started
+      if (!prevWorking && d.working) {
+        c.emote = "exclamation";
+        c.emoteUntil = now + 3000;
+        if (d.harness === "hermes") {
+          showKuyaBanner("KUYA: hermes, pumunta po kayo sa reading nook. May research task po kayo.");
+        } else {
+          showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa office. May task po kayo.`);
+        }
+      }
+      // 2. Blocked / Permission Asked
+      else if (!prevBlocked && d.blocked) {
+        c.emote = "exclamation";
+        c.emoteUntil = now + 4000;
+        showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa confession room para sa inyong desisyon.`);
+      }
+      // 3. Error / Nominated
+      else if (d.errorState && prevState !== "error") {
+        c.emote = "facepalm";
+        c.emoteUntil = now + 3500;
+        if (d.nominated) {
+          showKuyaBanner(`KUYA: ${d.harness}, nominated po kayo sa bahay ngayong linggo dahil sa mga error.`);
+        }
+      }
+      // 4. Task Completed / Returned to Idle
+      else if (prevWorking && !d.working && !d.blocked && !d.errorState) {
+        c.emote = "thumbs_up";
+        c.emoteUntil = now + 3500;
+        showKuyaBanner(`KUYA: Salamat, ${d.harness}. Tapos na ang task. Magpahinga po muna kayo.`);
+      }
+      // 5. Wake up event
+      else if (c.sleeping && !d.sleeping) {
         c.emote = "thumbs_up";
         c.emoteUntil = now + 3000;
       }
+
       c.sleeping = d.sleeping;
 
       const roomChanged = c.room !== targetRoom;
@@ -373,8 +507,11 @@ function step(c: Char, dt: number): void {
     // Reached destination: assume assigned POI activity
     if (c.sleeping) {
       c.action = "sleep";
+    } else if (c.blocked) {
+      c.action = "sit";
+      c.facing = "down";
     } else if (c.working) {
-      c.action = "type";
+      c.action = c.harness === "hermes" ? "read" : "type";
     } else if (c.poiId) {
       const poi = lifeManager.getPOI(c.poiId);
       if (poi) {
@@ -414,7 +551,7 @@ function drawParentLink(
   ctx.restore();
 }
 
-function drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+function drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, isError = false): void {
   ctx.save();
   ctx.font = `9px ${MONO}`;
   const width = Math.max(22, ctx.measureText(text).width + 8);
@@ -422,21 +559,21 @@ function drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: n
   const bx = Math.round(x - width / 2);
   const by = Math.round(y - height);
 
-  ctx.fillStyle = "#fff8ee";
-  ctx.strokeStyle = PALETTE.frame;
+  ctx.fillStyle = isError ? "#fee2e2" : "#fff8ee";
+  ctx.strokeStyle = isError ? "#ef4444" : PALETTE.frame;
   ctx.lineWidth = 1;
   ctx.fillRect(bx, by, width, height);
   ctx.strokeRect(bx + 0.5, by + 0.5, width - 1, height - 1);
 
   // Tiny beak pointing down
-  ctx.fillStyle = "#fff8ee";
+  ctx.fillStyle = isError ? "#fee2e2" : "#fff8ee";
   ctx.beginPath();
   ctx.moveTo(x - 2, by + height);
   ctx.lineTo(x + 2, by + height);
   ctx.lineTo(x, by + height + 2);
   ctx.fill();
 
-  ctx.fillStyle = PALETTE.ink;
+  ctx.fillStyle = isError ? "#991b1b" : PALETTE.ink;
   ctx.textBaseline = "middle";
   ctx.fillText(text, bx + 4, by + height / 2 + 0.5);
   ctx.restore();
@@ -459,9 +596,9 @@ function paint(now: number): void {
         drawParentLink(
           renderCtx,
           c.x,
-          c.y - (c.sub ? 15 : 22),
+          c.y - (c.sub ? 12 : 22),
           parent.x,
-          parent.y - (parent.sub ? 15 : 22),
+          parent.y - (parent.sub ? 12 : 22),
         );
       },
     });
@@ -472,7 +609,7 @@ function paint(now: number): void {
     entities.push({
       y: c.y,
       draw: (renderCtx, dpr) => {
-        const size = c.sub ? 26 : 34;
+        const size = c.sub ? 22 : 34;
 
         drawAnimatedCharacter(
           renderCtx,
@@ -486,16 +623,21 @@ function paint(now: number): void {
             emote: c.emoteUntil && now > c.emoteUntil ? null : c.emote,
             instanceIndex: c.instanceIndex,
             highlighted: hoveredKey === c.key || pinnedKey === c.key,
+            nominated: c.nominated,
+            errorState: c.errorState,
           },
           now,
           dpr,
         );
 
-        // Speech bubble for active tasks
+        // Tool icon / typing bubble for active tasks
         if (!c.sleeping && c.working) {
           const text = c.tool && now < c.bubbleUntil ? c.tool : typingDots(now);
           const anchor = Math.round(c.y - size - 8);
           drawBubble(renderCtx, text, Math.round(c.x), anchor);
+        } else if (c.blocked) {
+          // Blocked bubble in Confession Room
+          drawBubble(renderCtx, "!", Math.round(c.x), Math.round(c.y - size - 8), true);
         }
       },
     });
@@ -531,7 +673,15 @@ const btnTestWalk = document.getElementById("btn-test-walk") as HTMLButtonElemen
 function updateCard(c: Char): void {
   if (!cardEl || !renderer) return;
   const project = c.directory ? c.directory.split(/[\\/]/).filter(Boolean).pop() || "—" : "—";
-  const stateStr = c.sleeping ? "sleeping" : c.working ? "working" : "idle";
+  const stateStr = c.sleeping
+    ? "sleeping"
+    : c.blocked
+      ? "blocked"
+      : c.errorState
+        ? "error"
+        : c.working
+          ? "working"
+          : "idle";
 
   if (cardIconEl)
     cardIconEl.textContent =
@@ -547,15 +697,15 @@ function updateCard(c: Char): void {
                 ? "🦉"
                 : "🐾";
   if (cardHarnessEl) {
-    cardHarnessEl.textContent =
-      c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
+    const base = c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
+    cardHarnessEl.textContent = c.nominated ? `${base} [NOMINATED]` : base;
   }
   if (cardBadgeEl) {
     cardBadgeEl.textContent = stateStr;
     cardBadgeEl.className = `char-card-badge state-${stateStr}`;
   }
   if (cardProjectEl) cardProjectEl.textContent = project;
-  if (cardToolEl) cardToolEl.textContent = c.tool || (c.working ? "thinking" : "—");
+  if (cardToolEl) cardToolEl.textContent = c.tool || (c.working ? "thinking" : c.blocked ? "waiting approval" : "—");
   if (cardSubagentsEl) cardSubagentsEl.textContent = String(c.subagentCount);
   if (cardPidEl) {
     const pidVal = c.pid ?? (c.key.includes("scan:") ? c.key.split("scan:")[1] : null);
@@ -595,7 +745,7 @@ canvas.addEventListener("mousemove", (e) => {
   const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
-    const size = c.sub ? 26 : 34;
+    const size = c.sub ? 22 : 34;
     const dist = Math.hypot(c.x - mx, c.y - my);
     if (dist <= size * 0.75) {
       found = c;
@@ -621,7 +771,7 @@ canvas.addEventListener("click", (e) => {
   const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
-    const size = c.sub ? 26 : 34;
+    const size = c.sub ? 22 : 34;
     const dist = Math.hypot(c.x - mx, c.y - my);
     if (dist <= size * 0.75) {
       found = c;
@@ -682,7 +832,6 @@ document.querySelectorAll<HTMLButtonElement>(".cam-btn").forEach((btn) => {
 
 if (btnTestWalk) {
   btnTestWalk.addEventListener("click", () => {
-    // Acceptance: clicking debug button sends a character from Bedroom to Office through doors without clipping walls.
     const startX = 4 * 16 + 8;
     const startY = 5 * 16 + 14;
     const goalX = 26 * 16 + 8;
@@ -698,7 +847,12 @@ if (btnTestWalk) {
         sleeping: false,
         room: "bedroom",
         label: "Kuya Walker",
+        state: "working",
         working: false,
+        blocked: false,
+        errorState: false,
+        errorCount: 0,
+        nominated: false,
         tool: null,
         lastTool: null,
         bubbleUntil: 0,
@@ -869,7 +1023,7 @@ function frame(now: number): void {
   // House life autonomous POI progression for idle housemates
   for (const c of chars.values()) {
     if (c.key === "test:walker") continue;
-    if (!c.working && !c.sleeping && !c.walking) {
+    if (!c.working && !c.blocked && !c.sleeping && !c.walking) {
       const state = lifeManager.states.get(c.key);
       if (state && now >= state.activityUntil) {
         const nextPoi = lifeManager.pickIdlePOI(c.key, now);

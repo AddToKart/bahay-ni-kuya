@@ -56,6 +56,8 @@ export interface AnimatedSpriteState {
   emoteUntil?: number;
   instanceIndex?: number;
   highlighted?: boolean;
+  nominated?: boolean;
+  errorState?: boolean;
 }
 
 /** Draws an animated housemate character at (x, y) with action frame, species icon, ring, and active emote. */
@@ -140,7 +142,7 @@ export function drawAnimatedCharacter(
   ctx.strokeStyle = PALETTE.frame;
   ctx.lineWidth = 1;
   ctx.strokeRect(rx + 0.5, ry + 0.5, side - 1, side - 1);
-  ctx.strokeStyle = accent;
+  ctx.strokeStyle = state.errorState ? "#ef4444" : accent;
   ctx.lineWidth = 2;
   ctx.strokeRect(rx + 3, ry + 3, side - 6, side - 6);
 
@@ -217,5 +219,23 @@ export function drawAnimatedCharacter(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(emoteIcon, bx + bw / 2, by + bh / 2 + 1);
+  }
+
+  // 9. Nominated Marker
+  if (state.nominated) {
+    const nw = 56;
+    const nh = 11;
+    const nx = Math.round(x) - nw / 2;
+    const ny = ry - (emote ? 32 : 14);
+    ctx.fillStyle = Math.floor(timeMs / 400) % 2 === 0 ? "#dc2626" : "#b91c1c";
+    ctx.fillRect(nx, ny, nw, nh);
+    ctx.strokeStyle = "#fef08a";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(nx + 0.5, ny + 0.5, nw - 1, nh - 1);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold 8px ${MONO}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("NOMINATED", nx + nw / 2, ny + nh / 2 + 0.5);
   }
 }

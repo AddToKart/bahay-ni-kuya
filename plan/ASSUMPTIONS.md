@@ -74,3 +74,21 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Enforces anti-repetition rule (`picked.id !== previousPoiId`) so characters never immediately repeat the same activity.
   - Applies weighted room rotation inversely proportional to recent visits to prevent idle housemates from clustering or piling up in the living room; housemates actively visit the kitchen, game room, gym, and living room.
   - Sleep/Wake state transitions: harnesses that are not running remain asleep in bunk beds with floating `Zzz`. As soon as a process starts running, the housemate wakes up with a `thumbs_up` emote, leaves the bedroom, and begins house life.
+
+## Milestone 5: Task Flow
+
+- **Extended Wire Protocol**:
+  - Added new event types: `task_started`, `task_completed`, `blocked`, `subagent_started`, `subagent_ended` alongside existing `session_start`, `session_end`, `state`, `tool`, `error`.
+  - Added session states: `idle`, `working`, `blocked`, `error`.
+  - Added session properties: `errorCount` and `nominated` (true when `errorCount >= 3`).
+- **Adapter Event Mappings**:
+  - `codex`: `UserPromptSubmit` → `task_started`, `PermissionRequest` → `blocked`, `Stop`/`Interrupt` → `task_completed`, `SubagentStart`/`SubagentStop` → `subagent_started`/`subagent_ended`.
+  - `pi` & `omp`: `before_agent_start` → `task_started`, `tool_approval_requested` → `blocked`, `agent_end` → `task_completed`, `task:subagent:lifecycle` → subagents.
+  - `opencode`: `session.execution.started` → `task_started`, `permission.asked` → `blocked`, `session.execution.succeeded`/`session.idle` → `task_completed`.
+  - `hermes`: outbound webhook maps to task lifecycle; when working on research, Hermes navigates to the library reading nook (`living_bookshelf`).
+- **Kuya Layer & Visual Flow**:
+  - Kuya announcement banner (`#kuya-banner`) announces task summons (`KUYA: {harness}, pumunta po kayo sa office. May task po kayo.`), permission requests calling housemates to the Confession Room, task completion, and nomination alerts.
+  - Subagents: spawn directly at parent character, smaller scale (22px), take extra subagent desks in the office, and poof away when finished.
+  - Blocked housemates walk to the Confession Room, sit under the spotlight with a `!` bubble, and wait until resolved.
+  - Repeated errors (>= 3) display a glowing red/gold `NOMINATED` badge over the character.
+  - Verified with extended `bun run fake` ("day in the house" journey).

@@ -189,14 +189,14 @@ export default function (pi: PiApi): void {
       send({
         sessionId,
         parentSessionId: rootSession,
-        type: "session_start",
+        type: "subagent_started",
         state: "working",
         title: clip(event.description, 80) ?? clip(event.agent, 80) ?? "subagent",
       });
       return;
     }
     if (stage === "completed" || stage === "failed" || stage === "aborted" || stage === "done" || stage === "error") {
-      send({ sessionId, type: "session_end" });
+      send({ sessionId, type: "subagent_ended" });
       reported.delete(rawId);
     }
   }
@@ -241,9 +241,23 @@ export default function (pi: PiApi): void {
     lastStateAt = Date.now();
     send({
       sessionId,
-      type: "state",
+      type: "task_started",
       state: "working",
       title: clip(event.prompt, 80),
+      directory: clip(rootDirectory, 200),
+    });
+  });
+
+  on("tool_approval_requested", (event, ctx) => {
+    if (childSession) return;
+    const sessionId = ensureSession(ctx);
+    lastState = "blocked";
+    lastStateAt = Date.now();
+    send({
+      sessionId,
+      type: "blocked",
+      state: "blocked",
+      reason: "tool_approval",
       directory: clip(rootDirectory, 200),
     });
   });
@@ -258,8 +272,21 @@ export default function (pi: PiApi): void {
     send({ sessionId, type: "tool", tool, directory: clip(rootDirectory, 200) });
   });
 
-  on("agent_end", (event, ctx) => postState("idle", ctx));
-  on("agent_settled", (event, ctx) => postState("idle", ctx));
+  on("agent_end", (event, ctx) => {
+    if (childSession) return;
+    const sessionId = ensureSession(ctx);
+    lastState = "idle";
+    lastStateAt = Date.now();
+    send({ sessionId, type: "task_completed", state: "idle", directory: clip(rootDirectory, 200) });
+  });
+
+  on("agent_settled", (event, ctx) => {
+    if (childSession) return;
+    const sessionId = ensureSession(ctx);
+    lastState = "idle";
+    lastStateAt = Date.now();
+    send({ sessionId, type: "task_completed", state: "idle", directory: clip(rootDirectory, 200) });
+  });
 
   on("session_shutdown", () => {
     closeSession();
