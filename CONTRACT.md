@@ -60,7 +60,7 @@ env override (default `http://127.0.0.1:4777/event`). No adapter may throw into 
   "sessions": [ {
     "harness": "opencode", "sessionId": "ses_abc", "parentId": null,
     "state": "working",                 // idle | working (never "sleeping")
-    "title": "…", "tool": "edit", "directory": "D:/repo",
+    "title": "…", "tool": "edit", "directory": "D:/repo", "pid": 1234,
     "since": 1731739100000, "lastEventTs": 1731739199000,
     "source": "adapter"                 // adapter | scan
   } ]

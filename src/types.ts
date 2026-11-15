@@ -30,6 +30,7 @@ export interface SessionView {
   title?: string;
   tool?: string;
   directory?: string;
+  pid?: number;
   since: number;
   lastEventTs: number;
   source: "adapter" | "scan";

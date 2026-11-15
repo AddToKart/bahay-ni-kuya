@@ -96,8 +96,124 @@ h1 {
 }
 
 .stage {
+  position: relative;
   display: flex;
   justify-content: center;
+}
+
+.char-card {
+  position: absolute;
+  z-index: 100;
+  width: 220px;
+  background: #fdfbf7;
+  border: 2px solid var(--frame);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  padding: 8px 10px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--ink);
+  pointer-events: auto;
+  border-radius: 2px;
+}
+
+.char-card[hidden] {
+  display: none;
+}
+
+.char-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(43, 33, 25, 0.15);
+}
+
+.char-card-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.char-card-identity {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.char-card-harness {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.char-card-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.char-card-badge.state-working {
+  background: var(--working);
+  color: #fff;
+}
+
+.char-card-badge.state-idle {
+  background: var(--idle);
+  color: #fff;
+}
+
+.char-card-badge.state-sleeping {
+  background: var(--sleeping);
+  color: #fff;
+}
+
+.char-card-badge.state-blocked {
+  background: #d90429;
+  color: #fff;
+}
+
+.char-card-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.char-card-label {
+  color: var(--muted);
+}
+
+.char-card-value {
+  font-weight: 600;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.char-card-pid {
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(43, 33, 25, 0.15);
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.char-card-close {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0 4px;
+}
+
+.char-card-close:hover {
+  color: var(--ink);
 }
 
 canvas {

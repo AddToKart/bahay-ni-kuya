@@ -19,6 +19,7 @@ interface SessionRec {
   title?: string;
   tool?: string;
   directory?: string;
+  pid?: number;
   workingUntil: number;
   lastEventTs: number;
   since: number;
@@ -118,13 +119,34 @@ export class Store {
   }
 
   applyScan(procs: ProcInfo[], now = Date.now()): void {
-    const byHarness = new Map<Harness, ProcInfo[]>();
+    // 1. Identify all processes matching any harness
+    const matchedWithHarness: { proc: ProcInfo; harness: Harness }[] = [];
     for (const proc of procs) {
       const harness = matchHarness(proc);
-      if (!harness) continue;
+      if (harness) matchedWithHarness.push({ proc, harness });
+    }
+
+    // Set of all matched PIDs across all harnesses
+    const matchedPids = new Set(matchedWithHarness.map((m) => m.proc.pid));
+
+    // Deduplication: count only top-level matched processes.
+    // A matched process whose parent is also matched is a worker/child, NOT a new instance.
+    const topLevelMatches = matchedWithHarness.filter((m) => !matchedPids.has(m.proc.ppid));
+
+    // Group top-level processes by harness
+    const byHarness = new Map<Harness, ProcInfo[]>();
+    for (const { proc, harness } of topLevelMatches) {
       const list = byHarness.get(harness);
       if (list) list.push(proc);
       else byHarness.set(harness, [proc]);
+    }
+
+    // Map children under their top-level ancestor to sum CPU time
+    const childrenCpu = new Map<number, number>();
+    for (const { proc } of matchedWithHarness) {
+      if (matchedPids.has(proc.ppid)) {
+        childrenCpu.set(proc.ppid, (childrenCpu.get(proc.ppid) ?? 0) + proc.cpuMs);
+      }
     }
 
     for (const harness of HARNESSES) {
@@ -136,9 +158,10 @@ export class Store {
 
       const nextCpu = new Map<number, number>();
       for (const proc of list) {
+        const totalCpu = proc.cpuMs + (childrenCpu.get(proc.pid) ?? 0);
         const previous = state.cpuPrev.get(proc.pid);
-        const delta = previous === undefined ? 0 : Math.max(0, proc.cpuMs - previous);
-        nextCpu.set(proc.pid, proc.cpuMs);
+        const delta = previous === undefined ? 0 : Math.max(0, totalCpu - previous);
+        nextCpu.set(proc.pid, totalCpu);
         proc.working = delta > 400;
       }
       state.cpuPrev = nextCpu;
@@ -173,7 +196,8 @@ export class Store {
             harness,
             sessionId,
             parentId: null,
-            title: `${harness} · pid ${proc.pid}`,
+            title: `${harness}`,
+            pid: proc.pid,
             workingUntil: 0,
             lastEventTs: now,
             since: now,
@@ -181,6 +205,7 @@ export class Store {
           };
           this.sessions.set(key, rec);
         }
+        rec.pid = proc.pid;
         rec.lastEventTs = now;
         rec.workingUntil = proc.working ? now + IDLE_MS : 0;
       }
@@ -207,6 +232,7 @@ export class Store {
         title: rec.title,
         tool: rec.tool,
         directory: rec.directory,
+        pid: rec.pid,
         since: rec.since,
         lastEventTs: rec.lastEventTs,
         source: rec.source,

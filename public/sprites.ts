@@ -157,6 +157,14 @@ export function drawBubble(
   return y;
 }
 
+export const VARIANT_ACCENTS = [
+  "#e76f51", // terracotta
+  "#2a9d8f", // teal
+  "#f4a261", // amber
+  "#9b5de5", // violet
+  "#00bbf9", // cyan
+];
+
 export interface CharacterPaint {
   harness: string;
   /** feet position in scene coordinates */
@@ -165,14 +173,17 @@ export interface CharacterPaint {
   bob: number;
   size: number;
   facing: number;
+  instanceIndex?: number;
+  highlighted?: boolean;
 }
 
-/** Emoji sprite in a harness-accent pixel ring with a flat floor shadow + label. */
+/** Emoji sprite in a harness-accent pixel ring with a flat floor shadow. */
 export function drawCharacter(ctx: CanvasRenderingContext2D, p: CharacterPaint, dpr: number): void {
   const feetY = Math.round(p.y);
   const bob = Math.round(p.bob);
   const cy = Math.round(feetY + bob - p.size / 2);
-  const accent = accentFor(p.harness);
+  const variant = (p.instanceIndex ?? 0) > 0 ? VARIANT_ACCENTS[(p.instanceIndex! - 1) % VARIANT_ACCENTS.length] : null;
+  const accent = variant ?? accentFor(p.harness);
 
   // flat shadow stays on the floor surface
   ctx.fillStyle = "rgba(43, 33, 25, 0.3)";
@@ -183,12 +194,30 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, p: CharacterPaint, 
   // square pixel ring: 1px ink outside, 2px harness accent inside
   const half = Math.round(p.size / 2 + 4);
   const side = half * 2;
+  const rx = Math.round(p.x) - half;
+  const ry = cy - half;
+
+  if (p.highlighted) {
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(rx - 1.5, ry - 1.5, side + 3, side + 3);
+  }
+
   ctx.strokeStyle = PALETTE.frame;
   ctx.lineWidth = 1;
-  ctx.strokeRect(Math.round(p.x) - half + 0.5, cy - half + 0.5, side - 1, side - 1);
+  ctx.strokeRect(rx + 0.5, ry + 0.5, side - 1, side - 1);
   ctx.strokeStyle = accent;
   ctx.lineWidth = 2;
-  ctx.strokeRect(Math.round(p.x) - half + 3, cy - half + 3, side - 6, side - 6);
+  ctx.strokeRect(rx + 3, ry + 3, side - 6, side - 6);
+
+  // Accessory badge for multiple instances of same harness (pips on top right)
+  if ((p.instanceIndex ?? 0) > 0) {
+    const pips = Math.min(3, p.instanceIndex!);
+    ctx.fillStyle = accent;
+    for (let i = 0; i < pips; i += 1) {
+      ctx.fillRect(rx + side - 4 - i * 4, ry + 2, 3, 3);
+    }
+  }
 
   const sprite = emojiCanvas(p.harness, p.size, dpr);
   const dest = p.size * 1.35;

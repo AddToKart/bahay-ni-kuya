@@ -24,6 +24,32 @@
           role="img"
           aria-label="Pixel cross-section of the bahay ni kuya at dusk: a bedroom with bunk beds, a living room with a sofa and lamp, an office with two rows of desks, and a corridor joining them. Characters show each AI harness session; working sessions sit in the office, idle ones in the living room, and sleeping harnesses are in the bedroom."
         ></canvas>
+
+        <div id="char-card" class="char-card" hidden aria-live="polite">
+          <div class="char-card-header">
+            <span class="char-card-icon" id="card-icon">🦝</span>
+            <div class="char-card-identity">
+              <span class="char-card-harness" id="card-harness">omp</span>
+              <span class="char-card-badge" id="card-badge">working</span>
+            </div>
+            <button class="char-card-close" id="card-close" aria-label="Close card" hidden>&times;</button>
+          </div>
+          <div class="char-card-body">
+            <div class="char-card-row">
+              <span class="char-card-label">Project:</span>
+              <span class="char-card-value" id="card-project">—</span>
+            </div>
+            <div class="char-card-row">
+              <span class="char-card-label">Tool:</span>
+              <span class="char-card-value" id="card-tool">—</span>
+            </div>
+            <div class="char-card-row">
+              <span class="char-card-label">Subagents:</span>
+              <span class="char-card-value" id="card-subagents">0</span>
+            </div>
+            <div class="char-card-pid" id="card-pid">PID —</div>
+          </div>
+        </div>
       </div>
 
       <footer class="house-footer">

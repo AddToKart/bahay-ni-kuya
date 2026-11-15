@@ -43,6 +43,7 @@ interface SessionView {
   title?: string;
   tool?: string;
   directory?: string;
+  pid?: number;
   since: number;
   lastEventTs: number;
   source: "adapter" | "scan";
@@ -69,6 +70,10 @@ interface Char {
   tool: string | null;
   lastTool: string | null;
   bubbleUntil: number;
+  directory?: string;
+  pid?: number;
+  instanceIndex: number;
+  subagentCount: number;
   x: number;
   y: number;
   targetX: number;
@@ -120,6 +125,9 @@ interface Desired {
   label: string;
   working: boolean;
   tool: string | null;
+  directory?: string;
+  pid?: number;
+  instanceIndex: number;
 }
 
 function reconcile(snap: Snapshot, now: number): number {
@@ -130,6 +138,7 @@ function reconcile(snap: Snapshot, now: number): number {
   for (const s of snap.sessions) perHarness.set(s.harness, (perHarness.get(s.harness) ?? 0) + 1);
 
   const desired = new Map<string, Desired>();
+  const harnessInstances = new Map<string, number>();
 
   for (const s of snap.sessions) {
     const key = sessionKey(s.harness, s.sessionId);
@@ -149,6 +158,13 @@ function reconcile(snap: Snapshot, now: number): number {
           ? title
           : `${s.harness} (${title})`
         : s.harness;
+
+    let instanceIndex = 0;
+    if (!sub) {
+      instanceIndex = harnessInstances.get(s.harness) ?? 0;
+      harnessInstances.set(s.harness, instanceIndex + 1);
+    }
+
     desired.set(key, {
       key,
       harness: s.harness,
@@ -159,6 +175,9 @@ function reconcile(snap: Snapshot, now: number): number {
       label,
       working: s.state === "working",
       tool: s.tool ?? null,
+      directory: s.directory,
+      pid: s.pid,
+      instanceIndex,
     });
   }
 
@@ -177,6 +196,7 @@ function reconcile(snap: Snapshot, now: number): number {
         label: h.name,
         working: false,
         tool: null,
+        instanceIndex: 0,
       });
     } else if (h.running && count === 0) {
       desired.set(`ambient:${h.name}`, {
@@ -189,6 +209,7 @@ function reconcile(snap: Snapshot, now: number): number {
         label: `${h.name} (ambient)`,
         working: false,
         tool: null,
+        instanceIndex: 0,
       });
     }
   }
@@ -240,6 +261,10 @@ function reconcile(snap: Snapshot, now: number): number {
         tool: d.tool,
         lastTool: null,
         bubbleUntil: 0,
+        directory: d.directory,
+        pid: d.pid,
+        instanceIndex: d.instanceIndex,
+        subagentCount: 0,
         x: spawnX,
         y: door.y,
         targetX,
@@ -251,6 +276,13 @@ function reconcile(snap: Snapshot, now: number): number {
       };
       chars.set(d.key, c);
     } else {
+      c.label = d.label;
+      c.working = d.working;
+      c.tool = d.tool;
+      c.directory = d.directory;
+      c.pid = d.pid;
+      c.instanceIndex = d.instanceIndex;
+
       const roomChanged = c.room !== d.room;
       const targetChanged = c.targetX !== targetX || c.targetY !== targetY;
       if (roomChanged) {
@@ -283,6 +315,14 @@ function reconcile(snap: Snapshot, now: number): number {
     } else {
       c.lastTool = null;
       c.bubbleUntil = 0;
+    }
+  }
+
+  // Recalculate subagent counts
+  for (const c of chars.values()) c.subagentCount = 0;
+  for (const c of chars.values()) {
+    if (c.parentKey && chars.has(c.parentKey)) {
+      chars.get(c.parentKey)!.subagentCount += 1;
     }
   }
 
@@ -366,6 +406,8 @@ function paint(now: number, reduced: boolean): void {
         bob,
         size,
         facing: c.facing,
+        instanceIndex: c.instanceIndex,
+        highlighted: hoveredKey === c.key || pinnedKey === c.key,
       },
       spriteDpr,
     );
@@ -375,77 +417,20 @@ function paint(now: number, reduced: boolean): void {
     }
   }
 
-  // labels last, de-collided per room and kept inside their room's columns
-  ctx.font = `11px ${MONO}`;
-  const boxes: { x1: number; x2: number; y1: number; y2: number }[] = [];
-  const groups = new Map<RoomId, Char[]>();
-  for (const c of list) {
-    const group = groups.get(c.room);
-    if (group) group.push(c);
-    else groups.set(c.room, [c]);
-  }
-  for (const room of ROOM_IDS) {
-    const group = groups.get(room);
-    if (!group) continue;
-    group.sort((a, b) => a.x - b.x || (a.key < b.key ? -1 : 1));
-    const def = ROOMS[room];
-    for (const c of group) {
-      const maxWidth = c.sub ? 108 : 132;
-      const plateW = Math.min(ctx.measureText(c.label).width, maxWidth) + 6;
-      const half = plateW / 2;
-      const labelX = Math.min(
-        Math.max(c.x, def.x + 6 + half),
-        def.x + def.w - 6 - half,
-      );
-      const base = Math.round(c.y) + 13;
-      let baseline = base;
-      let settled = false;
-      for (const dy of [0, 15, 30, 45, -15, -30, -45]) {
-        const y = base + dy;
-        if (y < def.y + 16 || y > FLOOR_Y + 92) continue;
-        const rect = { x1: labelX - half, x2: labelX + half, y1: y - 10, y2: y + 3 };
-        const hit = boxes.some(
-          (p) => rect.x1 < p.x2 && rect.x2 > p.x1 && rect.y1 < p.y2 && rect.y2 > p.y1,
-        );
-        if (!hit) {
-          baseline = y;
-          boxes.push(rect);
-          settled = true;
-          break;
-        }
-      }
-      if (!settled) {
-        baseline = Math.min(Math.max(base, def.y + 16), FLOOR_Y + 92);
-        boxes.push({ x1: labelX - half, x2: labelX + half, y1: baseline - 10, y2: baseline + 3 });
-      }
-      drawLabel(ctx, c.label, labelX, baseline, maxWidth);
-    }
-  }
-
-  // speech bubbles sit just above their owner's head; small upward nudges avoid label plates
-  const labelBoxes = boxes.slice();
+  // speech bubbles sit just above their owner's head (permanent labels removed)
   for (const c of list) {
     if (c.sleeping || !c.working) continue;
     const size = c.sub ? 30 : 44;
     const text = c.tool && now < c.bubbleUntil ? c.tool : typingDots(now);
-    const shown = truncateToWidth(ctx, text, 170);
-    const bubbleW = Math.max(26, Math.ceil(ctx.measureText(shown).width) + 14);
-    let anchor = Math.round(c.y - size - 8);
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const x1 = Math.min(Math.max(4, c.x - bubbleW / 2), SCENE_W - bubbleW - 4);
-      const rect = { x1, x2: x1 + bubbleW, y1: anchor - 20, y2: anchor + 5 };
-      if (anchor - 20 < 4) break;
-      const hit = labelBoxes.some(
-        (p) => rect.x1 < p.x2 && rect.x2 > p.x1 && rect.y1 < p.y2 && rect.y2 > p.y1,
-      );
-      if (!hit) break;
-      anchor -= 12;
-    }
+    const anchor = Math.round(c.y - size - 8);
     drawBubble(ctx, text, Math.round(c.x), anchor);
   }
 }
 
 // ---------------------------------------------------------------- dom
+
+let hoveredKey: string | null = null;
+let pinnedKey: string | null = null;
 
 const canvas = document.getElementById("scene") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -453,6 +438,122 @@ const statusEl = document.getElementById("status") as HTMLElement;
 const connEl = document.getElementById("conn") as HTMLElement;
 const bannerEl = document.getElementById("banner") as HTMLElement;
 const legendEl = document.getElementById("legend") as HTMLElement;
+
+const cardEl = document.getElementById("char-card") as HTMLElement | null;
+const cardIconEl = document.getElementById("card-icon") as HTMLElement | null;
+const cardHarnessEl = document.getElementById("card-harness") as HTMLElement | null;
+const cardBadgeEl = document.getElementById("card-badge") as HTMLElement | null;
+const cardProjectEl = document.getElementById("card-project") as HTMLElement | null;
+const cardToolEl = document.getElementById("card-tool") as HTMLElement | null;
+const cardSubagentsEl = document.getElementById("card-subagents") as HTMLElement | null;
+const cardPidEl = document.getElementById("card-pid") as HTMLElement | null;
+const cardCloseEl = document.getElementById("card-close") as HTMLButtonElement | null;
+
+function updateCard(c: Char): void {
+  if (!cardEl) return;
+  const project = c.directory ? c.directory.split(/[\\/]/).filter(Boolean).pop() || "—" : "—";
+  const stateStr = c.sleeping ? "sleeping" : c.working ? "working" : "idle";
+
+  if (cardIconEl) cardIconEl.textContent = (c.harness === "opencode" ? "🦫" : c.harness === "codex" ? "🐙" : c.harness === "pi" ? "🐹" : c.harness === "omp" ? "🦝" : c.harness === "hermes" ? "🦉" : "🐾");
+  if (cardHarnessEl) {
+    cardHarnessEl.textContent = c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
+  }
+  if (cardBadgeEl) {
+    cardBadgeEl.textContent = stateStr;
+    cardBadgeEl.className = `char-card-badge state-${stateStr}`;
+  }
+  if (cardProjectEl) cardProjectEl.textContent = project;
+  if (cardToolEl) cardToolEl.textContent = c.tool || (c.working ? "thinking" : "—");
+  if (cardSubagentsEl) cardSubagentsEl.textContent = String(c.subagentCount);
+  if (cardPidEl) {
+    const pidVal = c.pid ?? (c.key.includes("scan:") ? c.key.split("scan:")[1] : null);
+    cardPidEl.textContent = pidVal ? `PID ${pidVal}` : (c.sleeping ? "offline" : "PID —");
+  }
+
+  const rect = canvas.getBoundingClientRect();
+  const domX = (c.x / SCENE_W) * rect.width;
+  const domY = (c.y / SCENE_H) * rect.height;
+  cardEl.style.left = `${Math.min(rect.width - 230, Math.max(10, domX - 110))}px`;
+  cardEl.style.top = `${Math.max(10, domY - (c.sub ? 30 : 44) - 95)}px`;
+  cardEl.hidden = false;
+  if (cardCloseEl) cardCloseEl.hidden = !pinnedKey;
+}
+
+function hideCard(): void {
+  if (pinnedKey) return;
+  if (cardEl) cardEl.hidden = true;
+  hoveredKey = null;
+}
+
+canvas.addEventListener("mousemove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = SCENE_W / rect.width;
+  const scaleY = SCENE_H / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  let found: Char | null = null;
+  for (const c of chars.values()) {
+    const size = c.sub ? 30 : 44;
+    const dist = Math.hypot(c.x - mx, c.y - my);
+    if (dist <= size * 0.75) {
+      found = c;
+      break;
+    }
+  }
+
+  if (found) {
+    hoveredKey = found.key;
+    if (!pinnedKey) updateCard(found);
+  } else {
+    hoveredKey = null;
+    if (!pinnedKey) hideCard();
+  }
+});
+
+canvas.addEventListener("mouseleave", () => {
+  hoveredKey = null;
+  if (!pinnedKey) hideCard();
+});
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = SCENE_W / rect.width;
+  const scaleY = SCENE_H / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  let found: Char | null = null;
+  for (const c of chars.values()) {
+    const size = c.sub ? 30 : 44;
+    const dist = Math.hypot(c.x - mx, c.y - my);
+    if (dist <= size * 0.75) {
+      found = c;
+      break;
+    }
+  }
+
+  if (found) {
+    if (pinnedKey === found.key) {
+      pinnedKey = null;
+      hideCard();
+    } else {
+      pinnedKey = found.key;
+      updateCard(found);
+    }
+  } else {
+    pinnedKey = null;
+    hideCard();
+  }
+});
+
+if (cardCloseEl) {
+  cardCloseEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pinnedKey = null;
+    hideCard();
+  });
+}
 
 let spriteDpr = 1;
 

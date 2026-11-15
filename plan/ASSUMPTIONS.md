@@ -19,3 +19,13 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Bearer token generated on first run and stored at `%USERPROFILE%\.bahay-ni-kuya\token`.
   - Strict Host and Origin validation (localhost / 127.0.0.1 only).
   - Git worktrees (`kuya/{harness}-{id}`) used by default for headless runs.
+
+## Milestone 1: Quick Fixes & Instance Polish
+
+- **Process Deduplication**: Implemented in `src/store.ts`. All matched harness processes are inspected; any matched process whose parent PID is also a matched harness process is treated as a child worker and excluded from top-level counting. Only top-level instances create characters or increment `state.procs`. Child CPU delta rolls up into the top-level parent.
+- **Persistent Process Scanner**: Replaced the 5-second interval PowerShell process spawn in `src/scan.ts` with a single long-lived background PowerShell process that streams JSON chunks continuously. Subsequent queries read from the live memory cache with 0 process spawn overhead.
+- **Canvas Decluttering & Character Identity**:
+  - Removed all permanent text labels, name tags, and PIDs from the canvas. The canvas is completely clean during regular operation.
+  - Added visual differentiation for multiple instances of the same harness: distinct instance color accents from `VARIANT_ACCENTS` and accessory pips on the character frame.
+  - Added interactive hover & click info cards (`#char-card`) displaying harness, project folder (`cwd` basename), state, current tool, subagent count, and PID in small gray text. Clicking a character pins the card; clicking outside or on the close button dismisses it.
+
