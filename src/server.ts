@@ -7,6 +7,7 @@ import { startOpenCodeWatcher } from "./opencode-db";
 import { log, logTail } from "./log";
 import { INSTALLED_REFRESH_MS, SCAN_MS, HARNESSES, type IngestEvent } from "./types";
 import { mergeCodexHooks } from "../scripts/install-adapters";
+import { saveLayout } from "./layout";
 import {
   isAllowedHostAndOrigin,
   isAuthenticated,
@@ -309,6 +310,27 @@ try {
         // Allowlisted roots for project selection
         if (req.method === "GET" && url.pathname === "/api/roots") {
           return jsonResponse({ roots: getAllowlistedRoots() });
+        }
+
+        // Dev layout editor save: furniture layers only, loopback + bearer token enforced.
+        if (req.method === "POST" && url.pathname === "/api/layout/save") {
+          if (!isAuthenticated(req)) return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          const text = await req.text();
+          if (text.length > 1_000_000) return jsonResponse({ error: "Payload too large" }, 413);
+          let body: unknown;
+          try {
+            body = JSON.parse(text);
+          } catch {
+            return jsonResponse({ error: "Bad json" }, 400);
+          }
+          try {
+            const props = typeof body === "object" && body !== null ? (body as { props?: unknown }).props : undefined;
+            const result = saveLayout(props);
+            log(`layout saved: ${result.props} props, backup ${result.backup}`);
+            return jsonResponse(result);
+          } catch (error) {
+            return jsonResponse({ error: error instanceof Error ? error.message : String(error) }, 400);
+          }
         }
 
         // Dispatcher endpoints require valid Bearer token
