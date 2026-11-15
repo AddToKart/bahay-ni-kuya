@@ -6,6 +6,7 @@
 
 import type { HouseMap, RoomId, MapProp } from "./map.js";
 import { resolveCharacterFrame, resolveEmoteFrame, type Facing, type Action, type Emote } from "./anim.js";
+import { validateFurniture, type Violation } from "./furniture-validate.js";
 
 declare const PIXI: any;
 
@@ -94,6 +95,10 @@ export class MapRenderer {
 
   sceneW = 672;
   sceneH = 432;
+
+  // G-key debug overlay (footprints, nav grid, POIs, doors, furniture violations)
+  debugOverlay = false;
+  debugContainer: any = null;
 
   constructor(map: HouseMap) {
     this.map = map;
@@ -703,6 +708,99 @@ export class MapRenderer {
       const d = new Date();
       const pad = (n: number) => String(n).padStart(2, "0");
       this.cctvTimeText.text = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    // 5. G-key debug overlay (footprints, nav grid, POIs, doors, furniture violations)
+    if (this.debugOverlay) this.refreshDebugOverlay();
+  }
+
+  toggleDebugOverlay(force?: boolean): void {
+    this.debugOverlay = force ?? !this.debugOverlay;
+    if (!this.debugOverlay && this.debugContainer) {
+      this.debugContainer.destroy({ children: true });
+      this.debugContainer = null;
+    }
+    if (this.debugOverlay) this.refreshDebugOverlay();
+  }
+
+  private refreshDebugOverlay(): void {
+    if (!this.app || !this.stageContainer) return;
+    if (!this.debugContainer) {
+      this.debugContainer = new PIXI.Container();
+      this.stageContainer.addChild(this.debugContainer);
+    }
+    const g = this.debugContainer as any;
+    g.removeChildren();
+
+    const T = 16;
+    const W = this.map.width;
+
+    // Nav grid: solid tiles shaded, walkable faintly outlined
+    const nav = new PIXI.Graphics();
+    for (let ty = 0; ty < this.map.height; ty++) {
+      for (let tx = 0; tx < W; tx++) {
+        const solid = this.map.collision[ty * W + tx] > 0;
+        if (solid) nav.rect(tx * T, ty * T, T, T).fill({ color: 0xff3b30, alpha: 0.22 });
+        else nav.rect(tx * T + 7, ty * T + 7, 2, 2).fill({ color: 0x9be36a, alpha: 0.5 });
+      }
+    }
+    g.addChild(nav);
+
+    // Blocking prop footprints
+    const feet = new PIXI.Graphics();
+    for (const p of this.map.props || []) {
+      if (p.layer !== "object") continue;
+      feet.rect(p.x * T + 1, p.y * T + 1, T - 2, T - 2).stroke({ color: 0xffd60a, width: 1, alpha: 0.8 });
+    }
+    g.addChild(feet);
+
+    // Doors
+    const doors = new PIXI.Graphics();
+    for (let i = 0; i < this.map.doors.length; i++) {
+      if (this.map.doors[i] > 0) {
+        const tx = i % W;
+        const ty = Math.floor(i / W);
+        doors.rect(tx * T, ty * T, T, T).stroke({ color: 0x64d2ff, width: 1.5, alpha: 0.9 });
+      }
+    }
+    g.addChild(doors);
+
+    // POIs: dot + id label (map.pois already carries tile coords)
+    const pois = new PIXI.Graphics();
+    const labels = new PIXI.Container();
+    for (const poi of this.map.pois ?? []) {
+      pois.circle(poi.x * T + 8, poi.y * T + 8, 3).fill({ color: 0x30d158, alpha: 0.9 });
+      const tag = new PIXI.Text({
+        text: poi.id,
+        style: new PIXI.TextStyle({ fontFamily: "ui-monospace, monospace", fontSize: 7, fill: "#30d158" }),
+      });
+      tag.position.set(poi.x * T + 1, poi.y * T - 3);
+      labels.addChild(tag);
+    }
+    g.addChild(pois);
+    g.addChild(labels);
+
+    // Violations from the validator, in red
+    let violations: Violation[] = [];
+    try {
+      violations = validateFurniture(this.map);
+    } catch {
+      // validator failure keeps the rest of the overlay alive
+    }
+    if (violations.length > 0) {
+      const bad = new PIXI.Graphics();
+      const vLabels = new PIXI.Container();
+      for (const v of violations) {
+        bad.rect(v.tile[0] * T, v.tile[1] * T, T, T).stroke({ color: 0xff453a, width: 2 });
+        const tag = new PIXI.Text({
+          text: `${v.rule}: ${v.prop}`,
+          style: new PIXI.TextStyle({ fontFamily: "ui-monospace, monospace", fontSize: 8, fill: "#ff6961", fontWeight: "bold" }),
+        });
+        tag.position.set(v.tile[0] * T, v.tile[1] * T - 10);
+        vLabels.addChild(tag);
+      }
+      g.addChild(bad);
+      g.addChild(vLabels);
     }
   }
 }

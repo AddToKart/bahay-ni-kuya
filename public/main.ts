@@ -806,6 +806,14 @@ document.querySelectorAll<HTMLButtonElement>(".cam-btn").forEach((btn) => {
 
 // ---------------------------------------------------------------- debug test walk button
 
+// G toggles the furniture/nav debug overlay (footprints, nav grid, POIs, doors, violations)
+window.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() !== "g" || event.repeat) return;
+  const target = event.target as HTMLElement | null;
+  if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+  renderer?.toggleDebugOverlay();
+});
+
 if (btnTestWalk) {
   btnTestWalk.addEventListener("click", () => {
     const startX = 4 * 16 + 8;

@@ -9,6 +9,8 @@
     "install-adapters": "bun run scripts/install-adapters.ts",
     "uninstall-adapters": "bun run scripts/install-adapters.ts --uninstall",
     "generate-map": "bun run scripts/generate-map.ts",
+    "structure-lock": "bun run scripts/structure-lock.ts",
+    "validate-furniture": "bun run scripts/validate-furniture.ts",
     "mcp": "bun run src/mcp.ts"
   },
   "devDependencies": {

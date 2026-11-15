@@ -143,7 +143,8 @@
       "id": "bedroom_cabinet",
       "sprite": "filing-cabinet",
       "x": 11,
-      "y": 5
+      "y": 5,
+      "frame": "side"
     },
     {
       "id": "bedroom_rug",
@@ -206,27 +207,26 @@
     {
       "id": "living_armchair_2",
       "sprite": "library-armchair",
-      "x": 21,
-      "y": 6,
-      "flip": true
+      "x": 20,
+      "y": 6
     },
     {
       "id": "living_rug",
       "sprite": "library-rug",
-      "x": 16,
-      "y": 6,
+      "x": 15,
+      "y": 5,
       "layer": "floor"
     },
     {
       "id": "living_bookshelf",
       "sprite": "library-shelf",
-      "x": 23,
+      "x": 22,
       "y": 3
     },
     {
       "id": "living_lamp",
       "sprite": "floor-lamp",
-      "x": 14,
+      "x": 13,
       "y": 3
     },
     {
@@ -279,7 +279,7 @@
     {
       "id": "desk_chair_2",
       "sprite": "chair",
-      "variant": "sage",
+      "variant": "rust",
       "x": 29,
       "y": 4
     },
@@ -293,7 +293,7 @@
     {
       "id": "desk_chair_3",
       "sprite": "chair",
-      "variant": "teal",
+      "variant": "rust",
       "x": 33,
       "y": 4
     },
@@ -335,7 +335,7 @@
     {
       "id": "desk_chair_6",
       "sprite": "chair",
-      "variant": "teal",
+      "variant": "sage",
       "x": 29,
       "y": 7
     },
@@ -349,7 +349,7 @@
     {
       "id": "desk_chair_7",
       "sprite": "chair",
-      "variant": "rust",
+      "variant": "sage",
       "x": 33,
       "y": 7
     },
@@ -459,7 +459,7 @@
       "id": "office_bookshelf_1",
       "sprite": "bookshelf",
       "x": 25,
-      "y": 4
+      "y": 1
     },
     {
       "id": "office_bin_1",
@@ -476,7 +476,7 @@
     {
       "id": "office_plant_2",
       "sprite": "lobby-plant-big",
-      "x": 40,
+      "x": 39,
       "y": 9
     },
     {
@@ -571,7 +571,7 @@
       "id": "confession_spotlight_prop",
       "sprite": "confession-spotlight",
       "x": 4,
-      "y": 18,
+      "y": 16,
       "layer": "wall"
     },
     {
@@ -620,39 +620,39 @@
     {
       "id": "kitchen_cooler_prop",
       "sprite": "kitchen-cooler",
-      "x": 17,
+      "x": 16,
       "y": 17
     },
     {
       "id": "kitchen_vending_prop",
       "sprite": "break-vending",
-      "x": 19,
+      "x": 17,
       "y": 17
     },
     {
       "id": "kitchen_bin_prop",
       "sprite": "bin",
-      "x": 21,
+      "x": 22,
       "y": 17
     },
     {
       "id": "kitchen_shelf_prop",
       "sprite": "kitchen-shelf",
-      "x": 13,
+      "x": 11,
       "y": 16,
       "layer": "wall"
     },
     {
       "id": "kitchen_clock",
       "sprite": "wall-clock",
-      "x": 16,
+      "x": 19,
       "y": 16,
       "layer": "wall"
     },
     {
       "id": "kitchen_mat_prop",
       "sprite": "kitchen-mat",
-      "x": 14,
+      "x": 13,
       "y": 18,
       "layer": "floor"
     },
@@ -714,7 +714,7 @@
     {
       "id": "arcade_prop_2",
       "sprite": "break-arcade",
-      "x": 32,
+      "x": 31,
       "y": 17
     },
     {
@@ -727,7 +727,7 @@
     {
       "id": "game_poster",
       "sprite": "break-poster",
-      "x": 28,
+      "x": 26,
       "y": 16,
       "layer": "wall"
     },
@@ -741,7 +741,7 @@
       "id": "game_bin",
       "sprite": "bin",
       "x": 33,
-      "y": 18
+      "y": 17
     },
     {
       "id": "game_plant",
@@ -753,13 +753,13 @@
       "id": "gym_treadmill_prop",
       "sprite": "treadmill",
       "x": 36,
-      "y": 18
+      "y": 17
     },
     {
       "id": "gym_bike_prop",
       "sprite": "gym-bike",
       "x": 36,
-      "y": 21
+      "y": 20
     },
     {
       "id": "gym_weights_prop",
@@ -4518,8 +4518,8 @@
         0,
         0,
         0,
-        0,
         42,
+        0,
         0,
         0,
         0,
@@ -4975,10 +4975,8 @@
         46,
         45,
         46,
-        0,
-        0,
+        46,
         47,
-        0,
         57,
         0,
         0,
@@ -4990,55 +4988,57 @@
         0,
         0,
         0,
-        51,
         0,
+        0,
+        51,
         52,
         0,
         0,
         0,
         0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
         53,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
         0,
         0,
         54,
@@ -5460,8 +5460,8 @@
         0,
         0,
         1,
-        0,
-        0,
+        1,
+        1,
         0,
         0,
         0,
@@ -5503,7 +5503,7 @@
         0,
         1,
         1,
-        0,
+        1,
         0,
         0,
         0,
@@ -5532,9 +5532,8 @@
         0,
         0,
         1,
-        0,
         1,
-        0,
+        1,
         0,
         0,
         0,
@@ -5542,6 +5541,7 @@
         0,
         0,
         0,
+        1,
         1,
         1,
         0,
@@ -5586,7 +5586,7 @@
         0,
         0,
         1,
-        1,
+        0,
         0,
         0,
         0,
@@ -5605,7 +5605,7 @@
         1,
         1,
         1,
-        0,
+        1,
         0,
         0,
         0,
@@ -5660,7 +5660,6 @@
         1,
         0,
         1,
-        0,
         0,
         0,
         0,
@@ -5669,6 +5668,7 @@
         1,
         0,
         0,
+        0,
         1,
         1,
         1,
@@ -5809,11 +5809,11 @@
         0,
         1,
         1,
-        0,
         0,
         1,
         1,
         1,
+        1,
         0,
         0,
         0,
@@ -6123,14 +6123,14 @@
         1,
         1,
         1,
-        0,
         1,
-        0,
         1,
-        0,
         1,
+        0,
         0,
+        0,
         1,
+        1,
         0,
         0,
         0,
@@ -6138,12 +6138,12 @@
         0,
         0,
         1,
-        0,
         1,
         0,
         1,
-        0,
+        1,
         0,
+        1,
         0,
         0,
         0,
@@ -6182,12 +6182,12 @@
         0,
         0,
         0,
-        1,
-        1,
         0,
         1,
         0,
         0,
+        0,
+        0,
         1,
         0,
         1,
@@ -6269,8 +6269,8 @@
         0,
         1,
         0,
-        0,
-        0,
+        1,
+        1,
         0,
         0,
         0,
@@ -6311,9 +6311,9 @@
         0,
         1,
         0,
-        1,
         0,
         0,
+        0,
         1,
         0,
         1,
@@ -6396,7 +6396,7 @@
         1,
         0,
         1,
-        0,
+        1,
         0,
         0,
         0,
@@ -7872,7 +7872,7 @@
           "id": 38,
           "name": "arcade_2",
           "type": "poi",
-          "x": 512,
+          "x": 496,
           "y": 288,
           "width": 16,
           "height": 16,
@@ -7909,7 +7909,7 @@
           "name": "treadmill",
           "type": "poi",
           "x": 576,
-          "y": 304,
+          "y": 288,
           "width": 16,
           "height": 16,
           "properties": [
@@ -8326,7 +8326,7 @@
             {
               "name": "frame",
               "type": "string",
-              "value": "default"
+              "value": "side"
             },
             {
               "name": "variant",
@@ -8673,7 +8673,7 @@
           "id": 1020,
           "name": "living_armchair_2",
           "type": "prop",
-          "x": 336,
+          "x": 320,
           "y": 96,
           "width": 16,
           "height": 16,
@@ -8701,7 +8701,7 @@
             {
               "name": "flip",
               "type": "bool",
-              "value": true
+              "value": false
             }
           ]
         },
@@ -8709,8 +8709,8 @@
           "id": 1021,
           "name": "living_rug",
           "type": "prop",
-          "x": 256,
-          "y": 96,
+          "x": 240,
+          "y": 80,
           "width": 16,
           "height": 16,
           "properties": [
@@ -8745,7 +8745,7 @@
           "id": 1022,
           "name": "living_bookshelf",
           "type": "prop",
-          "x": 368,
+          "x": 352,
           "y": 48,
           "width": 16,
           "height": 16,
@@ -8781,7 +8781,7 @@
           "id": 1023,
           "name": "living_lamp",
           "type": "prop",
-          "x": 224,
+          "x": 208,
           "y": 48,
           "width": 16,
           "height": 16,
@@ -9087,7 +9087,7 @@
             {
               "name": "variant",
               "type": "string",
-              "value": "sage"
+              "value": "rust"
             },
             {
               "name": "layer",
@@ -9159,7 +9159,7 @@
             {
               "name": "variant",
               "type": "string",
-              "value": "teal"
+              "value": "rust"
             },
             {
               "name": "layer",
@@ -9375,7 +9375,7 @@
             {
               "name": "variant",
               "type": "string",
-              "value": "teal"
+              "value": "sage"
             },
             {
               "name": "layer",
@@ -9447,7 +9447,7 @@
             {
               "name": "variant",
               "type": "string",
-              "value": "rust"
+              "value": "sage"
             },
             {
               "name": "layer",
@@ -10006,7 +10006,7 @@
           "name": "office_bookshelf_1",
           "type": "prop",
           "x": 400,
-          "y": 64,
+          "y": 16,
           "width": 16,
           "height": 16,
           "properties": [
@@ -10113,7 +10113,7 @@
           "id": 1060,
           "name": "office_plant_2",
           "type": "prop",
-          "x": 640,
+          "x": 624,
           "y": 144,
           "width": 16,
           "height": 16,
@@ -10618,7 +10618,7 @@
           "name": "confession_spotlight_prop",
           "type": "prop",
           "x": 64,
-          "y": 288,
+          "y": 256,
           "width": 16,
           "height": 16,
           "properties": [
@@ -10905,7 +10905,7 @@
           "id": 1082,
           "name": "kitchen_cooler_prop",
           "type": "prop",
-          "x": 272,
+          "x": 256,
           "y": 272,
           "width": 16,
           "height": 16,
@@ -10941,7 +10941,7 @@
           "id": 1083,
           "name": "kitchen_vending_prop",
           "type": "prop",
-          "x": 304,
+          "x": 272,
           "y": 272,
           "width": 16,
           "height": 16,
@@ -10977,7 +10977,7 @@
           "id": 1084,
           "name": "kitchen_bin_prop",
           "type": "prop",
-          "x": 336,
+          "x": 352,
           "y": 272,
           "width": 16,
           "height": 16,
@@ -11013,7 +11013,7 @@
           "id": 1085,
           "name": "kitchen_shelf_prop",
           "type": "prop",
-          "x": 208,
+          "x": 176,
           "y": 256,
           "width": 16,
           "height": 16,
@@ -11049,7 +11049,7 @@
           "id": 1086,
           "name": "kitchen_clock",
           "type": "prop",
-          "x": 256,
+          "x": 304,
           "y": 256,
           "width": 16,
           "height": 16,
@@ -11085,7 +11085,7 @@
           "id": 1087,
           "name": "kitchen_mat_prop",
           "type": "prop",
-          "x": 224,
+          "x": 208,
           "y": 288,
           "width": 16,
           "height": 16,
@@ -11445,7 +11445,7 @@
           "id": 1097,
           "name": "arcade_prop_2",
           "type": "prop",
-          "x": 512,
+          "x": 496,
           "y": 272,
           "width": 16,
           "height": 16,
@@ -11517,7 +11517,7 @@
           "id": 1099,
           "name": "game_poster",
           "type": "prop",
-          "x": 448,
+          "x": 416,
           "y": 256,
           "width": 16,
           "height": 16,
@@ -11590,7 +11590,7 @@
           "name": "game_bin",
           "type": "prop",
           "x": 528,
-          "y": 288,
+          "y": 272,
           "width": 16,
           "height": 16,
           "properties": [
@@ -11662,7 +11662,7 @@
           "name": "gym_treadmill_prop",
           "type": "prop",
           "x": 576,
-          "y": 288,
+          "y": 272,
           "width": 16,
           "height": 16,
           "properties": [
@@ -11698,7 +11698,7 @@
           "name": "gym_bike_prop",
           "type": "prop",
           "x": 576,
-          "y": 336,
+          "y": 320,
           "width": 16,
           "height": 16,
           "properties": [
