@@ -30,7 +30,8 @@ const TARGETS = {
   codexPs1: at(".bahay-ni-kuya", "adapters", "codex", "bahay-codex.ps1"),
   hooksJson: at(".codex", "hooks.json"),
   hermesConfig: at("AppData", "Local", "hermes", "config.yaml"),
-  legacyOpenCode: at(".config", "opencode", "plugins", "bahay-opencode.js"),
+  openCode: at(".config", "opencode", "plugins", "bahay-opencode.js"),
+  localOpenCode: repo(".opencode", "plugins", "bahay-opencode.js"),
 };
 
 const SOURCES = {
@@ -39,6 +40,7 @@ const SOURCES = {
   codexCmd: repo("adapters", "codex", "bahay-codex.cmd"),
   codexPs1: repo("adapters", "codex", "bahay-codex.ps1"),
   hermesFragment: repo("adapters", "hermes", "hooks-fragment.yaml"),
+  openCode: repo("adapters", "opencode", "bahay-opencode.js"),
 };
 
 // Hook event names verified inside codex.exe 0.166.0 (hooks\src\events\*, hooks\src\registry.rs).
@@ -256,15 +258,8 @@ function readCodexConfig(path: string): CodexConfig {
 }
 
 function installAll(notes: Note[], dryRun: boolean): void {
-  // opencode is covered by the server's read-only DB watcher; remove an earlier plugin copy.
-  if (existsSync(TARGETS.legacyOpenCode)) {
-    removeTracked(notes, TARGETS.legacyOpenCode, dryRun);
-    notes.push({
-      action: "cleaned",
-      path: TARGETS.legacyOpenCode,
-      detail: "opencode now uses the built-in DB watcher",
-    });
-  }
+  writeTracked(notes, TARGETS.openCode, requireSource(SOURCES.openCode), dryRun);
+  writeTracked(notes, TARGETS.localOpenCode, requireSource(SOURCES.openCode), dryRun);
   writeTracked(notes, TARGETS.omp, requireSource(SOURCES.omp), dryRun);
   writeTracked(notes, TARGETS.pi, requireSource(SOURCES.pi), dryRun);
 
@@ -316,7 +311,8 @@ function installAll(notes: Note[], dryRun: boolean): void {
 }
 
 function uninstallAll(notes: Note[], dryRun: boolean): void {
-  if (existsSync(TARGETS.legacyOpenCode)) removeTracked(notes, TARGETS.legacyOpenCode, dryRun);
+  if (existsSync(TARGETS.openCode)) removeTracked(notes, TARGETS.openCode, dryRun);
+  if (existsSync(TARGETS.localOpenCode)) removeTracked(notes, TARGETS.localOpenCode, dryRun);
   removeTracked(notes, TARGETS.omp, dryRun);
   removeTracked(notes, TARGETS.pi, dryRun);
   removeTracked(notes, TARGETS.codexCmd, dryRun);

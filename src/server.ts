@@ -1,8 +1,12 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { Store } from "./store";
 import { checkInstalled, scanProcesses } from "./scan";
 import { startOpenCodeWatcher } from "./opencode-db";
 import { log, logTail } from "./log";
 import { INSTALLED_REFRESH_MS, SCAN_MS, type IngestEvent } from "./types";
+import { mergeCodexHooks } from "../scripts/install-adapters";
 
 const PORT = Number(process.env.BAHAY_NI_KUYA_PORT ?? 4777);
 const HOST = process.env.BAHAY_NI_KUYA_HOST ?? "127.0.0.1";
@@ -212,6 +216,27 @@ function reportPortOwner(): void {
   }
 }
 
+function checkCodexHooks(): void {
+  try {
+    const hooksPath = join(homedir(), ".codex", "hooks.json");
+    if (!existsSync(hooksPath)) return;
+    const content = readFileSync(hooksPath, "utf8");
+    if (!content.includes("bahay-codex")) {
+      log("Orca or user updated ~/.codex/hooks.json without bahay-codex; re-merging...");
+      const cmdPath = join(homedir(), ".bahay-ni-kuya", "adapters", "codex", "bahay-codex.cmd").replace(/\\/g, "/");
+      const config = JSON.parse(content);
+      const merged = mergeCodexHooks(config, cmdPath);
+      if (merged.added.length > 0) {
+        writeFileSync(hooksPath, JSON.stringify(merged.config, null, 2) + "\n");
+        log(`re-merged ${merged.added.length} codex hook(s) into ~/.codex/hooks.json`);
+      }
+    }
+  } catch (err) {
+    log("codex hooks check failed", String(err));
+  }
+}
+
+checkCodexHooks();
 store.setInstalled(await checkInstalled());
 await scanTick();
 
