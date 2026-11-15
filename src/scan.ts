@@ -51,7 +51,7 @@ const MATCHERS: Record<Harness, (p: ProcInfo) => boolean> = {
 
 export function matchHarness(p: ProcInfo): Harness | null {
   if (p.pid === process.pid) return null;
-  if (p.cmd.includes("agent-house-fixture")) return null;
+  if (p.cmd.includes("bahay-ni-kuya-fixture")) return null;
   for (const harness of HARNESSES) if (MATCHERS[harness](p)) return harness;
   return null;
 }

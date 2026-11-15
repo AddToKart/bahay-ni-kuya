@@ -1,4 +1,4 @@
-# Agent House — implementation contract
+# Bahay ni Kuya — implementation contract
 
 Three slices depend on this file: server (`src/`), frontend (`public/`), adapters (`adapters/`,
 `scripts/`). Do not change a contract without updating this file and the other slices.
@@ -6,7 +6,7 @@ Three slices depend on this file: server (`src/`), frontend (`public/`), adapter
 ## Server
 
 - Bun, no runtime deps. Entry: `bun run src/server.ts`.
-- Port: `AGENT_HOUSE_PORT` env, default `4777`. Bind host `AGENT_HOUSE_HOST`, default `127.0.0.1`.
+- Port: `BAHAY_NI_KUYA_PORT` env, default `4777`. Bind host `BAHAY_NI_KUYA_HOST`, default `127.0.0.1`.
 - Routes:
   - `POST /event` — ingest one event. Body ≤64 KiB. `204` on success, `400` `{ok:false,error}`.
   - `POST /event/hermes` — Hermes outbound-webhook payloads (`hook_event_name`, `tool_name`,
@@ -47,7 +47,7 @@ Semantics:
 - `type:"session_end"` deletes the session and all its descendants.
 - Any accepted event marks the harness running immediately (before the next scan).
 
-Adapters are fire-and-forget: 1500 ms timeout, every failure swallowed, `AGENT_HOUSE_URL`
+Adapters are fire-and-forget: 1500 ms timeout, every failure swallowed, `BAHAY_NI_KUYA_URL`
 env override (default `http://127.0.0.1:4777/event`). No adapter may throw into its harness.
 
 ## Snapshot (server → browser)
@@ -91,5 +91,5 @@ when present, pseudo-sessions are suppressed for any harness with adapter sessio
 
 ## Local dev ports for parallel testing
 
-Server reads `AGENT_HOUSE_PORT`. Frontend agent uses `4780`, adapter agent uses `4781`.
+Server reads `BAHAY_NI_KUYA_PORT`. Frontend agent uses `4780`, adapter agent uses `4781`.
 Never touch a server on another port; kill only your own PID.

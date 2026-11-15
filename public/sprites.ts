@@ -1,4 +1,4 @@
-// Sprite + shared drawing primitives for Agent House.
+// Sprite + shared drawing primitives for Bahay ni Kuya.
 // All colors are the DESIGN.md palette (CSS vars mirror this constant).
 
 export const PALETTE = {

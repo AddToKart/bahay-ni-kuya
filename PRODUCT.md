@@ -1,6 +1,6 @@
-# Agent House
+# Bahay ni Kuya
 
-Status: active. Built 2026-11-16 from `plan/agent-house-plan.md`.
+Status: active. Built 2026-11-16 from `plan/bahay-ni-kuya-plan.md`.
 Owner: Kurt. Surface: local web app, `http://localhost:4777`, opened in Orca's embedded browser.
 
 ## What
@@ -46,7 +46,7 @@ no Orca plugin packaging (standalone local app).
 
 ## Assumptions (user declined a clarifying interview; brief is the authority)
 
-- Port stays 4777 by default (Orca browser bookmark); override is `AGENT_HOUSE_PORT`.
+- Port stays 4777 by default (Orca browser bookmark); override is `BAHAY_NI_KUYA_PORT`.
 - Adapters may be installed into global harness config dirs; every install is reversible
   and backed up.
 - Hermes runs natively on Windows here, so process scan sees it.

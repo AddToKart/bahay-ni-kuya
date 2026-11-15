@@ -1,7 +1,7 @@
-# Agent House adapters
+# Bahay ni Kuya adapters
 
 Four harnesses get a small, fail-silent adapter that POSTs contract events to
-`AGENT_HOUSE_URL` (default `http://127.0.0.1:4777/event`). **opencode needs no installation**:
+`BAHAY_NI_KUYA_URL` (default `http://127.0.0.1:4777/event`). **opencode needs no installation**:
 the server reads opencode's own SQLite database read-only (see below).
 
 Rules that hold for all installed adapters:
@@ -9,7 +9,7 @@ Rules that hold for all installed adapters:
 - POST only, no GETs, no retries, no queues that survive the process.
 - 1500 ms timeout on the request (`AbortSignal.timeout`; codex uses `-TimeoutSec 1`).
 - Every handler body and every post is wrapped; the adapter never throws into the harness.
-- A down Agent House means silent drops — nothing is buffered or replayed later.
+- A down Bahay ni Kuya means silent drops — nothing is buffered or replayed later.
 - Session ids are stable for the life of the harness session.
 
 Install everything with:
@@ -21,7 +21,7 @@ bun run scripts/install-adapters.ts --uninstall
 ```
 
 The installer backs up every file it edits or copies over to
-`%USERPROFILE%/.agent-house/backups/<ISO timestamp>/` before touching it, and prints a
+`%USERPROFILE%/.bahay-ni-kuya/backups/<ISO timestamp>/` before touching it, and prints a
 per-path summary. It does not start the server.
 
 ---
@@ -46,7 +46,7 @@ The server reads the active opencode process's database with a read-only `bun:sq
 connection: sessions (id, `parent_id`, title, directory, `time_updated`), recent parts
 (`step-*`, `text`, `reasoning`, `tool`) and messages. Mapping:
 
-| opencode DB fact | Agent House event |
+| opencode DB fact | Bahay ni Kuya event |
 |---|---|
 | session row updated since the current opencode process started | `session_start` with title/directory, `parent_id` → `parentSessionId` |
 | session/part written within 6 s | `state:"working"` |
@@ -64,8 +64,8 @@ Subagents are child sessions (`parent_id`) and appear exactly like event-driven 
 
 | | |
 |---|---|
-| Sources | `adapters/codex/agent-house-codex.ps1`, `adapters/codex/agent-house-codex.cmd` |
-| Installed to | `C:/Users/Cayz/.agent-house/adapters/codex/` |
+| Sources | `adapters/codex/bahay-codex.ps1`, `adapters/codex/bahay-codex.cmd` |
+| Installed to | `C:/Users/Cayz/.bahay-ni-kuya/adapters/codex/` |
 | Configured in | `C:/Users/Cayz/.codex/hooks.json` (JSON merge, Orca entries preserved) |
 | Wire | hook JSON on stdin, PowerShell reads `[Console]::In.ReadToEnd()` |
 
@@ -91,7 +91,7 @@ ids from the transcript file name (`transcript_path` stem); `SubagentStart`/`Sub
 the `agent_transcript_path` stem as the child id with the parent transcript stem as
 `parentSessionId`.
 
-| codex hook | Agent House event |
+| codex hook | Bahay ni Kuya event |
 |---|---|
 | `SessionStart` | `session_start`, `state:"idle"`, `directory: cwd` |
 | `UserPromptSubmit` | `state:"working"`, `title: prompt` |
@@ -105,7 +105,7 @@ the `agent_transcript_path` stem as the child id with the parent transcript stem
 
 ```json
 "PreToolUse": [
-  { "hooks": [ { "type": "command", "command": "C:/Users/Cayz/.agent-house/adapters/codex/agent-house-codex.cmd", "timeout": 10 } ] }
+  { "hooks": [ { "type": "command", "command": "C:/Users/Cayz/.bahay-ni-kuya/adapters/codex/bahay-codex.cmd", "timeout": 10 } ] }
 ]
 ```
 
@@ -113,7 +113,7 @@ Existing Orca entries (same event or other events) are preserved semantically �
 re-serialized with `JSON.stringify(config, null, 2)`, so key order, spacing and trailing-newline
 formatting may change even though no Orca hook is added, removed or rewritten. A second install
 run adds nothing. Uninstall removes only hook objects whose command contains
-`agent-house-codex`; Orca's own entries in the same event arrays stay untouched. Uninstall also
+`bahay-codex`; Orca's own entries in the same event arrays stay untouched. Uninstall also
 re-serializes, so formatting changes apply there too.
 
 ---
@@ -122,14 +122,14 @@ re-serializes, so formatting changes apply there too.
 
 | | |
 |---|---|
-| Source | `adapters/omp/agent-house-omp.ts` |
-| Installed to | `C:/Users/Cayz/.omp/agent/extensions/agent-house-omp.ts` |
+| Source | `adapters/omp/bahay-omp.ts` |
+| Installed to | `C:/Users/Cayz/.omp/agent/extensions/bahay-omp.ts` |
 | Registration | `export default function (pi) { pi.on(...) }` (auto-loaded extension, zero imports) |
 
 Registration, event names and the subagent bus were read from the Orca extension already
 installed at `C:/Users/Cayz/.omp/agent/extensions/orca-agent-status.ts`:
 
-| pi event | Agent House event |
+| pi event | Bahay ni Kuya event |
 |---|---|
 | `session_start` (`ctx.sessionManager.getSessionId()`) | `session_start`, `state:"idle"`, `directory: process.cwd()` |
 | `before_agent_start` (`event.prompt`) | `state:"working"`, `title: prompt` |
@@ -157,8 +157,8 @@ move).
 
 | | |
 |---|---|
-| Source | `adapters/pi/agent-house-pi.ts` |
-| Installed to | `C:/Users/Cayz/.pi/agent/extensions/agent-house-pi.ts` |
+| Source | `adapters/pi/bahay-pi.ts` |
+| Installed to | `C:/Users/Cayz/.pi/agent/extensions/bahay-pi.ts` |
 | Wire harness field | `"pi"` |
 
 Mapping is identical to omp. `tool_execution_start`, `agent_end`, `agent_settled`,
@@ -181,7 +181,7 @@ Schema verified in `hermes-agent/agent/outbound_webhooks.py`; event names verifi
 ```yaml
 hooks:
   outbound:
-    - name: agent-house
+    - name: bahay-ni-kuya
       url: http://127.0.0.1:4777/event/hermes
       events: [on_session_start, on_session_end, pre_llm_call, post_llm_call,
                pre_tool_call, post_tool_call, subagent_start, subagent_stop]
@@ -201,12 +201,12 @@ start, `pre_llm_call` → working, `pre_tool_call`/`post_tool_call` → tool (wo
 
 Hermes POSTs its own payload shape
 `{ hook_event_name, profile, tool_name, tool_input, session_id, cwd, extra, delivery_id, timestamp }`
-to `/event/hermes`, where the Agent House server maps it onto the contract. Parent/child ids
+to `/event/hermes`, where the Bahay ni Kuya server maps it onto the contract. Parent/child ids
 arrive inside `extra` (`parent_session_id`, `child_session_id`, `child_role`, `child_goal`,
 `child_status`).
 
 **Approval:** outbound webhooks do *not* use the shell-hook consent allowlist, so no
-`hermes --accept-hooks` is needed for this block. The marker block is the only thing Agent House
+`hermes --accept-hooks` is needed for this block. The marker block is the only thing Bahay ni Kuya
 writes; `--uninstall` removes exactly that block.
 
 ---
@@ -217,7 +217,7 @@ writes; `--uninstall` removes exactly that block.
 bun run src/server.ts                                  # terminal 1
 bun run scripts/fake-events.ts                         # ~18 s scripted pass
 bun run scripts/fake-events.ts --loop                  # repeat forever
-AGENT_HOUSE_URL=http://127.0.0.1:4781/event bun run scripts/fake-events.ts
+BAHAY_NI_KUYA_URL=http://127.0.0.1:4781/event bun run scripts/fake-events.ts
 ```
 
 The script exits 1 with a clear message if `/healthz` does not answer within 3 seconds. It posts a
@@ -236,10 +236,10 @@ curl.exe -s http://127.0.0.1:4777/state
 
 - **Nothing appears:** confirm `curl.exe -s http://127.0.0.1:4777/healthz` returns `{"ok":true,...}`;
   harnesses that start before the server are still fine (they drop the first events).
-- **Wrong endpoint:** set `AGENT_HOUSE_URL` in the environment the harness itself starts with.
+- **Wrong endpoint:** set `BAHAY_NI_KUYA_URL` in the environment the harness itself starts with.
   Hermes needs the `/event/hermes` URL and is configured at install time.
 - **Codex hooks not firing:** check `codex --version` is 0.166.x and that
-  `~/.codex/hooks.json` still contains the `agent-house-codex` command entries (Orca rewrites
+  `~/.codex/hooks.json` still contains the `bahay-codex` command entries (Orca rewrites
   this file occasionally; re-run the installer to merge them again).
 - **Hermes conflicts:** if your `config.yaml` already has a non-empty `hooks:` block, the
   installer skips the hermes step and prints why. Merge the `outbound` entry from

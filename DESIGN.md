@@ -1,4 +1,4 @@
-# Agent House — design contract
+# Bahay ni Kuya — design contract
 
 Mode: **Operate** (glanceable status, not a game to play). Expression lives in the scene, not
 in chrome. One idea per form: the house is the status; the header is the caption.
@@ -49,7 +49,7 @@ marketing layout, "AI slop" sparkle iconography, text baked into background imag
 ## Typography
 
 - One family: `ui-monospace, "Cascadia Mono", Consolas, monospace`.
-- Title `AGENT HOUSE` 18px, 700, letter-spacing .18em, uppercase.
+- Title `Bahay ni Kuya` 18px, 700, letter-spacing .18em, uppercase.
 - Subtitle/caption 12px, `--muted`.
 - Canvas labels: 11px monospace, `--ink`, single line, truncated with `…`.
 - No display fonts, no italics.

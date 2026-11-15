@@ -1,9 +1,9 @@
-// Agent House adapter for pi 0.83.0 (same extension API as omp 18.20.2).
+// Bahay ni Kuya adapter for omp 18.20.2 (same extension API as pi 0.83.0).
 //
-// Install: copy to C:/Users/Cayz/.pi/agent/extensions/agent-house-pi.ts
+// Install: copy to C:/Users/Cayz/.omp/agent/extensions/bahay-omp.ts
 // (or run `bun run scripts/install-adapters.ts`). No imports: the extension must load even when
 // the harness's package graph changes, so only the verified `pi.on(...)` / `pi.events.on(...)`
-// surface is used (types live in @earendil-works/pi-coding-agent, but are not needed at runtime).
+// surface is used.
 //
 // Contract: fire-and-forget. Every handler body is try/catched, every POST has a 1500 ms timeout,
 // failures are swallowed and never retried. A down server means silent drops.
@@ -39,7 +39,7 @@ interface PiApi {
   events?: { on?: (name: string, handler: (event: unknown) => void) => void };
 }
 
-const HARNESS = "pi";
+const HARNESS = "omp";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:4777/event";
 // Harness globals are untyped here on purpose: the extension ships with zero imports.
 const globals = globalThis as unknown as {
@@ -57,7 +57,7 @@ function env(key: string): string {
   }
 }
 
-const ENDPOINT = (env("AGENT_HOUSE_URL") || DEFAULT_ENDPOINT).replace(/\/+$/, "");
+const ENDPOINT = (env("BAHAY_NI_KUYA_URL") || DEFAULT_ENDPOINT).replace(/\/+$/, "");
 
 function asBag(value: unknown): Bag {
   return typeof value === "object" && value !== null ? (value as Bag) : {};

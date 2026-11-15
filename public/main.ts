@@ -1,4 +1,4 @@
-// Agent House scene controller: snapshot reconciliation, walking, drawing, WS.
+// Bahay ni Kuya scene controller: snapshot reconciliation, walking, drawing, WS.
 
 import {
   allocateSlots,

@@ -1,11 +1,11 @@
-# >>> agent-house (managed by scripts/install-adapters.ts — remove this block to uninstall)
-# Hermes outbound webhooks -> Agent House. Verified against hermes 0.21.5:
+# >>> bahay-ni-kuya (managed by scripts/install-adapters.ts — remove this block to uninstall)
+# Hermes outbound webhooks -> Bahay ni Kuya. Verified against hermes 0.21.5:
 #   agent/outbound_webhooks.py (`hooks.outbound` list schema), hermes_cli/plugins.py (VALID_HOOKS).
-# Fire-and-forget, fail-open, queue-bounded; no tool call ever waits on Agent House.
-# Agent House maps this payload shape on POST /event/hermes.
+# Fire-and-forget, fail-open, queue-bounded; no tool call ever waits on Bahay ni Kuya.
+# Bahay ni Kuya maps this payload shape on POST /event/hermes.
 hooks:
   outbound:
-    - name: agent-house
+    - name: bahay-ni-kuya
       url: http://127.0.0.1:4777/event/hermes
       events:
         - on_session_start
@@ -17,4 +17,4 @@ hooks:
         - subagent_start
         - subagent_stop
       timeout: 2
-# <<< agent-house
+# <<< bahay-ni-kuya

@@ -1,5 +1,5 @@
 /**
- * OpenCode watcher: reads opencode's own SQLite DB (read-only) to produce Agent House
+ * OpenCode watcher: reads opencode's own SQLite DB (read-only) to produce Bahay ni Kuya
  * events. opencode 1.18.35's TUI plugin context exposes no event bus (verified by probe:
  * `Event`/`session` are absent from the setup context), so the plugin route yields nothing.
  * The DB is written by opencode itself and gives sessions, parent links, titles, tool parts

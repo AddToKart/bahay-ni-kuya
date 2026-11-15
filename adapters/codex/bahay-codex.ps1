@@ -1,8 +1,8 @@
-# Agent House adapter for codex-cli hooks (verified against codex-cli 0.166.0).
+# Bahay ni Kuya adapter for codex-cli hooks (verified against codex-cli 0.166.0).
 #
 # Codex runs this per hook event and pipes the hook payload as JSON on stdin. Every failure is
 # swallowed: the script always exits 0 and never writes to stdout (stdout is a hook protocol
-# channel, and Agent House is an observer, not a gate).
+# channel, and Bahay ni Kuya is an observer, not a gate).
 #
 # Payload fields observed in the codex binary: transcript_path, cwd, hook_event_name,
 # permission_mode, agent_transcript_path, stop_hook_active, last_assistant_message, prompt,
@@ -44,7 +44,7 @@ try {
   $sessionId = Get-SessionIdFromPath $payload.transcript_path
   $directory = Clip-Value $payload.cwd 200
 
-  $endpoint = [string]$env:AGENT_HOUSE_URL
+  $endpoint = [string]$env:BAHAY_NI_KUYA_URL
   if (-not $endpoint -or $endpoint.Trim().Length -eq 0) { $endpoint = 'http://127.0.0.1:4777/event' }
   $endpoint = $endpoint.Trim().TrimEnd('/')
 
@@ -68,7 +68,7 @@ try {
       $events += @{ type = 'tool'; state = 'working'; sessionId = $sessionId; tool = $tool; directory = $directory }
     }
     'PermissionRequest' {
-      # Permissions are not modelled in Agent House; keep the character working.
+      # Permissions are not modelled in Bahay ni Kuya; keep the character working.
       $events += @{ type = 'tool'; state = 'working'; sessionId = $sessionId; tool = $tool; directory = $directory }
     }
     'Stop' {
@@ -110,7 +110,7 @@ try {
       $body = $event | ConvertTo-Json -Compress -Depth 4
       Invoke-RestMethod -Method Post -Uri $endpoint -ContentType 'application/json' -Body $body -TimeoutSec 1 | Out-Null
     } catch {
-      # silent drop: Agent House being down must never disturb codex
+      # silent drop: Bahay ni Kuya being down must never disturb codex
     }
   }
 } catch {

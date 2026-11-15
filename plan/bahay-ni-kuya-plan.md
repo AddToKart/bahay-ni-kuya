@@ -1,4 +1,4 @@
-# Agent House — Implementation Plan
+# Bahay ni Kuya — Implementation Plan
 
 Pixel/emoji visualizer for every AI coding harness on this PC. A local web app at
 `http://localhost:4777` renders a Canvas 2D house: harnesses sleep in the **Bedroom**
@@ -165,11 +165,11 @@ All adapters share the same safety rules:
 - Posts use `AbortSignal.timeout(1500)` and never block the host beyond that.
 - If the server is down, adapters fail **silently** (no dialogs, no crash, no retry storms;
   at most one info line to the harness's own log file).
-- Adapters read the target URL from env `AGENT_HOUSE_URL` (default `http://127.0.0.1:4777/event`).
+- Adapters read the target URL from env `BAHAY_NI_KUYA_URL` (default `http://127.0.0.1:4777/event`).
 
-### 5.1 opencode plugin — `adapters/opencode/agent-house-opencode.ts`
+### 5.1 opencode plugin — `adapters/opencode/bahay-opencode.ts`
 
-- **Install:** copy to `C:\Users\Cayz\.config\opencode\plugins\agent-house-opencode.ts`.
+- **Install:** copy to `C:\Users\Cayz\.config\opencode\plugins\bahay-opencode.ts`.
   No config change needed (plugins dir is scanned automatically). **Rollback:** delete the file.
 - **Design:** default-export plugin. Subscribes to
   `session.created` (capture `parentID` → subagent), `session.status` / `session.idle` /
@@ -195,21 +195,21 @@ All adapters share the same safety rules:
   ```
   (Exact key spelling/shape **[ASSUMPTION]** — confirmed against hermes docs + a logging
   probe in M3; hermes hooks are fail-open, so a bad block degrades to no events, not a crash.)
-- **Rollback:** remove the appended block (keep a dated backup `config.yaml.agent-house-backup`).
+- **Rollback:** remove the appended block (keep a dated backup `config.yaml.bahay-ni-kuya-backup`).
 - Hermes is native Windows → process scan sees `hermes.exe` normally; `delegate_task`
   subagents (up to 3 concurrent) arrive as events with `parent_session_id`/`child_session_id`.
 
-### 5.3 codex — `adapters/codex/agent-house-codex.cmd` + `.ps1`
+### 5.3 codex — `adapters/codex/bahay-codex.cmd` + `.ps1`
 
 - **Install:** **append** four entries to the existing `~/.codex/hooks.json` (Orca's entries
   stay untouched; file is already trusted/activated). New script:
-  `C:\Users\Cayz\.orca\agent-hooks\agent-house-codex.cmd` (put ours beside Orca's, since
+  `C:\Users\Cayz\.orca\agent-hooks\bahay-codex.cmd` (put ours beside Orca's, since
   that dir is already used and trusted for hook scripts).
   ```jsonc
   // appended to hooks: { ... }
-  "SessionStart": [ { "hooks": [ { "type": "command", "command": "C:/Users/Cayz/.orca/agent-hooks/agent-house-codex.cmd", "timeout": 10 } ] } ],
-  "Stop":          [ { "hooks": [ { "type": "command", "command": ".../agent-house-codex.cmd", "timeout": 10 } ] } ],
-  "PreToolUse":    [ { "hooks": [ { "type": "command", "command": ".../agent-house-codex.cmd", "POST body → working", "timeout": 10 } ] } ],
+  "SessionStart": [ { "hooks": [ { "type": "command", "command": "C:/Users/Cayz/.orca/agent-hooks/bahay-codex.cmd", "timeout": 10 } ] } ],
+  "Stop":          [ { "hooks": [ { "type": "command", "command": ".../bahay-codex.cmd", "timeout": 10 } ] } ],
+  "PreToolUse":    [ { "hooks": [ { "type": "command", "command": ".../bahay-codex.cmd", "POST body → working", "timeout": 10 } ] } ],
   "PostToolUse":   [ ... same script ... ]
   ```
   The `.cmd` wraps a small PowerShell/Node one-liner that reads the hook JSON from stdin
@@ -221,9 +221,9 @@ All adapters share the same safety rules:
 - Fallback if hooks don't fire as expected: `~/.codex/sessions/` dir-existence + mtime
   watcher (dir verified to exist) as an M7 fallback.
 
-### 5.4 omp extension — `adapters/omp/agent-house-omp.ts`
+### 5.4 omp extension — `adapters/omp/bahay-omp.ts`
 
-- **Install:** copy to `~/.omp/agent/extensions/agent-house-omp.ts` (auto-discovered;
+- **Install:** copy to `~/.omp/agent/extensions/bahay-omp.ts` (auto-discovered;
   Orca's extensions there already prove auto-load works). **Rollback:** delete the file.
 - Subscribes to `before_agent_start`, `turn_end`, `agent_end`, `session_shutdown`,
   `tool_execution_start/update/end`. Subagents: `ctx.agent` identifies a subagent session
@@ -231,10 +231,10 @@ All adapters share the same safety rules:
 - **Assumption (verify in M5 probe):** exact event payload fields (`ctx.agent` naming,
   session ids in payloads); the M5 logging adapter confirms before building the real one.
 
-### 5.5 pi extension — `adapters/pi/agent-house-pi.ts`
+### 5.5 pi extension — `adapters/pi/bahay-pi.ts`
 
 - Same code shape as the omp adapter (verified: pi/omp share handler shapes; Orca ships the
-  *same* extension file to both dirs). Install to `~/.pi/agent/extensions/agent-house-pi.ts`.
+  *same* extension file to both dirs). Install to `~/.pi/agent/extensions/bahay-pi.ts`.
 - Types import from `@earendil-works/pi-coding-agent` (that's the package the `pi` shim runs;
   types-only import so nothing breaks if it moves). Uses `pi.on("session_start" | "turn_start" |
   "turn_end" | "message_start" | "tool_call", ...)`.
@@ -376,7 +376,7 @@ labeled as "activity guess" in the UI (bubble text), never claimed as ground tru
 
 - **opencode:** the plugin route does not work on 1.18.35 — a probe showed the V2 `setup(ctx)` context exposes no event bus (`keys: options, agent, aisdk, catalog, command, integration, plugin, reference, skill`; no `event`/`session`) in both `opencode run` and the TUI. Orca's own V2 plugin no-ops there too. Replaced with a read-only SQLite watcher (`src/opencode-db.ts`, 3 s poll, 6 s active window, 15 s startup grace) over `~/.local/share/opencode/opencode.db`: sessions, `parent_id` subagents, titles, directories, tool parts. The tested plugin file was removed and the installer cleans any legacy copy.
 - **Frontend:** name labels render on cream plates with per-room collision avoidance (shift down/up, clamp to room); subagents get companion slots beside the parent desk (±34/±40 px) with a dashed parent link; office/spawn positions are deduped.
-- **codex:** all installed hook keys verified present in `codex.exe` 0.166.0 strings (`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PermissionRequest`, `Stop`, `SubagentStart`, `SubagentStop`, `SessionEnd`, `Interrupt`). Merge preserved the 9 Orca entries (19 total, valid JSON); backup at `~/.agent-house/backups/2026-11-15T17-25-39-257Z/`. Hook script exercised end-to-end with synthetic stdin payloads.
+- **codex:** all installed hook keys verified present in `codex.exe` 0.166.0 strings (`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PermissionRequest`, `Stop`, `SubagentStart`, `SubagentStop`, `SessionEnd`, `Interrupt`). Merge preserved the 9 Orca entries (19 total, valid JSON); backup at `~/.bahay-ni-kuya/backups/2026-11-15T17-25-39-257Z/`. Hook script exercised end-to-end with synthetic stdin payloads.
 - **hermes:** `hooks.outbound` schema, payload shape and event names verified from installed Python sources (`agent/outbound_webhooks.py`, `hermes_cli/plugins.py`); block appended to `AppData/Local/hermes/config.yaml`. Live `hermes` run not exercised (hooks prompt for approval; fail-open).
 - **omp/pi:** extensions installed into their auto-loaded extension dirs; API/event names read from the Orca extensions already running on this machine. Live runs not exercised (TUI-only harnesses).
 - **Verified live:** process scan lifecycle (spawn → idle, kill → sweep), WS broadcast, idle decay, subagent tree deletion, opencode canary (`opencode run` succeeded with server up; watcher showed the session working), codex hook stdin-path, browser scene (0 console/page errors).

@@ -1,4 +1,4 @@
-// Agent House adapter installer.
+// Bahay ni Kuya adapter installer.
 //
 //   bun run scripts/install-adapters.ts              # install / update (idempotent)
 //   bun run scripts/install-adapters.ts --uninstall  # remove everything it installed
@@ -6,7 +6,7 @@
 //   bun run scripts/install-adapters.ts --help
 //
 // Every file it edits or copies over is backed up first to
-//   %USERPROFILE%/.agent-house/backups/<ISO timestamp>/
+//   %USERPROFILE%/.bahay-ni-kuya/backups/<ISO timestamp>/
 // The codex hooks.json is JSON-merged (Orca entries preserved); the hermes config.yaml gets a
 // marker block appended/updated (never a duplicate `hooks:` key).
 
@@ -23,27 +23,27 @@ const at = (...parts: string[]): string => join(HOME, ...parts).replace(/\\/g, "
 const repo = (...parts: string[]): string => resolve(REPO, ...parts).replace(/\\/g, "/");
 
 const TARGETS = {
-  omp: at(".omp", "agent", "extensions", "agent-house-omp.ts"),
-  pi: at(".pi", "agent", "extensions", "agent-house-pi.ts"),
-  codexDir: at(".agent-house", "adapters", "codex"),
-  codexCmd: at(".agent-house", "adapters", "codex", "agent-house-codex.cmd"),
-  codexPs1: at(".agent-house", "adapters", "codex", "agent-house-codex.ps1"),
+  omp: at(".omp", "agent", "extensions", "bahay-omp.ts"),
+  pi: at(".pi", "agent", "extensions", "bahay-pi.ts"),
+  codexDir: at(".bahay-ni-kuya", "adapters", "codex"),
+  codexCmd: at(".bahay-ni-kuya", "adapters", "codex", "bahay-codex.cmd"),
+  codexPs1: at(".bahay-ni-kuya", "adapters", "codex", "bahay-codex.ps1"),
   hooksJson: at(".codex", "hooks.json"),
   hermesConfig: at("AppData", "Local", "hermes", "config.yaml"),
-  legacyOpenCode: at(".config", "opencode", "plugins", "agent-house-opencode.js"),
+  legacyOpenCode: at(".config", "opencode", "plugins", "bahay-opencode.js"),
 };
 
 const SOURCES = {
-  omp: repo("adapters", "omp", "agent-house-omp.ts"),
-  pi: repo("adapters", "pi", "agent-house-pi.ts"),
-  codexCmd: repo("adapters", "codex", "agent-house-codex.cmd"),
-  codexPs1: repo("adapters", "codex", "agent-house-codex.ps1"),
+  omp: repo("adapters", "omp", "bahay-omp.ts"),
+  pi: repo("adapters", "pi", "bahay-pi.ts"),
+  codexCmd: repo("adapters", "codex", "bahay-codex.cmd"),
+  codexPs1: repo("adapters", "codex", "bahay-codex.ps1"),
   hermesFragment: repo("adapters", "hermes", "hooks-fragment.yaml"),
 };
 
 // Hook event names verified inside codex.exe 0.166.0 (hooks\src\events\*, hooks\src\registry.rs).
 // Omitted on purpose: Notification (not a hook key in this build) and PreCompact/PostCompact
-// (valid, but Agent House does not need the extra traffic).
+// (valid, but Bahay ni Kuya does not need the extra traffic).
 export const CODEX_EVENTS = [
   "SessionStart",
   "UserPromptSubmit",
@@ -57,9 +57,9 @@ export const CODEX_EVENTS = [
   "Interrupt",
 ] as const;
 
-const CODEX_COMMAND_MARKER = "agent-house-codex";
-const HERMES_START = "# >>> agent-house";
-const HERMES_END = "# <<< agent-house";
+const CODEX_COMMAND_MARKER = "bahay-codex";
+const HERMES_START = "# >>> bahay-ni-kuya";
+const HERMES_END = "# <<< bahay-ni-kuya";
 
 type CodexConfig = Record<string, unknown>;
 
@@ -150,7 +150,7 @@ export function upsertHermesBlock(
   if (start >= 0) {
     const end = text.indexOf(HERMES_END, start);
     if (end < 0) {
-      return { text, action: "skipped", note: "existing `# >>> agent-house` marker has no closing marker" };
+      return { text, action: "skipped", note: "existing `# >>> bahay-ni-kuya` marker has no closing marker" };
     }
     const stop = end + HERMES_END.length;
     const next = text.slice(0, start) + block.trimEnd() + text.slice(stop);
@@ -196,7 +196,7 @@ const backups: string[] = [];
 function backupFile(abs: string): string | undefined {
   if (!existsSync(abs)) return undefined;
   if (!backupRoot) {
-    backupRoot = at(".agent-house", "backups", new Date().toISOString().replace(/[:.]/g, "-"));
+    backupRoot = at(".bahay-ni-kuya", "backups", new Date().toISOString().replace(/[:.]/g, "-"));
     mkdirSync(backupRoot, { recursive: true });
   }
   const relative = abs.replace(/^[A-Za-z]:/, "").replace(/[\\/]+/g, "__");
@@ -303,7 +303,7 @@ function installAll(notes: Note[], dryRun: boolean): void {
     return;
   }
   if (result.action === "unchanged") {
-    notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "agent-house block already current" });
+    notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "bahay-ni-kuya block already current" });
     return;
   }
   const output = crlf ? result.text.replace(/\n/g, "\r\n") : result.text;
@@ -330,7 +330,7 @@ function uninstallAll(notes: Note[], dryRun: boolean): void {
       writeTracked(notes, TARGETS.hooksJson, Buffer.from(text, "utf8"), dryRun);
       notes.push({ action: "unmerged", path: TARGETS.hooksJson, detail: `removed: ${stripped.removed.join(", ")}` });
     } else {
-      notes.push({ action: "unchanged", path: TARGETS.hooksJson, detail: "no agent-house entries" });
+      notes.push({ action: "unchanged", path: TARGETS.hooksJson, detail: "no bahay-ni-kuya entries" });
     }
   } else {
     notes.push({ action: "absent", path: TARGETS.hooksJson });
@@ -343,9 +343,9 @@ function uninstallAll(notes: Note[], dryRun: boolean): void {
     if (result.removed) {
       const output = crlf ? result.text.replace(/\n/g, "\r\n") : result.text;
       writeTracked(notes, TARGETS.hermesConfig, Buffer.from(output, "utf8"), dryRun);
-      notes.push({ action: "unmerged", path: TARGETS.hermesConfig, detail: "removed agent-house block" });
+      notes.push({ action: "unmerged", path: TARGETS.hermesConfig, detail: "removed bahay-ni-kuya block" });
     } else {
-      notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "no agent-house block" });
+      notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "no bahay-ni-kuya block" });
     }
   } else {
     notes.push({ action: "absent", path: TARGETS.hermesConfig });
@@ -366,7 +366,7 @@ function printNotes(notes: Note[]): void {
 }
 
 function printHelp(): void {
-  console.log(`Agent House adapter installer
+  console.log(`Bahay ni Kuya adapter installer
 
 Usage:
   bun run scripts/install-adapters.ts [options]
@@ -379,14 +379,14 @@ Options:
 Targets (home: ${HOME}):
   omp       ${TARGETS.omp}
   pi        ${TARGETS.pi}
-  codex     ${TARGETS.codexDir}/agent-house-codex.{cmd,ps1}
+  codex     ${TARGETS.codexDir}/bahay-codex.{cmd,ps1}
             ${TARGETS.hooksJson}   (JSON merge; Orca entries preserved)
   hermes    ${TARGETS.hermesConfig}   (marker block append)
 
-Backups: ${HOME}/.agent-house/backups/<ISO timestamp>/
+Backups: ${HOME}/.bahay-ni-kuya/backups/<ISO timestamp>/
 
 Environment:
-  AGENT_HOUSE_URL   read at runtime by every adapter except hermes (whose URL is
+  BAHAY_NI_KUYA_URL   read at runtime by every adapter except hermes (whose URL is
                     written into config.yaml). Default http://127.0.0.1:4777/event.
 `);
 }
@@ -400,7 +400,7 @@ async function main(argv: string[]): Promise<void> {
   const dryRun = flags.has("--dry-run");
   const uninstall = flags.has("--uninstall");
   const notes: Note[] = [];
-  console.log(`Agent House adapters — ${uninstall ? "uninstall" : "install"}${dryRun ? " (dry run)" : ""}\n`);
+  console.log(`Bahay ni Kuya adapters — ${uninstall ? "uninstall" : "install"}${dryRun ? " (dry run)" : ""}\n`);
   if (uninstall) uninstallAll(notes, dryRun);
   else installAll(notes, dryRun);
   printNotes(notes);

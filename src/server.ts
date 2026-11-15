@@ -4,8 +4,8 @@ import { startOpenCodeWatcher } from "./opencode-db";
 import { log, logTail } from "./log";
 import { INSTALLED_REFRESH_MS, SCAN_MS, type IngestEvent } from "./types";
 
-const PORT = Number(process.env.AGENT_HOUSE_PORT ?? 4777);
-const HOST = process.env.AGENT_HOUSE_HOST ?? "127.0.0.1";
+const PORT = Number(process.env.BAHAY_NI_KUYA_PORT ?? 4777);
+const HOST = process.env.BAHAY_NI_KUYA_HOST ?? "127.0.0.1";
 
 interface WsLike {
   send(data: string): void;
@@ -28,7 +28,7 @@ function asString(value: unknown): string | undefined {
 /**
  * Hermes outbound webhooks post their own payload shape:
  * { hook_event_name, profile, tool_name, tool_input, session_id, cwd, extra, delivery_id, timestamp }.
- * Map it onto the Agent House contract. Unknown events are accepted and ignored (hooks are
+ * Map it onto the Bahay ni Kuya contract. Unknown events are accepted and ignored (hooks are
  * fire-and-forget; a 4xx would only produce noise in the harness).
  */
 function mapHermesPayload(value: unknown): IngestEvent[] {
@@ -284,7 +284,7 @@ try {
 } catch (err) {
   log(`could not bind ${HOST}:${PORT}`, String(err));
   reportPortOwner();
-  log(`set AGENT_HOUSE_PORT to a free port, or stop the process above`);
+  log(`set BAHAY_NI_KUYA_PORT to a free port, or stop the process above`);
   process.exit(1);
 }
 
@@ -307,5 +307,5 @@ const installed = store
   .harnesses.filter((h) => h.installed)
   .map((h) => h.name)
   .join(", ");
-log(`Agent House listening on http://localhost:${PORT} (${server.port})`);
+log(`Bahay ni Kuya listening on http://localhost:${PORT} (${server.port})`);
 log(`installed harnesses: ${installed || "none"}`);

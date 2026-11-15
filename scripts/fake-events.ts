@@ -1,8 +1,8 @@
-// Scripted Agent House demo: posts contract events at realistic timings so the house fills up
+// Scripted Bahay ni Kuya demo: posts contract events at realistic timings so the house fills up
 // and empties out. Usage:
 //   bun run scripts/fake-events.ts            # one ~18s pass
 //   bun run scripts/fake-events.ts --loop     # repeat forever
-//   AGENT_HOUSE_URL=http://127.0.0.1:4781/event bun run scripts/fake-events.ts
+//   BAHAY_NI_KUYA_URL=http://127.0.0.1:4781/event bun run scripts/fake-events.ts
 //
 // Exits non-zero when the server cannot be reached within 3 seconds.
 
@@ -24,7 +24,7 @@ interface Step {
 }
 
 const DEFAULT_ENDPOINT = "http://127.0.0.1:4777/event";
-const ENDPOINT = (process.env.AGENT_HOUSE_URL || DEFAULT_ENDPOINT).replace(/\/+$/, "");
+const ENDPOINT = (process.env.BAHAY_NI_KUYA_URL || DEFAULT_ENDPOINT).replace(/\/+$/, "");
 const ORIGIN = ENDPOINT.replace(/\/event(?:\/.*)?$/, "");
 const DIRECTORY = process.cwd().replace(/\\/g, "/");
 const LOOP = process.argv.includes("--loop");
@@ -159,7 +159,7 @@ function stamp(ms: number): string {
 async function runOnce(pass: number): Promise<void> {
   live.clear();
   const started = performance.now();
-  console.log(`Agent House demo pass ${pass} -> ${ENDPOINT}`);
+  console.log(`Bahay ni Kuya demo pass ${pass} -> ${ENDPOINT}`);
   const heartbeat = setInterval(keepAlive, 1500);
   try {
     for (const step of steps) {
@@ -178,8 +178,8 @@ async function runOnce(pass: number): Promise<void> {
 async function main(): Promise<void> {
   const up = await waitForServer();
   if (!up) {
-    console.error(`Agent House server unreachable at ${ORIGIN} (tried /healthz for 3s).`);
-    console.error("Start it with: bun run src/server.ts   (or set AGENT_HOUSE_URL)");
+    console.error(`Bahay ni Kuya server unreachable at ${ORIGIN} (tried /healthz for 3s).`);
+    console.error("Start it with: bun run src/server.ts   (or set BAHAY_NI_KUYA_URL)");
     process.exit(1);
   }
   let pass = 1;

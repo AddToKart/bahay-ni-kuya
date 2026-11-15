@@ -1,4 +1,4 @@
-# Agent House
+# Bahay ni Kuya
 
 A local visualizer for every AI coding harness on this PC: characters sleep in the Bedroom,
 hang out in the Living Room, and work at desks in the Office. Subagents appear as smaller
@@ -6,11 +6,13 @@ characters tethered to their parent.
 
 Open **http://localhost:4777** (Bun server, no build step).
 
-| State | Room |
-| --- | --- |
-| Harness not running | Bedroom (sleeping) |
-| Running, idle or waiting | Living Room |
-| Thinking / calling tools | Office |
+> Le **BAHAY NI KUYA** — every harness lives under one roof. 🏡
+
+| Harness state | Where | Notes |
+| --- | --- | --- |
+| Not running | 🛏️ Bedroom (sleeping) | `where.exe` can't find it on PATH |
+| Running, idle or waiting | 🛋️ Living Room (chilling) | process alive, no recent activity |
+| Thinking / calling tools | 💼 Office (at a desk) | visible tool bubble when known |
 
 Harnesses: **opencode**, **codex**, **pi**, **omp** (oh-my-pi), **hermes**.
 
@@ -60,15 +62,15 @@ Notes:
   Orca's entries are preserved.
 - Hermes outbound hooks may prompt for approval on first launch (`hermes --accept-hooks`).
 - Harnesses load adapters at startup: restart them after installing.
-- The installer copies backups to `%USERPROFILE%\.agent-house\backups\<timestamp>\`.
+- The installer copies backups to `%USERPROFILE%\.bahay-ni-kuya\backups\<timestamp>\`.
 
 ## Configuration
 
 | Env var | Default | Meaning |
 | --- | --- | --- |
-| `AGENT_HOUSE_PORT` | `4777` | server port |
-| `AGENT_HOUSE_HOST` | `127.0.0.1` | bind host |
-| `AGENT_HOUSE_URL` | `http://127.0.0.1:4777/event` | adapter target |
+| `BAHAY_NI_KUYA_PORT` | `4777` | server port |
+| `BAHAY_NI_KUYA_HOST` | `127.0.0.1` | bind host |
+| `BAHAY_NI_KUYA_URL` | `http://127.0.0.1:4777/event` | adapter target |
 
 If the port is taken the server exits with the owning PID and suggests a free port.
 
@@ -89,14 +91,14 @@ bun run dev     # --watch server
 bun run fake    # demo events
 ```
 
-Verification checklist lives in `plan/agent-house-plan.md` under each milestone.
+Verification checklist lives in `plan/bahay-ni-kuya-plan.md` under each milestone.
 
 ## Troubleshooting
 
 - **Nothing moves, all sleeping** — the scan may be failing; check server output. A failed
   PowerShell scan keeps the previous state, never marks everything stopped.
 - **A harness never appears** — `where.exe <binary>` must find it; adapters are optional.
-- **Port 4777 busy** — stop the reported PID or `AGENT_HOUSE_PORT=4780 bun run start`.
+- **Port 4777 busy** — stop the reported PID or `BAHAY_NI_KUYA_PORT=4780 bun run start`.
 - **Adapter doesn't fire** — restart the harness; check the harness's own logs/plugin
   approval; uninstall and rely on the scan layer.
 

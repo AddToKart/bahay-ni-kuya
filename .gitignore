@@ -2,4 +2,4 @@ node_modules/
 server-test.log
 *.log
 .agent-house/
-backups/
+.bahay-ni-kuya/
