@@ -1,0 +1,38 @@
+{
+  "task_call": [
+    "KUYA: {harness}, pumunta po kayo sa office. May task po kayo.",
+    "KUYA: {harness}, tawag po kayo sa office para sa isang mahalagang gawain.",
+    "KUYA: {harness}, maghanda po, may bago tayong challenge sa office."
+  ],
+  "hermes_research": [
+    "KUYA: hermes, pumunta po kayo sa library reading nook. May research task po kayo.",
+    "KUYA: hermes, kailangan ng malalim na pagsusuri sa reading nook sa inyong mga aklat."
+  ],
+  "blocked_confession": [
+    "KUYA: {harness}, pumunta po kayo sa confession room para sa inyong desisyon.",
+    "KUYA: {harness}, mag-usap po tayo sa confession room ukol sa inyong kailangang permiso.",
+    "KUYA: {harness}, kailangan po ng inyong pahintulot sa confession room."
+  ],
+  "error_facepalm": [
+    "KUYA: Mukhang nagka-aberya si {harness}. Ayusin po natin 'yan.",
+    "KUYA: {harness}, huwag mag-alala, subukan nating muli."
+  ],
+  "nominated": [
+    "KUYA: {harness}, dahil sa sunod-sunod na error, NOMINATED po kayo sa eviction ngayong linggo.",
+    "KUYA: Naku, {harness}. Pasok po kayo sa listahan ng mga nominado dahil sa aberya."
+  ],
+  "task_completed": [
+    "KUYA: Salamat, {harness}. Mahusay ang inyong trabaho. Magpahinga po muna kayo.",
+    "KUYA: Tapos na ang task ni {harness}. Maaari na po kayong bumalik sa bahay.",
+    "KUYA: Good job, {harness}! Tagumpay ang inyong gawain."
+  ],
+  "wake_up": [
+    "KUYA: Magandang umaga, mga housemates! Gising na po para sa araw na ito.",
+    "KUYA: Oras na para bumangon at simulan ang mga gawain sa bahay."
+  ],
+  "chores": [
+    "KUYA: Napakasipag naman maglinis at mag-ayos sa bahay.",
+    "KUYA: Mukhang masarap ang niluluto ninyo sa kusina ah.",
+    "KUYA: Enjoy po sa inyong laro sa game room, mga housemates."
+  ]
+}

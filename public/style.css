@@ -61,12 +61,47 @@ h1 {
   text-transform: uppercase;
 }
 
+.day-badge {
+  background: rgba(224, 169, 59, 0.15);
+  color: #e0a93b;
+  border: 1px solid rgba(224, 169, 59, 0.4);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  align-self: center;
+}
+
 .status {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   color: var(--muted);
   font-size: 12px;
+}
+
+.tts-btn {
+  background: rgba(43, 33, 25, 0.3);
+  border: 1px solid var(--frame);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.tts-btn:hover {
+  color: var(--wall-liv);
+  border-color: var(--muted);
+}
+
+.tts-btn.active {
+  background: rgba(127, 176, 105, 0.2);
+  color: #a7f3d0;
+  border-color: #34d399;
 }
 
 .conn {

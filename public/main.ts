@@ -6,6 +6,7 @@ import { MapRenderer, type YSortable } from "./renderer.js";
 import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
+import { KuyaLayer } from "./kuya.js";
 import type { SessionState } from "../src/types.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
@@ -87,26 +88,10 @@ let houseMap: HouseMap | null = null;
 let navGrid: NavGrid | null = null;
 let renderer: MapRenderer | null = null;
 const lifeManager = new HouseLifeManager();
+const kuya = new KuyaLayer();
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
-}
-
-// ---------------------------------------------------------------- Kuya Banner
-
-let kuyaBannerTimer: number | null = null;
-
-function showKuyaBanner(msg: string, durationMs = 5000): void {
-  const banner = document.getElementById("kuya-banner");
-  const text = document.getElementById("kuya-msg");
-  if (!banner || !text) return;
-  text.textContent = msg;
-  banner.hidden = false;
-  if (kuyaBannerTimer !== null) window.clearTimeout(kuyaBannerTimer);
-  kuyaBannerTimer = window.setTimeout(() => {
-    banner.hidden = true;
-    kuyaBannerTimer = null;
-  }, durationMs);
 }
 
 // Convert world coords to tile coords and compute orthogonal A* path
@@ -365,9 +350,9 @@ function reconcile(snap: Snapshot, now: number): number {
       // Initial task Kuya banner if starting directly into work
       if (d.working) {
         if (d.harness === "hermes") {
-          showKuyaBanner("KUYA: hermes, pumunta po kayo sa reading nook. May research task po kayo.");
+          kuya.announce(kuya.formatLine("hermes_research", { harness: "hermes" }));
         } else {
-          showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa office. May task po kayo.`);
+          kuya.announce(kuya.formatLine("task_call", { harness: d.harness }));
         }
       }
     } else {
@@ -395,35 +380,38 @@ function reconcile(snap: Snapshot, now: number): number {
         c.emote = "exclamation";
         c.emoteUntil = now + 3000;
         if (d.harness === "hermes") {
-          showKuyaBanner("KUYA: hermes, pumunta po kayo sa reading nook. May research task po kayo.");
+          kuya.announce(kuya.formatLine("hermes_research", { harness: "hermes" }));
         } else {
-          showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa office. May task po kayo.`);
+          kuya.announce(kuya.formatLine("task_call", { harness: d.harness }));
         }
       }
       // 2. Blocked / Permission Asked
       else if (!prevBlocked && d.blocked) {
         c.emote = "exclamation";
         c.emoteUntil = now + 4000;
-        showKuyaBanner(`KUYA: ${d.harness}, pumunta po kayo sa confession room para sa inyong desisyon.`);
+        kuya.announce(kuya.formatLine("blocked_confession", { harness: d.harness }));
       }
       // 3. Error / Nominated
       else if (d.errorState && prevState !== "error") {
         c.emote = "facepalm";
         c.emoteUntil = now + 3500;
         if (d.nominated) {
-          showKuyaBanner(`KUYA: ${d.harness}, nominated po kayo sa bahay ngayong linggo dahil sa mga error.`);
+          kuya.announce(kuya.formatLine("nominated", { harness: d.harness }));
+        } else {
+          kuya.announce(kuya.formatLine("error_facepalm", { harness: d.harness }));
         }
       }
       // 4. Task Completed / Returned to Idle
       else if (prevWorking && !d.working && !d.blocked && !d.errorState) {
         c.emote = "thumbs_up";
         c.emoteUntil = now + 3500;
-        showKuyaBanner(`KUYA: Salamat, ${d.harness}. Tapos na ang task. Magpahinga po muna kayo.`);
+        kuya.announce(kuya.formatLine("task_completed", { harness: d.harness }));
       }
       // 5. Wake up event
       else if (c.sleeping && !d.sleeping) {
         c.emote = "thumbs_up";
         c.emoteUntil = now + 3000;
+        kuya.announce(kuya.formatLine("wake_up", { harness: d.harness }));
       }
 
       c.sleeping = d.sleeping;
@@ -1063,6 +1051,8 @@ buildLegend();
 fitCanvas();
 setConnected(false);
 window.addEventListener("resize", fitCanvas);
+kuya.initDOM();
+kuya.loadLines();
 
 // Load house map & POIs, then initialize renderer, navGrid, and house life
 Promise.all([

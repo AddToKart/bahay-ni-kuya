@@ -92,3 +92,20 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Blocked housemates walk to the Confession Room, sit under the spotlight with a `!` bubble, and wait until resolved.
   - Repeated errors (>= 3) display a glowing red/gold `NOMINATED` badge over the character.
   - Verified with extended `bun run fake` ("day in the house" journey).
+
+## Milestone 6: Kuya Layer
+
+- **Editable Taglish Lines (`config/kuya-lines.json`)**:
+  - Contains customizable announcement lines organized by category: `task_call`, `hermes_research`, `blocked_confession`, `error_facepalm`, `nominated`, `task_completed`, `wake_up`, `chores`.
+  - Supports template variables e.g. `{harness}`, populated dynamically.
+  - Can be edited directly by the user without modifying TypeScript or restarting code.
+- **Announcement Ticker with Queue (`public/kuya.ts`)**:
+  - Implements a FIFO queue for announcements so rapid transitions don't overwrite each other; each announcement is held for 4.5 seconds before advancing to the next in queue.
+  - Renders inside `#kuya-banner` above the scene canvas with gold border, badge, and slide-in animation.
+- **Day Counter**:
+  - Calculates house days (`Day N in the house`) based on project/session start timestamp and displays in the header.
+- **Camera Controls**:
+  - CCTV camera buttons (`ALL`, `OFFICE`, `LIVING`, `BEDROOM`, `KITCHEN`, `GAME`, `CONFESSION`) smoothly pan, zoom, and update CCTV channel header.
+- **Optional Text-To-Speech (TTS)**:
+  - Toggle button in header (`#btn-tts`), off by default.
+  - When toggled on, speaks announcements via the Web Speech API (`SpeechSynthesisUtterance`).
