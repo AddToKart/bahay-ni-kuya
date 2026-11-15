@@ -44,10 +44,10 @@ describe("Milestone 3: Navigation and Animation", () => {
   });
 
   it("snaps to adjacent walkable neighbor if goal tile is solid (e.g. furniture)", () => {
-    // Tile (26, 3) is a solid desk monitor in the office
-    expect(navGrid.isWalkable(26, 3)).toBe(false);
-    // Pathfinding to (26, 3) should find a walkable neighbor e.g. (26, 4)
-    const path = navGrid.findPath(26, 5, 26, 3);
+    // Tile (26, 2) is a solid desk monitor in the office (desk rows moved up in furniture-fix-2)
+    expect(navGrid.isWalkable(26, 2)).toBe(false);
+    // Pathfinding to (26, 2) should find a walkable neighbor e.g. (26, 3)
+    const path = navGrid.findPath(26, 5, 26, 2);
     expect(path.length).toBeGreaterThan(0);
     const end = path[path.length - 1];
     expect(navGrid.isWalkable(end.x, end.y)).toBe(true);
