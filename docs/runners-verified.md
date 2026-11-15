@@ -75,3 +75,47 @@ Verified against installed binaries on Windows 11 (2026-11-16).
   ```
 - **Git Worktree Support**: Built-in `--worktree` (`-w`) creates an isolated git worktree branch.
 - **MCP Client**: Native command `hermes mcp add/list/remove`. MCP servers configured in `AppData\Local\hermes\config.yaml` under `mcp_servers:`.
+
+---
+
+## MCP Client Configuration Snippets
+
+These snippets register Bahay ni Kuya's stdio MCP server (`bun run src/mcp.ts`) into each supported harness. The installer (`bun run scripts/install-adapters.ts`) automatically injects these configurations with automated backup and uninstallation.
+
+### 1. Codex CLI (`~/.codex/config.toml`)
+
+```toml
+# >>> bahay-ni-kuya-mcp
+[mcp_servers.bahay_ni_kuya]
+command = "bun"
+args = ["run", "d:/code_ni_kurt/pixel-office/src/mcp.ts"]
+# <<< bahay-ni-kuya-mcp
+```
+
+### 2. OpenCode (`~/.config/opencode/opencode.json`)
+
+```json
+{
+  "mcp": {
+    "bahay-ni-kuya": {
+      "type": "stdio",
+      "command": "bun",
+      "args": ["run", "d:/code_ni_kurt/pixel-office/src/mcp.ts"]
+    }
+  }
+}
+```
+
+### 3. Hermes (`AppData\Local\hermes\config.yaml`)
+
+```yaml
+mcp_servers:
+  # >>> bahay-ni-kuya-mcp
+  bahay_ni_kuya:
+    command: bun
+    args:
+      - run
+      - "d:/code_ni_kurt/pixel-office/src/mcp.ts"
+  # <<< bahay-ni-kuya-mcp
+```
+

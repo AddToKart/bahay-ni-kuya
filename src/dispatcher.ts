@@ -23,6 +23,9 @@ export interface TaskRecord {
   createdAt: number;
   startedAt?: number;
   completedAt?: number;
+  callerHarness?: string;
+  depth?: number;
+  parentTaskId?: string;
 }
 
 interface RunnerConfig {
@@ -51,7 +54,22 @@ export class Dispatcher {
     return this.tasks.get(id);
   }
 
-  submitTask(harness: Harness, prompt: string, cwd: string): TaskRecord {
+  submitTask(
+    harness: Harness,
+    prompt: string,
+    cwd: string,
+    callerHarness?: string,
+    depth = 0,
+    parentTaskId?: string,
+  ): TaskRecord {
+    // Guard against delegation loops
+    if (callerHarness && callerHarness.toLowerCase() === harness.toLowerCase()) {
+      throw new Error(`Delegation loop detected: harness '${harness}' cannot delegate tasks to itself`);
+    }
+    if (depth >= 2) {
+      throw new Error("Delegation depth limit reached: maximum allowed delegation depth is 2 levels");
+    }
+
     const id = `task_${Date.now()}_${this.taskCounter++}`;
     const record: TaskRecord = {
       id,
@@ -62,6 +80,9 @@ export class Dispatcher {
       exitCode: null,
       tail: [],
       createdAt: Date.now(),
+      callerHarness,
+      depth,
+      parentTaskId,
     };
     this.tasks.set(id, record);
 
@@ -194,7 +215,13 @@ export class Dispatcher {
     try {
       const child = spawn(runner.command, cmdArgs, {
         cwd: executionDir,
-        env: { ...process.env, ...runner.env },
+        env: {
+          ...process.env,
+          ...runner.env,
+          KUYA_CALLER_HARNESS: record.harness,
+          KUYA_DELEGATION_DEPTH: String((record.depth ?? 0) + 1),
+          KUYA_PARENT_TASK_ID: record.id,
+        },
         shell: process.platform === "win32",
       });
 

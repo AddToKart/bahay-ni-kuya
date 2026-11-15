@@ -325,7 +325,7 @@ try {
             } catch {
               return jsonResponse({ error: "Invalid JSON body" }, 400);
             }
-            const { harness, prompt, cwd } = body;
+            const { harness, prompt, cwd, callerHarness, caller_harness, depth, parentTaskId, parent_task_id } = body;
             if (!harness || !prompt) {
               return jsonResponse({ error: "harness and prompt are required" }, 400);
             }
@@ -337,9 +337,16 @@ try {
               return jsonResponse({ error: cwdValidation.error }, 400);
             }
 
-            const task = dispatcher.submitTask(harness, prompt, cwdValidation.path!);
-            scheduleBroadcast();
-            return jsonResponse(task, 201);
+            try {
+              const caller = callerHarness || caller_harness;
+              const taskDepth = typeof depth === "number" ? depth : depth ? parseInt(depth, 10) : 0;
+              const parentId = parentTaskId || parent_task_id;
+              const task = dispatcher.submitTask(harness, prompt, cwdValidation.path!, caller, taskDepth, parentId);
+              scheduleBroadcast();
+              return jsonResponse(task, 201);
+            } catch (err: any) {
+              return jsonResponse({ error: err.message || "Failed to submit task" }, 400);
+            }
           }
 
           // GET /api/tasks

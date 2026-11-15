@@ -29,9 +29,11 @@ const TARGETS = {
   codexCmd: at(".bahay-ni-kuya", "adapters", "codex", "bahay-codex.cmd"),
   codexPs1: at(".bahay-ni-kuya", "adapters", "codex", "bahay-codex.ps1"),
   hooksJson: at(".codex", "hooks.json"),
+  codexConfigToml: at(".codex", "config.toml"),
   hermesConfig: at("AppData", "Local", "hermes", "config.yaml"),
   openCode: at(".config", "opencode", "plugins", "bahay-opencode.js"),
   localOpenCode: repo(".opencode", "plugins", "bahay-opencode.js"),
+  openCodeConfig: at(".config", "opencode", "opencode.json"),
 };
 
 const SOURCES = {
@@ -186,6 +188,148 @@ export function removeHermesBlock(text: string): { text: string; removed: boolea
   return { text: merged ? `${merged}\n` : "", removed: true };
 }
 
+// --- MCP Server Registration Helpers (Milestone 8) ---
+const CODEX_MCP_START = "# >>> bahay-ni-kuya-mcp";
+const CODEX_MCP_END = "# <<< bahay-ni-kuya-mcp";
+
+export function mergeCodexMcp(
+  tomlText: string,
+  mcpScriptPath: string,
+): { text: string; action: "appended" | "replaced" | "unchanged" } {
+  const normalizedPath = mcpScriptPath.replace(/\\/g, "/");
+  const block = `${CODEX_MCP_START}\n[mcp_servers.bahay_ni_kuya]\ncommand = "bun"\nargs = ["run", "${normalizedPath}"]\n${CODEX_MCP_END}`;
+
+  const start = tomlText.indexOf(CODEX_MCP_START);
+  if (start >= 0) {
+    const end = tomlText.indexOf(CODEX_MCP_END, start);
+    if (end >= 0) {
+      const stop = end + CODEX_MCP_END.length;
+      const next = tomlText.slice(0, start) + block.trimEnd() + tomlText.slice(stop);
+      return { text: next, action: next === tomlText ? "unchanged" : "replaced" };
+    }
+  }
+
+  if (/\[mcp_servers\.bahay_ni_kuya\]/.test(tomlText)) {
+    return { text: tomlText, action: "unchanged" };
+  }
+
+  const base = tomlText.endsWith("\n") ? tomlText : `${tomlText}\n`;
+  return { text: `${base}\n${block.trimEnd()}\n`, action: "appended" };
+}
+
+export function stripCodexMcp(tomlText: string): { text: string; removed: boolean } {
+  const start = tomlText.indexOf(CODEX_MCP_START);
+  if (start >= 0) {
+    const end = tomlText.indexOf(CODEX_MCP_END, start);
+    if (end >= 0) {
+      const before = tomlText.slice(0, start).replace(/\n+$/, "");
+      const after = tomlText.slice(end + CODEX_MCP_END.length).replace(/^\n+/, "");
+      const merged = [before, after].filter((p) => p.length > 0).join("\n\n");
+      return { text: merged ? `${merged}\n` : "", removed: true };
+    }
+  }
+  return { text: tomlText, removed: false };
+}
+
+export function mergeOpenCodeMcp(
+  jsonText: string,
+  mcpScriptPath: string,
+): { text: string; action: "updated" | "unchanged" } {
+  const normalizedPath = mcpScriptPath.replace(/\\/g, "/");
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return { text: jsonText, action: "unchanged" };
+  }
+  if (typeof parsed !== "object" || parsed === null) return { text: jsonText, action: "unchanged" };
+
+  parsed.mcp = parsed.mcp || {};
+  const existing = parsed.mcp["bahay-ni-kuya"];
+  const currentEntry = {
+    type: "stdio",
+    command: "bun",
+    args: ["run", normalizedPath],
+  };
+
+  if (existing && JSON.stringify(existing) === JSON.stringify(currentEntry)) {
+    return { text: jsonText, action: "unchanged" };
+  }
+
+  parsed.mcp["bahay-ni-kuya"] = currentEntry;
+  return { text: `${JSON.stringify(parsed, null, 2)}\n`, action: "updated" };
+}
+
+export function stripOpenCodeMcp(jsonText: string): { text: string; removed: boolean } {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return { text: jsonText, removed: false };
+  }
+  if (typeof parsed !== "object" || parsed === null || !parsed.mcp) {
+    return { text: jsonText, removed: false };
+  }
+
+  if (parsed.mcp["bahay-ni-kuya"]) {
+    delete parsed.mcp["bahay-ni-kuya"];
+    if (Object.keys(parsed.mcp).length === 0) delete parsed.mcp;
+    return { text: `${JSON.stringify(parsed, null, 2)}\n`, removed: true };
+  }
+
+  return { text: jsonText, removed: false };
+}
+
+const HERMES_MCP_START = "# >>> bahay-ni-kuya-mcp";
+const HERMES_MCP_END = "# <<< bahay-ni-kuya-mcp";
+
+export function mergeHermesMcp(
+  yamlText: string,
+  mcpScriptPath: string,
+): { text: string; action: "appended" | "replaced" | "unchanged" } {
+  const normalizedPath = mcpScriptPath.replace(/\\/g, "/");
+  const block = `  ${HERMES_MCP_START}\n  bahay_ni_kuya:\n    command: bun\n    args:\n      - run\n      - "${normalizedPath}"\n  ${HERMES_MCP_END}`;
+
+  const start = yamlText.indexOf(HERMES_MCP_START);
+  if (start >= 0) {
+    const end = yamlText.indexOf(HERMES_MCP_END, start);
+    if (end >= 0) {
+      const stop = end + HERMES_MCP_END.length;
+      const next = yamlText.slice(0, start) + block.trim() + yamlText.slice(stop);
+      return { text: next, action: next === yamlText ? "unchanged" : "replaced" };
+    }
+  }
+
+  const mcpServersMatch = yamlText.match(/^mcp_servers\s*:\s*$/m);
+  if (mcpServersMatch && mcpServersMatch.index !== undefined) {
+    const insertPos = mcpServersMatch.index + mcpServersMatch[0].length;
+    const before = yamlText.slice(0, insertPos);
+    const after = yamlText.slice(insertPos);
+    return {
+      text: `${before}\n${block}${after}`,
+      action: "appended",
+    };
+  }
+
+  const rootBlock = `${HERMES_MCP_START}\nmcp_servers:\n  bahay_ni_kuya:\n    command: bun\n    args:\n      - run\n      - "${normalizedPath}"\n${HERMES_MCP_END}\n`;
+  const base = yamlText.endsWith("\n") ? yamlText : `${yamlText}\n`;
+  return { text: `${base}\n${rootBlock}`, action: "appended" };
+}
+
+export function stripHermesMcp(yamlText: string): { text: string; removed: boolean } {
+  const start = yamlText.indexOf(HERMES_MCP_START);
+  if (start >= 0) {
+    const end = yamlText.indexOf(HERMES_MCP_END, start);
+    if (end >= 0) {
+      const before = yamlText.slice(0, start).replace(/\n+$/, "");
+      const after = yamlText.slice(end + HERMES_MCP_END.length).replace(/^\n+/, "");
+      const merged = [before, after].filter((p) => p.length > 0).join("\n\n");
+      return { text: merged ? `${merged}\n` : "", removed: true };
+    }
+  }
+  return { text: yamlText, removed: false };
+}
+
 interface Note {
   action: string;
   path: string;
@@ -299,15 +443,57 @@ function installAll(notes: Note[], dryRun: boolean): void {
   }
   if (result.action === "unchanged") {
     notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "bahay-ni-kuya block already current" });
-    return;
+  } else {
+    const output = crlf ? result.text.replace(/\n/g, "\r\n") : result.text;
+    writeTracked(notes, TARGETS.hermesConfig, Buffer.from(output, "utf8"), dryRun);
+    notes.push({
+      action: result.action === "appended" ? "appended" : "replaced",
+      path: TARGETS.hermesConfig,
+      detail: result.action === "appended" ? "added `hooks.outbound` block" : "updated `hooks.outbound` block in place",
+    });
   }
-  const output = crlf ? result.text.replace(/\n/g, "\r\n") : result.text;
-  writeTracked(notes, TARGETS.hermesConfig, Buffer.from(output, "utf8"), dryRun);
-  notes.push({
-    action: result.action === "appended" ? "appended" : "replaced",
-    path: TARGETS.hermesConfig,
-    detail: result.action === "appended" ? "added `hooks.outbound` block" : "updated `hooks.outbound` block in place",
-  });
+
+  // --- MCP Client Registrations (Milestone 8) ---
+  const mcpScript = repo("src", "mcp.ts");
+
+  // 1. Codex MCP (config.toml)
+  if (existsSync(TARGETS.codexConfigToml)) {
+    const codexToml = readFileSync(TARGETS.codexConfigToml, "utf8");
+    const mcpRes = mergeCodexMcp(codexToml, mcpScript);
+    if (mcpRes.action !== "unchanged") {
+      writeTracked(notes, TARGETS.codexConfigToml, Buffer.from(mcpRes.text, "utf8"), dryRun);
+      notes.push({ action: mcpRes.action, path: TARGETS.codexConfigToml, detail: "registered bahay_ni_kuya MCP server" });
+    } else {
+      notes.push({ action: "unchanged", path: TARGETS.codexConfigToml, detail: "bahay_ni_kuya MCP server already configured" });
+    }
+  }
+
+  // 2. OpenCode MCP (opencode.json)
+  if (existsSync(TARGETS.openCodeConfig)) {
+    const openJson = readFileSync(TARGETS.openCodeConfig, "utf8");
+    const mcpRes = mergeOpenCodeMcp(openJson, mcpScript);
+    if (mcpRes.action === "updated") {
+      writeTracked(notes, TARGETS.openCodeConfig, Buffer.from(mcpRes.text, "utf8"), dryRun);
+      notes.push({ action: "updated", path: TARGETS.openCodeConfig, detail: "registered bahay-ni-kuya MCP server" });
+    } else {
+      notes.push({ action: "unchanged", path: TARGETS.openCodeConfig, detail: "bahay-ni-kuya MCP server already configured" });
+    }
+  }
+
+  // 3. Hermes MCP (config.yaml)
+  if (existsSync(TARGETS.hermesConfig)) {
+    const curYaml = readFileSync(TARGETS.hermesConfig, "utf8");
+    const isCrlf = curYaml.includes("\r\n");
+    const normYaml = curYaml.replace(/\r\n/g, "\n");
+    const mcpRes = mergeHermesMcp(normYaml, mcpScript);
+    if (mcpRes.action !== "unchanged") {
+      const out = isCrlf ? mcpRes.text.replace(/\n/g, "\r\n") : mcpRes.text;
+      writeTracked(notes, TARGETS.hermesConfig, Buffer.from(out, "utf8"), dryRun);
+      notes.push({ action: mcpRes.action, path: TARGETS.hermesConfig, detail: "registered bahay_ni_kuya MCP server" });
+    } else {
+      notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "bahay_ni_kuya MCP server already configured" });
+    }
+  }
 }
 
 function uninstallAll(notes: Note[], dryRun: boolean): void {
@@ -335,16 +521,46 @@ function uninstallAll(notes: Note[], dryRun: boolean): void {
   if (existsSync(TARGETS.hermesConfig)) {
     const raw = readFileSync(TARGETS.hermesConfig, "utf8");
     const crlf = raw.includes("\r\n");
-    const result = removeHermesBlock(raw.replace(/\r\n/g, "\n"));
-    if (result.removed) {
-      const output = crlf ? result.text.replace(/\n/g, "\r\n") : result.text;
+    let text = raw.replace(/\r\n/g, "\n");
+
+    const hookRes = removeHermesBlock(text);
+    if (hookRes.removed) text = hookRes.text;
+
+    const mcpRes = stripHermesMcp(text);
+    if (mcpRes.removed) text = mcpRes.text;
+
+    if (hookRes.removed || mcpRes.removed) {
+      const output = crlf ? text.replace(/\n/g, "\r\n") : text;
       writeTracked(notes, TARGETS.hermesConfig, Buffer.from(output, "utf8"), dryRun);
-      notes.push({ action: "unmerged", path: TARGETS.hermesConfig, detail: "removed bahay-ni-kuya block" });
+      notes.push({ action: "unmerged", path: TARGETS.hermesConfig, detail: "removed bahay-ni-kuya hooks and/or MCP block" });
     } else {
-      notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "no bahay-ni-kuya block" });
+      notes.push({ action: "unchanged", path: TARGETS.hermesConfig, detail: "no bahay-ni-kuya blocks" });
     }
   } else {
     notes.push({ action: "absent", path: TARGETS.hermesConfig });
+  }
+
+  // MCP Cleanup
+  if (existsSync(TARGETS.codexConfigToml)) {
+    const raw = readFileSync(TARGETS.codexConfigToml, "utf8");
+    const result = stripCodexMcp(raw);
+    if (result.removed) {
+      writeTracked(notes, TARGETS.codexConfigToml, Buffer.from(result.text, "utf8"), dryRun);
+      notes.push({ action: "unmerged", path: TARGETS.codexConfigToml, detail: "removed bahay_ni_kuya MCP server" });
+    } else {
+      notes.push({ action: "unchanged", path: TARGETS.codexConfigToml, detail: "no bahay_ni_kuya MCP server" });
+    }
+  }
+
+  if (existsSync(TARGETS.openCodeConfig)) {
+    const raw = readFileSync(TARGETS.openCodeConfig, "utf8");
+    const result = stripOpenCodeMcp(raw);
+    if (result.removed) {
+      writeTracked(notes, TARGETS.openCodeConfig, Buffer.from(result.text, "utf8"), dryRun);
+      notes.push({ action: "unmerged", path: TARGETS.openCodeConfig, detail: "removed bahay-ni-kuya MCP server" });
+    } else {
+      notes.push({ action: "unchanged", path: TARGETS.openCodeConfig, detail: "no bahay-ni-kuya MCP server" });
+    }
   }
 }
 

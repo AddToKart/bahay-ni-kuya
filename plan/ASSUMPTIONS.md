@@ -126,3 +126,27 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Endpoints implemented: `POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/:id`, `POST /api/tasks/:id/cancel`.
 - **Kuya Console UI (`public/console.ts`)**:
   - Task prompt textarea, dropdown with installed harnesses only, project folder dropdown, dispatch button, and live task list with status pills and cancellation controls.
+
+## Milestone 8: MCP Wrapper & Delegation Protection
+
+- **Stdio MCP Server (`src/mcp.ts`)**:
+  - Uses the official `@modelcontextprotocol/sdk` (permitted single runtime dependency) with `McpServer` and `StdioServerTransport`.
+  - Registered as `"mcp": "bun run src/mcp.ts"` in `package.json`.
+  - Stdio communication preserves clean JSON-RPC on stdin/stdout; all diagnostic logs routed to `console.error` (stderr).
+  - Tools implemented:
+    - `kuya_list_housemates`: Queries `GET /state` and `GET /api/tasks`, formats structured housemate statuses, rooms, and active tasks.
+    - `kuya_assign_task(harness, task, cwd?, caller_harness?)`: Submits task via `POST /api/tasks` with loop & depth checks.
+    - `kuya_task_status(id)`: Queries `GET /api/tasks/:id`, returns status, tail output, exit code, and git diff stat.
+    - `kuya_cancel_task(id)`: Calls `POST /api/tasks/:id/cancel` to abort active or queued task.
+- **Delegation Loop Prevention**:
+  - Guard 1 (Self-delegation): If caller harness is identical to target harness (via `caller_harness` or `KUYA_CALLER_HARNESS` env var), delegation is immediately rejected.
+  - Guard 2 (Depth limit): Maximum delegation depth capped at 2 levels. Tasks launched pass incremented `KUYA_DELEGATION_DEPTH` and `KUYA_CALLER_HARNESS` to child processes; any invocation at depth >= 2 is rejected.
+  - Double enforcement: Loop and depth checks enforced both at the MCP tool level and inside `Dispatcher.submitTask` / `POST /api/tasks`.
+- **Harness MCP Client Registration (`scripts/install-adapters.ts`)**:
+  - Injects MCP configuration into supported client harnesses with automatic backup and uninstallation:
+    - Codex: `~/.codex/config.toml` under `[mcp_servers.bahay_ni_kuya]`
+    - OpenCode: `~/.config/opencode/opencode.json` under `mcp["bahay-ni-kuya"]`
+    - Hermes: `AppData\Local\hermes\config.yaml` under `mcp_servers.bahay_ni_kuya`
+  - Uninstallation cleanly strips markers and sections without corrupting user config.
+  - Documented configuration snippets in `docs/runners-verified.md`.
+

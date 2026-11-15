@@ -132,18 +132,18 @@ export class HouseLifeManager {
     // Valid idle rooms
     const targetRooms: RoomId[] = ["living", "kitchen", "gameroom", "gym"];
 
-    // Eligible POIs that have capacity and are NOT an immediate repeat
+    // Eligible POIs that have capacity and are NOT an immediate repeat of current or previous POI
     const eligible = this.pois.filter((p) => {
       if (!targetRooms.includes(p.room)) return false;
-      if (p.id === state.previousPoiId) return false;
+      if (p.id === state.currentPoiId || p.id === state.previousPoiId) return false;
       if (this.isAtCapacity(p.id)) return false;
       return true;
     });
 
     if (eligible.length === 0) {
-      // Fallback: any available POI in target rooms
+      // Fallback: any available POI in target rooms excluding current
       const fallback = this.pois.filter(
-        (p) => targetRooms.includes(p.room) && !this.isAtCapacity(p.id),
+        (p) => targetRooms.includes(p.room) && !this.isAtCapacity(p.id) && p.id !== state.currentPoiId,
       );
       if (fallback.length === 0) return null;
       return fallback[Math.floor(Math.random() * fallback.length)];

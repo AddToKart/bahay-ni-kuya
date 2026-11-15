@@ -8,9 +8,13 @@
     "fake": "bun run scripts/fake-events.ts",
     "install-adapters": "bun run scripts/install-adapters.ts",
     "uninstall-adapters": "bun run scripts/install-adapters.ts --uninstall",
-    "generate-map": "bun run scripts/generate-map.ts"
+    "generate-map": "bun run scripts/generate-map.ts",
+    "mcp": "bun run src/mcp.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.4"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
   }
 }
