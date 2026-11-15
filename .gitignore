@@ -3,4 +3,4 @@ server-test.log
 *.log
 .agent-house/
 .bahay-ni-kuya/
-.kuya-worktrees/
+docs/layout-backups/
