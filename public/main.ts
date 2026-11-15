@@ -1,30 +1,16 @@
-// Bahay ni Kuya scene controller: snapshot reconciliation, walking, drawing, WS.
+// Bahay ni Kuya scene controller: snapshot reconciliation, A* navigation, 4-direction animation, CCTV & WS.
 
-import {
-  allocateSlots,
-  doorPoint,
-  drawScene,
-  FLOOR_Y,
-  CORRIDOR_Y,
-  ROOMS,
-  ROOM_IDS,
-  legendAccent,
-  type RoomId,
-  type Slot,
-  type SlotRequest,
-} from "./rooms.js";
-import {
-  drawBubble,
-  drawCharacter,
-  drawLabel,
-  drawParentLink,
-  drawZzz,
-  HARNESS_ORDER,
-  MONO,
-  SCENE_H,
-  SCENE_W,
-  truncateToWidth,
-} from "./sprites.js";
+import { HARNESS_ORDER, MONO, PALETTE, accentFor, VARIANT_ACCENTS } from "./sprites.js";
+import { loadHouseMap, type HouseMap, type MapPOI, type RoomId } from "./map.js";
+import { MapRenderer, type YSortable } from "./renderer.js";
+import { NavGrid, type Point } from "./nav.js";
+import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
+
+// Scene dimensions matching the 42x27 16px tilemap
+const SCENE_W = 672;
+const SCENE_H = 432;
+const WALK_SPEED = 50; // px/s
+const ARRIVE = 2; // px
 
 // ---------------------------------------------------------------- snapshot types
 
@@ -78,42 +64,47 @@ interface Char {
   y: number;
   targetX: number;
   targetY: number;
-  path: { x: number; y: number }[];
-  facing: 1 | -1;
+  path: Point[];
+  facing: Facing;
+  action: Action;
+  emote: Emote;
+  emoteUntil?: number;
   walking: boolean;
-  slotId: string | null;
+  poiId: string | null;
 }
 
-const WALK_SPEED = 40; // px/s
-const ARRIVE = 2; // px
-
 const chars = new Map<string, Char>();
-let allocation = new Map<string, Slot>();
+let houseMap: HouseMap | null = null;
+let navGrid: NavGrid | null = null;
+let renderer: MapRenderer | null = null;
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
 }
 
-function buildPath(
-  fromX: number,
-  fromY: number,
-  fromRoom: RoomId,
-  toX: number,
-  toY: number,
-  toRoom: RoomId,
-): { x: number; y: number }[] {
-  const path: { x: number; y: number }[] = [];
-  if (fromRoom !== toRoom) {
-    const fromDoor = ROOMS[fromRoom].doorX;
-    const toDoor = ROOMS[toRoom].doorX;
-    path.push({ x: fromDoor, y: FLOOR_Y });
-    path.push({ x: fromDoor, y: CORRIDOR_Y });
-    path.push({ x: toDoor, y: CORRIDOR_Y });
-    path.push({ x: toDoor, y: FLOOR_Y });
-  }
-  path.push({ x: toX, y: toY });
-  return path;
+// Convert world coords to tile coords and compute orthogonal A* path
+function calculateAStarPath(fromX: number, fromY: number, toX: number, toY: number): Point[] {
+  if (!navGrid) return [{ x: toX, y: toY }];
+  const startTx = Math.min(41, Math.max(0, Math.floor(fromX / 16)));
+  const startTy = Math.min(26, Math.max(0, Math.floor(fromY / 16)));
+  const goalTx = Math.min(41, Math.max(0, Math.floor(toX / 16)));
+  const goalTy = Math.min(26, Math.max(0, Math.floor(toY / 16)));
+
+  const tileSteps = navGrid.findPath(startTx, startTy, goalTx, goalTy);
+  if (tileSteps.length === 0) return [{ x: toX, y: toY }];
+
+  // Convert tile coords to world pixel waypoints (center of tile, feet at y+14)
+  const waypoints = tileSteps.map((p) => ({
+    x: p.x * 16 + 8,
+    y: p.y * 16 + 14,
+  }));
+
+  // Ensure last waypoint is exact target
+  waypoints[waypoints.length - 1] = { x: toX, y: toY };
+  return waypoints;
 }
+
+// ---------------------------------------------------------------- POI assignment
 
 interface Desired {
   key: string;
@@ -128,6 +119,44 @@ interface Desired {
   directory?: string;
   pid?: number;
   instanceIndex: number;
+}
+
+function findBestPOI(desired: Desired, claimedPOIs: Set<string>): MapPOI | null {
+  if (!houseMap) return null;
+
+  let candidates: MapPOI[] = [];
+  if (desired.sleeping) {
+    candidates = houseMap.pois.filter((p) => p.room === "bedroom" && !claimedPOIs.has(p.id));
+  } else if (desired.working) {
+    if (desired.sub) {
+      candidates = houseMap.pois.filter(
+        (p) => p.room === "office" && p.tags.includes("subagent") && !claimedPOIs.has(p.id),
+      );
+      if (candidates.length === 0) {
+        candidates = houseMap.pois.filter((p) => p.room === "office" && !claimedPOIs.has(p.id));
+      }
+    } else {
+      candidates = houseMap.pois.filter(
+        (p) => p.room === "office" && p.tags.includes("primary") && !claimedPOIs.has(p.id),
+      );
+      if (candidates.length === 0) {
+        candidates = houseMap.pois.filter((p) => p.room === "office" && !claimedPOIs.has(p.id));
+      }
+    }
+  } else {
+    // Idle housemate: choose from living, gameroom, kitchen, gym
+    candidates = houseMap.pois.filter(
+      (p) =>
+        (p.room === "living" || p.room === "gameroom" || p.room === "kitchen" || p.room === "gym") &&
+        !claimedPOIs.has(p.id),
+    );
+  }
+
+  if (candidates.length === 0) {
+    candidates = houseMap.pois.filter((p) => p.room === desired.room);
+  }
+
+  return candidates.length > 0 ? candidates[0] : null;
 }
 
 function reconcile(snap: Snapshot, now: number): number {
@@ -214,41 +243,43 @@ function reconcile(snap: Snapshot, now: number): number {
     }
   }
 
-  // drop characters that no longer exist
-  for (const key of [...chars.keys()]) if (!desired.has(key)) chars.delete(key);
+  // Drop characters that no longer exist (preserve manual test walker)
+  for (const key of [...chars.keys()]) {
+    if (key !== "test:walker" && !desired.has(key)) chars.delete(key);
+  }
 
-  // deterministic slot allocation, keeping existing spots while the room matches
-  const requests: SlotRequest[] = [];
+  // Allocate POIs
+  const claimedPOIs = new Set<string>();
   for (const d of desired.values()) {
-    requests.push({ key: d.key, room: d.room, sub: d.sub, parentKey: d.sub ? d.parentKey : null });
+    const existing = chars.get(d.key);
+    if (existing && existing.room === d.room && existing.poiId) {
+      claimedPOIs.add(existing.poiId);
+    }
   }
-  const previous = new Map<string, Slot>();
-  for (const [key, slot] of allocation) {
-    const d = desired.get(key);
-    if (!d) continue;
-    // a companion spot is only valid while the session is still a subagent
-    if (slot.id.includes(":sub-") && !d.sub) continue;
-    previous.set(key, slot);
-  }
-  allocation = allocateSlots(previous, requests);
 
   for (const d of desired.values()) {
-    const slot = allocation.get(d.key);
-    if (!slot) continue;
-    const targetX = slot.x;
-    const targetY = slot.y;
     let c = chars.get(d.key);
+    let targetX = 0;
+    let targetY = 0;
+    let poiFacing: Facing = "down";
+    let poiAction: Action = d.sleeping ? "sleep" : d.working ? "type" : "sit";
+
+    const poi = findBestPOI(d, claimedPOIs);
+    if (poi) {
+      claimedPOIs.add(poi.id);
+      targetX = poi.x * 16 + 8;
+      targetY = poi.y * 16 + 14;
+      poiFacing = poi.facing;
+      poiAction = (poi.action as Action) || (d.sleeping ? "sleep" : d.working ? "type" : "sit");
+    } else {
+      targetX = 18 * 16 + 8;
+      targetY = 6 * 16 + 14;
+    }
 
     if (!c) {
-      const door = doorPoint(d.room);
-      const roomDef = ROOMS[d.room];
-      let hash = 0;
-      for (let i = 0; i < d.key.length; i += 1) hash = (hash * 31 + d.key.charCodeAt(i)) >>> 0;
-      const spread = ((hash % 5) - 2) * 9;
-      const spawnX = Math.min(
-        Math.max(door.x + spread, roomDef.x + 18),
-        roomDef.x + roomDef.w - 18,
-      );
+      // Spawn at bedroom door if sleeping, or living room door
+      const spawnX = d.sleeping ? 6 * 16 + 8 : 17 * 16 + 8;
+      const spawnY = d.sleeping ? 11 * 16 + 14 : 11 * 16 + 14;
       c = {
         key: d.key,
         harness: d.harness,
@@ -266,13 +297,15 @@ function reconcile(snap: Snapshot, now: number): number {
         instanceIndex: d.instanceIndex,
         subagentCount: 0,
         x: spawnX,
-        y: door.y,
+        y: spawnY,
         targetX,
         targetY,
-        path: buildPath(spawnX, door.y, d.room, targetX, targetY, d.room),
-        facing: 1,
+        path: calculateAStarPath(spawnX, spawnY, targetX, targetY),
+        facing: poiFacing,
+        action: d.sleeping ? "sleep" : "walk",
+        emote: null,
         walking: true,
-        slotId: slot.id,
+        poiId: poi ? poi.id : null,
       };
       chars.set(d.key, c);
     } else {
@@ -282,26 +315,23 @@ function reconcile(snap: Snapshot, now: number): number {
       c.directory = d.directory;
       c.pid = d.pid;
       c.instanceIndex = d.instanceIndex;
-
-      const roomChanged = c.room !== d.room;
-      const targetChanged = c.targetX !== targetX || c.targetY !== targetY;
-      if (roomChanged) {
-        c.path = buildPath(c.x, c.y, c.room, targetX, targetY, d.room);
-        c.room = d.room;
-      } else if (targetChanged) {
-        c.path = buildPath(c.x, c.y, d.room, targetX, targetY, d.room);
-      }
-      c.targetX = targetX;
-      c.targetY = targetY;
-      c.slotId = slot.id;
       c.sleeping = d.sleeping;
-      c.label = d.label;
       c.parentKey = d.parentKey;
       c.sub = d.sub;
-    }
 
-    c.working = d.working;
-    c.tool = d.tool;
+      const roomChanged = c.room !== d.room;
+      const targetChanged = Math.abs(c.targetX - targetX) > 4 || Math.abs(c.targetY - targetY) > 4;
+
+      if (roomChanged || targetChanged) {
+        c.room = d.room;
+        c.targetX = targetX;
+        c.targetY = targetY;
+        c.poiId = poi ? poi.id : null;
+        c.path = calculateAStarPath(c.x, c.y, targetX, targetY);
+        c.action = "walk";
+        c.walking = true;
+      }
+    }
 
     if (c.working) {
       if (c.tool) {
@@ -329,7 +359,7 @@ function reconcile(snap: Snapshot, now: number): number {
   return sleepingCount;
 }
 
-// ---------------------------------------------------------------- movement
+// ---------------------------------------------------------------- movement & animation
 
 function step(c: Char, dt: number): void {
   let remaining = WALK_SPEED * dt;
@@ -350,16 +380,30 @@ function step(c: Char, dt: number): void {
       const stepX = Math.sign(dx) * Math.min(Math.abs(dx), remaining);
       c.x += stepX;
       moved = Math.abs(stepX);
-      if (moved > 0.01) c.facing = dx > 0 ? 1 : -1;
+      c.facing = dx > 0 ? "right" : "left";
     } else if (Math.abs(dy) > 0.5) {
       const stepY = Math.sign(dy) * Math.min(Math.abs(dy), remaining);
       c.y += stepY;
       moved = Math.abs(stepY);
+      c.facing = dy > 0 ? "down" : "up";
     }
     if (moved === 0) break;
     remaining -= moved;
   }
+
   c.walking = c.path.length > 0;
+  if (c.walking) {
+    c.action = "walk";
+  } else {
+    // Reached destination: assume room action
+    if (c.sleeping) {
+      c.action = "sleep";
+    } else if (c.working) {
+      c.action = "type";
+    } else {
+      c.action = "sit";
+    }
+  }
 }
 
 // ---------------------------------------------------------------- drawing
@@ -369,65 +413,115 @@ function typingDots(now: number): string {
   return ".".repeat(dots) + "\u00a0".repeat(3 - dots);
 }
 
-function paint(now: number, reduced: boolean): void {
-  const occupied = new Set<RoomId>();
-  for (const c of chars.values()) occupied.add(c.room);
-  drawScene(ctx, { occupied });
+function drawParentLink(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): void {
+  ctx.save();
+  ctx.strokeStyle = "rgba(230, 225, 215, 0.45)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
 
-  // subagent dashed tethers behind the characters
+function drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+  ctx.save();
+  ctx.font = `9px ${MONO}`;
+  const width = Math.max(22, ctx.measureText(text).width + 8);
+  const height = 13;
+  const bx = Math.round(x - width / 2);
+  const by = Math.round(y - height);
+
+  ctx.fillStyle = "#fff8ee";
+  ctx.strokeStyle = PALETTE.frame;
+  ctx.lineWidth = 1;
+  ctx.fillRect(bx, by, width, height);
+  ctx.strokeRect(bx + 0.5, by + 0.5, width - 1, height - 1);
+
+  // Tiny beak pointing down
+  ctx.fillStyle = "#fff8ee";
+  ctx.beginPath();
+  ctx.moveTo(x - 2, by + height);
+  ctx.lineTo(x + 2, by + height);
+  ctx.lineTo(x, by + height + 2);
+  ctx.fill();
+
+  ctx.fillStyle = PALETTE.ink;
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, bx + 4, by + height / 2 + 0.5);
+  ctx.restore();
+}
+
+function paint(now: number): void {
+  if (!renderer) return;
+
+  // Prepare YSortable entities for depth-ordered drawing
+  const entities: YSortable[] = [];
+
+  // 1. Subagent dashed tethers
   for (const c of chars.values()) {
     if (!c.parentKey) continue;
     const parent = chars.get(c.parentKey);
     if (!parent) continue;
-    drawParentLink(
-      ctx,
-      c.x,
-      c.y - (c.sub ? 15 : 22),
-      parent.x,
-      parent.y - (parent.sub ? 15 : 22),
-    );
-  }
-
-  const list = [...chars.values()].sort((a, b) => a.y - b.y || a.x - b.x || (a.key < b.key ? -1 : 1));
-  for (const c of list) {
-    const size = c.sub ? 30 : 44;
-    let bob = 0;
-    if (!reduced) {
-      if (c.walking) bob = Math.floor(now / (1000 / 6)) % 2 === 0 ? 0 : -2;
-      else if (c.working) bob = Math.floor(now / (1000 / 3)) % 2 === 0 ? 0 : -2;
-    }
-
-    drawCharacter(
-      ctx,
-      {
-        harness: c.harness,
-        x: Math.round(c.x),
-        y: Math.round(c.y),
-        bob,
-        size,
-        facing: c.facing,
-        instanceIndex: c.instanceIndex,
-        highlighted: hoveredKey === c.key || pinnedKey === c.key,
+    entities.push({
+      y: Math.min(c.y, parent.y) - 20,
+      draw: (renderCtx) => {
+        drawParentLink(
+          renderCtx,
+          c.x,
+          c.y - (c.sub ? 15 : 22),
+          parent.x,
+          parent.y - (parent.sub ? 15 : 22),
+        );
       },
-      spriteDpr,
-    );
-
-    if (c.sleeping) {
-      drawZzz(ctx, Math.round(c.x), Math.round(c.y), size, now, reduced);
-    }
+    });
   }
 
-  // speech bubbles sit just above their owner's head (permanent labels removed)
-  for (const c of list) {
-    if (c.sleeping || !c.working) continue;
-    const size = c.sub ? 30 : 44;
-    const text = c.tool && now < c.bubbleUntil ? c.tool : typingDots(now);
-    const anchor = Math.round(c.y - size - 8);
-    drawBubble(ctx, text, Math.round(c.x), anchor);
+  // 2. Housemate characters
+  for (const c of chars.values()) {
+    entities.push({
+      y: c.y,
+      draw: (renderCtx, dpr) => {
+        const size = c.sub ? 26 : 34;
+
+        drawAnimatedCharacter(
+          renderCtx,
+          {
+            harness: c.harness,
+            x: Math.round(c.x),
+            y: Math.round(c.y),
+            size,
+            facing: c.facing,
+            action: c.action,
+            emote: c.emoteUntil && now > c.emoteUntil ? null : c.emote,
+            instanceIndex: c.instanceIndex,
+            highlighted: hoveredKey === c.key || pinnedKey === c.key,
+          },
+          now,
+          dpr,
+        );
+
+        // Speech bubble for active tasks
+        if (!c.sleeping && c.working) {
+          const text = c.tool && now < c.bubbleUntil ? c.tool : typingDots(now);
+          const anchor = Math.round(c.y - size - 8);
+          drawBubble(renderCtx, text, Math.round(c.x), anchor);
+        }
+      },
+    });
   }
+
+  renderer.render(ctx, SCENE_W, SCENE_H, entities, spriteDpr, now);
 }
 
-// ---------------------------------------------------------------- dom
+// ---------------------------------------------------------------- dom & interaction
 
 let hoveredKey: string | null = null;
 let pinnedKey: string | null = null;
@@ -449,14 +543,29 @@ const cardSubagentsEl = document.getElementById("card-subagents") as HTMLElement
 const cardPidEl = document.getElementById("card-pid") as HTMLElement | null;
 const cardCloseEl = document.getElementById("card-close") as HTMLButtonElement | null;
 
+const btnTestWalk = document.getElementById("btn-test-walk") as HTMLButtonElement | null;
+
 function updateCard(c: Char): void {
-  if (!cardEl) return;
+  if (!cardEl || !renderer) return;
   const project = c.directory ? c.directory.split(/[\\/]/).filter(Boolean).pop() || "—" : "—";
   const stateStr = c.sleeping ? "sleeping" : c.working ? "working" : "idle";
 
-  if (cardIconEl) cardIconEl.textContent = (c.harness === "opencode" ? "🦫" : c.harness === "codex" ? "🐙" : c.harness === "pi" ? "🐹" : c.harness === "omp" ? "🦝" : c.harness === "hermes" ? "🦉" : "🐾");
+  if (cardIconEl)
+    cardIconEl.textContent =
+      c.harness === "opencode"
+        ? "🦫"
+        : c.harness === "codex"
+          ? "🐙"
+          : c.harness === "pi"
+            ? "🐹"
+            : c.harness === "omp"
+              ? "🦝"
+              : c.harness === "hermes"
+                ? "🦉"
+                : "🐾";
   if (cardHarnessEl) {
-    cardHarnessEl.textContent = c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
+    cardHarnessEl.textContent =
+      c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
   }
   if (cardBadgeEl) {
     cardBadgeEl.textContent = stateStr;
@@ -467,12 +576,16 @@ function updateCard(c: Char): void {
   if (cardSubagentsEl) cardSubagentsEl.textContent = String(c.subagentCount);
   if (cardPidEl) {
     const pidVal = c.pid ?? (c.key.includes("scan:") ? c.key.split("scan:")[1] : null);
-    cardPidEl.textContent = pidVal ? `PID ${pidVal}` : (c.sleeping ? "offline" : "PID —");
+    cardPidEl.textContent = pidVal ? `PID ${pidVal}` : c.sleeping ? "offline" : "PID —";
   }
 
   const rect = canvas.getBoundingClientRect();
-  const domX = (c.x / SCENE_W) * rect.width;
-  const domY = (c.y / SCENE_H) * rect.height;
+  // Project world coordinates through camera
+  const screenX = (c.x - renderer.camera.x) * renderer.camera.zoom + SCENE_W / 2;
+  const screenY = (c.y - renderer.camera.y) * renderer.camera.zoom + SCENE_H / 2;
+  const domX = (screenX / SCENE_W) * rect.width;
+  const domY = (screenY / SCENE_H) * rect.height;
+
   cardEl.style.left = `${Math.min(rect.width - 230, Math.max(10, domX - 110))}px`;
   cardEl.style.top = `${Math.max(10, domY - (c.sub ? 30 : 44) - 95)}px`;
   cardEl.hidden = false;
@@ -485,16 +598,21 @@ function hideCard(): void {
   hoveredKey = null;
 }
 
-canvas.addEventListener("mousemove", (e) => {
+function clientToWorld(clientX: number, clientY: number): { x: number; y: number } {
+  if (!renderer) return { x: 0, y: 0 };
   const rect = canvas.getBoundingClientRect();
-  const scaleX = SCENE_W / rect.width;
-  const scaleY = SCENE_H / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
+  const screenX = (clientX - rect.left) * (SCENE_W / rect.width);
+  const screenY = (clientY - rect.top) * (SCENE_H / rect.height);
+  const worldX = (screenX - SCENE_W / 2) / renderer.camera.zoom + renderer.camera.x;
+  const worldY = (screenY - SCENE_H / 2) / renderer.camera.zoom + renderer.camera.y;
+  return { x: worldX, y: worldY };
+}
 
+canvas.addEventListener("mousemove", (e) => {
+  const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
-    const size = c.sub ? 30 : 44;
+    const size = c.sub ? 26 : 34;
     const dist = Math.hypot(c.x - mx, c.y - my);
     if (dist <= size * 0.75) {
       found = c;
@@ -517,15 +635,10 @@ canvas.addEventListener("mouseleave", () => {
 });
 
 canvas.addEventListener("click", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = SCENE_W / rect.width;
-  const scaleY = SCENE_H / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
-
+  const { x: mx, y: my } = clientToWorld(e.clientX, e.clientY);
   let found: Char | null = null;
   for (const c of chars.values()) {
-    const size = c.sub ? 30 : 44;
+    const size = c.sub ? 26 : 34;
     const dist = Math.hypot(c.x - mx, c.y - my);
     if (dist <= size * 0.75) {
       found = c;
@@ -555,6 +668,97 @@ if (cardCloseEl) {
   });
 }
 
+// ---------------------------------------------------------------- CCTV controls
+
+const CAM_CONFIGS: Record<string, { x: number; y: number; zoom: number; label: string }> = {
+  all: { x: 336, y: 216, zoom: 1, label: "CAM ALL - BAHAY NI KUYA" },
+  office: { x: 520, y: 80, zoom: 1.8, label: "CAM 3 - OFFICE" },
+  living: { x: 272, y: 80, zoom: 1.8, label: "CAM 2 - LIVING ROOM" },
+  bedroom: { x: 88, y: 80, zoom: 1.8, label: "CAM 1 - BEDROOM" },
+  kitchen: { x: 88, y: 224, zoom: 1.8, label: "CAM 4 - KITCHEN" },
+  gameroom: { x: 272, y: 224, zoom: 1.8, label: "CAM 5 - GAME ROOM" },
+  confession: { x: 72, y: 360, zoom: 2.2, label: "CAM 6 - CONFESSION ROOM" },
+};
+
+document.querySelectorAll<HTMLButtonElement>(".cam-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".cam-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const camKey = btn.dataset.cam || "all";
+    const cfg = CAM_CONFIGS[camKey] || CAM_CONFIGS.all;
+    if (renderer) {
+      renderer.camera.targetX = cfg.x;
+      renderer.camera.targetY = cfg.y;
+      renderer.camera.targetZoom = cfg.zoom;
+      renderer.camera.activeCamLabel = cfg.label;
+    }
+  });
+});
+
+// ---------------------------------------------------------------- debug test walk button
+
+if (btnTestWalk) {
+  btnTestWalk.addEventListener("click", () => {
+    // Acceptance: clicking debug button sends a character from Bedroom to Office through doors without clipping walls.
+    const startX = 4 * 16 + 8;
+    const startY = 5 * 16 + 14;
+    const goalX = 26 * 16 + 8;
+    const goalY = 4 * 16 + 14;
+
+    let walker = chars.get("test:walker");
+    if (!walker) {
+      walker = {
+        key: "test:walker",
+        harness: "opencode",
+        parentKey: null,
+        sub: false,
+        sleeping: false,
+        room: "bedroom",
+        label: "Kuya Walker",
+        working: false,
+        tool: null,
+        lastTool: null,
+        bubbleUntil: 0,
+        instanceIndex: 0,
+        subagentCount: 0,
+        x: startX,
+        y: startY,
+        targetX: goalX,
+        targetY: goalY,
+        path: [],
+        facing: "right",
+        action: "walk",
+        emote: "exclamation",
+        emoteUntil: performance.now() + 2500,
+        walking: true,
+        poiId: "office_desk_1",
+      };
+      chars.set("test:walker", walker);
+    } else {
+      walker.x = startX;
+      walker.y = startY;
+      walker.targetX = goalX;
+      walker.targetY = goalY;
+      walker.emote = "exclamation";
+      walker.emoteUntil = performance.now() + 2500;
+    }
+
+    walker.path = calculateAStarPath(startX, startY, goalX, goalY);
+    walker.walking = true;
+    walker.action = "walk";
+
+    // Switch camera to show the journey
+    if (renderer) {
+      renderer.camera.targetX = 336;
+      renderer.camera.targetY = 216;
+      renderer.camera.targetZoom = 1.1;
+      renderer.camera.activeCamLabel = "CAM REC - TEST WALK BEDROOM -> OFFICE";
+    }
+  });
+}
+
+// ---------------------------------------------------------------- canvas sizing & header
+
 let spriteDpr = 1;
 
 function fitCanvas(): void {
@@ -576,7 +780,7 @@ function buildLegend(): void {
     const chip = document.createElement("span");
     chip.className = "chip";
     const dot = document.createElement("i");
-    dot.style.background = legendAccent(name);
+    dot.style.background = accentFor(name);
     chip.append(dot, document.createTextNode(name));
     legendEl.append(chip);
   }
@@ -601,7 +805,12 @@ let socket: WebSocket | null = null;
 let retryTimer: number | null = null;
 
 function applySnapshot(snap: Snapshot): void {
-  if (!snap || snap.type !== "snapshot" || !Array.isArray(snap.sessions) || !Array.isArray(snap.harnesses)) {
+  if (
+    !snap ||
+    snap.type !== "snapshot" ||
+    !Array.isArray(snap.sessions) ||
+    !Array.isArray(snap.harnesses)
+  ) {
     return;
   }
   gotSnapshot = true;
@@ -672,6 +881,8 @@ function frame(now: number): void {
   const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
   lastFrame = now;
 
+  if (renderer) renderer.update(dt);
+
   if (reduced) {
     for (const c of chars.values()) {
       if (c.path.length > 0) {
@@ -685,7 +896,7 @@ function frame(now: number): void {
     for (const c of chars.values()) step(c, dt);
   }
 
-  paint(now, reduced);
+  paint(now);
   requestAnimationFrame(frame);
 }
 
@@ -695,15 +906,34 @@ buildLegend();
 fitCanvas();
 setConnected(false);
 window.addEventListener("resize", fitCanvas);
-connect();
 
-fetch("/state")
-  .then((res) => (res.ok ? res.json() : null))
-  .then((data) => {
-    if (!gotSnapshot && data) applySnapshot(data as Snapshot);
+// Load house map and initialize renderer & navigation grid
+loadHouseMap()
+  .then((map) => {
+    houseMap = map;
+    renderer = new MapRenderer(map);
+    navGrid = new NavGrid(map.width, map.height, map.collision);
+
+    // Ensure all door tiles are explicitly walkable
+    for (let i = 0; i < map.doors.length; i++) {
+      if (map.doors[i] > 0) {
+        navGrid.setWalkable(i % map.width, Math.floor(i / map.width), true);
+      }
+    }
+
+    connect();
+
+    fetch("/state")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!gotSnapshot && data) applySnapshot(data as Snapshot);
+      })
+      .catch(() => {
+        /* WS is primary */
+      });
+
+    requestAnimationFrame(frame);
   })
-  .catch(() => {
-    /* WS is the primary source; this is only a cold-start fallback */
+  .catch((err) => {
+    console.error("Failed to initialize Bahay ni Kuya map:", err);
   });
-
-requestAnimationFrame(frame);

@@ -49,3 +49,17 @@ Recorded during milestone execution. Kept up to date without interrupting the us
   - Smooth camera pan & zoom controller.
 
 
+## Milestone 3: Navigation and Animation
+
+- **A\* Pathfinding (`public/nav.ts`)**:
+  - Implemented 4-directional grid-based A* pathfinding using the collision layer from `public/map/house.json`.
+  - Door tiles are explicitly marked as walkable so characters seamlessly traverse doorways between rooms and hallways.
+  - Added fallback snap-to-walkable-neighbor if a target coordinate falls onto solid furniture (e.g., clicking on a desk or bed routes to the chair tile immediately adjacent).
+- **Sprite Animation System (`public/anim.ts`)**:
+  - 4-direction facing orientation (`up`, `down`, `left`, `right`).
+  - Distinct action animations: `walk`, `idle`, `sit`, `type`, `sleep`, `wash`, `cook`, `tv`, `pool`, `arcade`, `exercise`, `water`, `read`.
+  - Emote bubbles with expressive glyphs: `thumbs_up` (👍), `facepalm` (🤦), `question` (❓), `exclamation` (❗), `sweat` (💧), `heart` (❤️).
+  - Species avatars per harness: Beaver (opencode), Octopus (codex), Hamster (pi), Raccoon (omp), Owl (hermes).
+- **Interactive Controls & Test Walk**:
+  - Added CCTV camera buttons (`ALL`, `OFFICE`, `LIVING`, `BEDROOM`, `KITCHEN`, `GAME`, `CONFESSION`) that smoothly pan and zoom to each room with customized camera labels.
+  - Added `#btn-test-walk` button: clicking it spawns/moves a character to Bedroom (4, 5) and routes through the bedroom door (6, 11), down the hallway, through the office door (32, 11), and into the office desk (26, 4) without clipping any dividing walls.

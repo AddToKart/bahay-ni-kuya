@@ -52,6 +52,22 @@
         </div>
       </div>
 
+      <div class="cctv-controls">
+        <div class="cctv-cams" role="group" aria-label="CCTV Camera Feeds">
+          <span class="ctrl-label">CCTV:</span>
+          <button class="cam-btn active" data-cam="all" id="cam-all">ALL</button>
+          <button class="cam-btn" data-cam="office" id="cam-office">OFFICE</button>
+          <button class="cam-btn" data-cam="living" id="cam-living">LIVING</button>
+          <button class="cam-btn" data-cam="bedroom" id="cam-bedroom">BEDROOM</button>
+          <button class="cam-btn" data-cam="kitchen" id="cam-kitchen">KITCHEN</button>
+          <button class="cam-btn" data-cam="gameroom" id="cam-gameroom">GAME</button>
+          <button class="cam-btn" data-cam="confession" id="cam-confession">CONFESSION</button>
+        </div>
+        <div class="debug-actions">
+          <button class="debug-btn" id="btn-test-walk">🚶 Test Walk: Bedroom → Office</button>
+        </div>
+      </div>
+
       <footer class="house-footer">
         <div class="legend" id="legend" aria-label="harness legend"></div>
         <p class="hint">Working sessions sit in the office, idle ones wait in the living room.</p>

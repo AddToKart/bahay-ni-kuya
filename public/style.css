@@ -224,6 +224,70 @@ canvas {
   image-rendering: pixelated;
 }
 
+.cctv-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: rgba(32, 41, 56, 0.4);
+  border: 1px solid var(--frame);
+  border-radius: 2px;
+}
+
+.cctv-cams {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ctrl-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.cam-btn, .debug-btn {
+  background: #1e222d;
+  color: #cfd8dc;
+  border: 1px solid #37474f;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease;
+}
+
+.cam-btn:hover, .debug-btn:hover {
+  background: #2b3447;
+  color: #ffffff;
+  border-color: #546e7a;
+}
+
+.cam-btn.active {
+  background: var(--idle);
+  color: #12141c;
+  border-color: var(--idle);
+}
+
+.debug-btn {
+  background: #263238;
+  border-color: #455a64;
+}
+
+.debug-btn:hover {
+  background: var(--working);
+  color: #12141c;
+  border-color: var(--working);
+}
+
 .house-footer {
   display: flex;
   align-items: center;
