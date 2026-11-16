@@ -263,6 +263,86 @@ export class HouseManager {
   }
 }
 
+export function promptKuyaCall(key: string, name?: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("call-modal");
+    const desc = document.getElementById("call-target-desc");
+    const input = document.getElementById("call-message-input") as HTMLInputElement | null;
+    const submit = document.getElementById("call-submit");
+    const cancel = document.getElementById("call-cancel");
+    const close = document.getElementById("call-close");
+    const errorEl = document.getElementById("call-error");
+
+    if (!modal || !input) {
+      try {
+        resolve(window.prompt(`What should Kuya ask ${name || key}?`, "Kumusta! Quick check-in."));
+      } catch {
+        resolve(null);
+      }
+      return;
+    }
+
+    if (desc) {
+      desc.textContent = `Kuya will call ${name || key} into the Confession Room for a 1-on-1 check-in.`;
+    }
+    input.value = "Kumusta! Quick check-in.";
+    if (errorEl) {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    }
+
+    modal.removeAttribute("hidden");
+    modal.hidden = false;
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 10);
+
+    const cleanup = () => {
+      modal.setAttribute("hidden", "");
+      modal.hidden = true;
+      submit?.removeEventListener("click", onConfirm);
+      cancel?.removeEventListener("click", onCancel);
+      close?.removeEventListener("click", onCancel);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
+    };
+
+    const onConfirm = () => {
+      const msg = input.value.trim();
+      if (!msg) {
+        if (errorEl) {
+          errorEl.textContent = "Please enter a message for Kuya to say.";
+          errorEl.hidden = false;
+        }
+        return;
+      }
+      cleanup();
+      resolve(msg);
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    const onBackdrop = (e: MouseEvent) => {
+      if (e.target === modal) onCancel();
+    };
+
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+      if (e.key === "Enter" && document.activeElement === input) onConfirm();
+    };
+
+    submit?.addEventListener("click", onConfirm);
+    cancel?.addEventListener("click", onCancel);
+    close?.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+  });
+}
+
 export class KuyaConsole {
   private token: string | null = null;
   private houseManager: HouseManager | null = null;
@@ -536,7 +616,7 @@ export class KuyaConsole {
   private async callHousemate(): Promise<void> {
     const key = this.housemateSelect?.value ?? "";
     if (!key) return alert("Select a housemate first.");
-    const message = window.prompt("What should Kuya ask?", "Kumusta! Quick check-in.");
+    const message = await promptKuyaCall(key);
     if (!message?.trim()) return;
     try {
       const res = await this.api(`/api/housemates/${encodeURIComponent(key)}/call`, {

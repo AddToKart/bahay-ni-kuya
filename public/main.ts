@@ -7,7 +7,7 @@ import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
 import { KuyaLayer } from "./kuya.js";
-import { KuyaConsole, HouseManager, type HouseRecord } from "./console.js";
+import { KuyaConsole, HouseManager, promptKuyaCall, type HouseRecord } from "./console.js";
 import { DiaryRoom } from "./confession.js";
 import { installLayoutEditor } from "./layout-editor.js";
 import type { ChatLine, QuestionView, SessionState } from "../src/types.js";
@@ -902,7 +902,7 @@ cardCallEl?.addEventListener("click", async (event) => {
   event.stopPropagation();
   const key = cardHousemateKey;
   if (!key) return;
-  const message = window.prompt("What should Kuya ask?", "Kumusta! Quick check-in.");
+  const message = await promptKuyaCall(key);
   if (!message?.trim()) return;
   const res = await cardApi(`/api/housemates/${encodeURIComponent(key)}/call`, {
     method: "POST",

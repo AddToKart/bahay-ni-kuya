@@ -201,6 +201,26 @@
         </section>
       </div>
 
+      <div class="modal-backdrop" id="call-modal" hidden>
+        <section class="summon-panel" role="dialog" aria-modal="true" aria-labelledby="call-title">
+          <div class="summon-head">
+            <h3 id="call-title">📞 Call to Confession Room</h3>
+            <button class="summon-close" id="call-close" aria-label="Close">&times;</button>
+          </div>
+          <p class="summon-note" id="call-target-desc" style="margin-top: 0; margin-bottom: 12px;">
+            Kuya wants to talk to this housemate in the Confession Room.
+          </p>
+          <label class="summon-field">What should Kuya ask?
+            <input id="call-message-input" type="text" placeholder="Kumusta! Quick check-in." value="Kumusta! Quick check-in." aria-label="Kuya message" />
+          </label>
+          <p class="summon-error" id="call-error" hidden></p>
+          <div class="summon-actions">
+            <button class="dispatch-btn summon-cancel" id="call-cancel">Cancel</button>
+            <button class="dispatch-btn" id="call-submit">Call to Confession</button>
+          </div>
+        </section>
+      </div>
+
       <footer class="house-footer">
         <div class="legend" id="legend" aria-label="harness legend"></div>
         <p class="hint">Working sessions sit in the office, idle ones wait in the living room.</p>
