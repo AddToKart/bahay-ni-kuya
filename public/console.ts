@@ -473,11 +473,6 @@ export class KuyaConsole {
       if (submit) submit.disabled = false;
     }
   }
-      this.showSummonError(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      if (submit) submit.disabled = false;
-    }
-  }
 
   private async evictHousemate(): Promise<void> {
     const key = this.housemateSelect?.value ?? "";
