@@ -10,7 +10,7 @@ interface StateLike {
   chat?: ChatLine[];
 }
 
-const POLL_MS = 1000;
+const POLL_MS = 3000;
 
 export class DiaryRoom {
   private token: string | null = null;
@@ -29,6 +29,7 @@ export class DiaryRoom {
   private closeAnswer: (() => void) | null = null;
   private chatMode = false;
   private visible = false;
+  private isPolling = false;
   private currentSessionId: string | null = null;
   private currentHousemateKey: string | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -84,11 +85,15 @@ export class DiaryRoom {
   }
 
   private async poll(): Promise<void> {
+    if (this.isPolling || document.hidden) return;
+    this.isPolling = true;
     try {
-      const res = await fetch("/state");
+      const res = await fetch("/state", { signal: AbortSignal.timeout(3000) });
       if (res.ok) this.update((await res.json()) as StateLike);
     } catch {
       /* server offline: keep last state */
+    } finally {
+      this.isPolling = false;
     }
   }
 

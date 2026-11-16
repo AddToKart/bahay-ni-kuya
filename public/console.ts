@@ -368,6 +368,8 @@ export class KuyaConsole {
   private summonError: HTMLElement | null = null;
   private modelFilter: HTMLInputElement | null = null;
   private allModels: { providerID: string; modelID: string }[] = [];
+  private isRefreshingHousemates = false;
+  private isRefreshingTasks = false;
 
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
@@ -634,9 +636,10 @@ export class KuyaConsole {
   }
 
   private async refreshHousemates(): Promise<void> {
-    if (!this.housemateSelect) return;
+    if (!this.housemateSelect || this.isRefreshingHousemates || document.hidden) return;
+    this.isRefreshingHousemates = true;
     try {
-      const res = await this.api("/state");
+      const res = await this.api("/state", { signal: AbortSignal.timeout(3000) });
       if (!res.ok) return;
       const state = (await res.json()) as {
         sessions?: { sessionId: string; harness: string; state: string; housemateKey?: string }[];
@@ -654,6 +657,8 @@ export class KuyaConsole {
       if (this.agentSelect && this.agentSelect.options.length === 0) void this.loadOpenCodeOptions();
     } catch {
       /* state unavailable */
+    } finally {
+      this.isRefreshingHousemates = false;
     }
   }
 
@@ -790,10 +795,12 @@ export class KuyaConsole {
   }
 
   async refreshTasks(): Promise<void> {
-    if (!this.tasksListEl || !this.token) return;
+    if (!this.tasksListEl || !this.token || this.isRefreshingTasks || document.hidden) return;
+    this.isRefreshingTasks = true;
     try {
       const res = await fetch("/api/tasks", {
         headers: { authorization: `Bearer ${this.token}` },
+        signal: AbortSignal.timeout(3000),
       });
       if (!res.ok) return;
       const tasks: TaskItem[] = await res.json();
@@ -846,6 +853,8 @@ export class KuyaConsole {
       }
     } catch {
       /* ignore */
+    } finally {
+      this.isRefreshingTasks = false;
     }
   }
 }

@@ -761,11 +761,16 @@ setInterval(() => void scanTick(), SCAN_MS);
 setInterval(() => void installedTick(), INSTALLED_REFRESH_MS);
 setInterval(() => broadcast(true), 10_000);
 
-process.on("SIGINT", () => {
+const shutdown = async () => {
   log("shutting down");
-  void housemates.stop();
+  try {
+    await housemates.stop();
+  } catch {}
   process.exit(0);
-});
+};
+
+process.on("SIGINT", () => void shutdown());
+process.on("SIGTERM", () => void shutdown());
 
 const installed = store
   .snapshot()
