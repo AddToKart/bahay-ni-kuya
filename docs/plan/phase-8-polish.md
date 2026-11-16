@@ -13,9 +13,11 @@ one commit series), so this phase is a menu, not a plan to execute blindly.
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P8: Rule 2 (garden area must not break the structure lock — see
-the constraint below), Rule 3 (all new props authored properly with MANIFEST rows), Rule 6
-(before/after screenshots per item), Rule 11/Rule 10 (report per item).
+Rules 1–11 apply. Specific to P8: Rule 2 (garden area must not break the structure lock — see
+the constraint below), Rule 3 (all new props authored properly with MANIFEST rows; the P1
+visual-leftover fixes go here per D11, some via the E editor), Rule 6 (before/after screenshots
+per item), Rule 11 (all P8 items are client-side visuals/config — no sessions or agents involved;
+the final security review re-verifies the Rule 11 guard), Rule 10 (report per item).
 
 ## Backlog items (each = one task with its own approval)
 
@@ -29,7 +31,8 @@ the constraint below), Rule 3 (all new props authored properly with MANIFEST row
 | P8-T6 | Performance pass | Target 60 fps with 20 characters + overlays open (eavesdrop + job panel); measures: existing benchmark re-run + a browser DevTools trace capture recorded in the report; pause-when-hidden already exists (`visibilitychange`) — verify and extend to overlay timers; if a hotspot appears (e.g. debug overlay), fix with container culling, never by removing validators |
 | P8-T7 | README with screenshots or a GIF | README gains a visual tour (house view + confession + squad panel), updated Quick Start, and the current feature list; GIF via a short screen capture converted to an optimized GIF/MP4, committed under `docs/screenshots/` |
 | P8-T8 | License file, NOTICE and assets manifest review | Confirm every new sprite from P2–P8 is in `assets/MANIFEST.md` with the right license (Oddboro-derived → Apache-2.0 with change note; original → CC0), root `NOTICE` still correct, `docs/oddboro-license-audit.md` still accurate; fix drift found |
-| P8-T9 | Final security review | Every control endpoint (summon, evict, call, answer, chat, dispatch, job control, layout save, season actions): loopback + Host/Origin + Bearer + rate limit + audit verified by a checklist walk; token handling (file perms, never in query strings/logs); redaction coverage (messages, transcripts, audit, gate logs); worktree/merge safety (no auto-delete/merge anywhere); secrets scan of the repo (`rg` for key patterns); results recorded as a table with PASS/FIXED/ACCEPTED-RISK rows |
+| P8-T9 | Final security review | Every control endpoint (summon, evict, call, answer, chat, dispatch, job control, layout save, season actions): loopback + Host/Origin + Bearer + rate limit + audit verified by a checklist walk; token handling (file perms, never in query strings/logs); redaction coverage (messages, transcripts, audit, gate logs); worktree/merge safety (no auto-delete/merge anywhere); Rule 11 re-verification (`bun run guard` green; guests observed-only; no house-created child sessions; wildcard path manual-only); secrets scan of the repo (`rg` for key patterns); results recorded as a table with PASS/FIXED/ACCEPTED-RISK rows |
+| P8-T10b | P1 visual leftovers (D11 RESOLVED: accept for now, moved into this backlog) | Dining-chair symmetry, bin/cup wall-pinning and gym-bin placement are fixable with the E layout editor (validator-verified); gym mirror offset, pool-table scale, confession spotlight cone and the missing gym cooler need art/structure decisions and are re-proposed individually | `public/map/house.json` via editor, P8 report |
 
 ## Order and approval protocol
 

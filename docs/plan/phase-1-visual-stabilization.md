@@ -20,9 +20,10 @@ loop (edit → validate → screenshot → fix) so later phases inherit a visual
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P1: Rule 2 (structure lock), Rule 3 (no new art invented — the one
+Rules 1–11 apply. Specific to P1: Rule 2 (structure lock), Rule 3 (no new art invented — the one
 art gap found is listed, not invented), Rule 5 (no judged-compliant escapes), Rule 6 (visual
-proof), Rule 7 (endpoint security for the save endpoint).
+proof), Rule 7 (endpoint security for the save endpoint). (Rule 11 is irrelevant to P1: no
+sessions or agents are touched.)
 
 ## Ordered task list
 
@@ -128,7 +129,7 @@ allowlistedRoots` wiring is fixed later in P4 — tracked as F-SEC-03.)
   (POI ids unchanged; only coords moved).
 - Visual-check list contains no fixable items (the 5 remaining are art/structure/lighting scope
   items, explicitly out of scope by the spec) — VERIFIED.
-- Standing rules 1–10 hold (no structure change: hash `990d961c8f3ea7f0` unchanged since
+- Standing rules 1–11 hold (no structure change: hash `990d961c8f3ea7f0` unchanged since
   baseline; NOTICE/MANIFEST untouched and still accurate).
 
 ## Risks with fallbacks

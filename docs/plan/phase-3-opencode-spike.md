@@ -19,12 +19,13 @@ is a bounded, throwaway spike that turns UNVERIFIED claims into captured evidenc
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P3: Rule 4 is the entire point (captured evidence under docs/ —
+Rules 1–11 apply. Specific to P3: Rule 4 is the entire point (captured evidence under docs/ —
 here, under `spikes/opencode-control/` per the spec, with copies of any user-facing conclusions
 referenced from `docs/opencode-evidence/`); Rule 7 (no credentials read/stored/logged —
 `auth.json` and provider API keys are off-limits; if a captured payload must contain a key it is
 redacted before commit); Rule 9 (Windows-first process management evidence); Rule 10 (report at
-the end).
+the end); Rule 11 (no custom subagents — the spike OBSERVES opencode's native subagents, it never
+creates a child session with a parentID itself, and it records the evidence P4 needs).
 
 ## Safety boundaries
 
@@ -33,11 +34,16 @@ the end).
   `git init`, seed `README.md`, `src/app.ts`, `src/app.test.ts` (one passing, one failing test),
   initial commit. Never the real repo, never a user repo.
 - Real API spend is bounded: harmless prompts only (`"List the files in this repo and stop."`,
-  `"Add a comment 'spike' to the top of src/app.ts."`), max 6 turns total across the spike
-  (decision D4 asks approval for this budget).
+  `"Add a comment 'spike' to the top of src/app.ts."`), max 6 turns total across the spike —
+  **using the cheapest connected model for the bulk probes** (D4 RESOLVED); more expensive
+  models appear only in the 3-combo agent/model probe (P3-T5) where the spec requires proving
+  different combinations.
 - No auto-approve flags (`--auto`) unless a probe explicitly needs to answer permissions through
   the API — in that case the permission is answered via the verified API call, not by flags.
-- Managed servers run on dedicated ports (40041+) with `--hostname 127.0.0.1`; every script
+- Managed servers run on dedicated ports (40041+) with `--hostname 127.0.0.1`; D5 accepted for
+  the spike: servers run **with `--pure`**, and the spike must report (P3-T17) what the flag
+  disables and whether the user's agents rely on anything it turns off — that report decides
+  whether P4 pins `--pure` for managed servers. Every script
   records the PID tree it spawned and kills it via the recorded cleanup command (FINDINGS item
   11) before exiting; a `finally` block runs `cleanup.ps1` even on Ctrl+C.
 - Nothing is ever written into `~/.config/opencode/` or `~/.local/share/opencode/` by the spike.
@@ -57,11 +63,12 @@ the end).
 | P3-T9 | Item 7 — tokens/cost: locate usage data (per message, per session; input/output/reasoning/cache tokens; cost fields). Capture one real sample with the numbers visible; check `opencode stats` CLI output shape too. Record where reasoning tokens and cache reads/writes appear | `probe7-usage.ts` |
 | P3-T10 | Item 8 — agents/providers/variants via API: list agents with names, mode (primary/subagent/all), default model; list connected providers and their models; check reasoning/variant options (`--variant` flag exists — find its API equivalent). Diff against `~/.config/opencode/agents/` + `opencode.json` contents and record mismatches | `probe8-catalog.ts` |
 | P3-T11 | Item 9 — subagent lifecycle: spawn a turn that delegates to a subagent (real agents have task/delegation tools); capture child session created (parentID, agent, title), busy, finished, error, abort; how completion signals the parent; where the child's permission/question surfaces (own session? parent? both?) | `probe9-subagents.ts` |
+| P3-T11b | Rule 11 evidence (new, spec Rule 11c): confirm native task-tool child sessions carry `parentID`, agent name and title (capture the exact `session.created` payload); record how a NATIVE subagent differs from a direct session create with a `parentID` (e.g. field presence, title format, agent linkage) so P4's guest logic ignores nothing and invents nothing; ALSO record what opencode natively supports for restricting/allowing subagent types (permission config? task config? nothing?) to feed decision D13; probe `--pure` side effects (what plugins/skills it disables, whether the user's agents depend on any) for D5 | `probe9-subagents.ts` (extended), `probe13-pure-flag.ts` (new) |
 | P3-T12 | Item 10 — override semantics: does an explicit model/variant on the request override the agent's configured model? Configure one agent with a fixed model (temp copy of an agent file inside the FIXTURE repo's `.opencode/agent/` if supported, else document the config-only path), then request with a different model and record which wins (message metadata proves it) | `probe10-override.ts` |
 | P3-T13 | Item 11 — login reuse + orphans: verify the background server uses the existing opencode login with no extra key (no `auth.json` access by us; server starts and serves a model call). Kill the parent PowerShell script abruptly (`taskkill /F /PID <parent>`), wait, list any surviving opencode processes; record the EXACT cleanup command that works on Windows (`taskkill /T /F /PID` vs `Stop-Process -Id` vs killing by port owner) and whether `serve --port` + `--print-logs` gives a reliable owner PID | `probe11-orphans.ps1`, `cleanup.ps1` |
 | P3-T14 | Item 12 — CPU/memory with 3 active sessions: `Get-Process` sampling of the opencode tree every 2 s during the concurrency probe; record steady-state RSS + CPU% per session and total | `probe12-resources.ps1` |
-| P3-T15 | Go/no-go + open questions in FINDINGS.md; list every UNVERIFIED item that remains and what would de-risk it | FINDINGS.md |
-| P3-T16 | Standing-rule audit: confirm no app files touched (`git status` clean except `spikes/` + docs), no credentials in any captured file (grep for `apiKey`, `authorization`, `token` values in evidence before commit), temp dirs cleaned | FINDINGS.md checklist |
+| P3-T15 | Go/no-go + open questions in FINDINGS.md; list every UNVERIFIED item that remains and what would de-risk it; include the P3-T11b findings so KUYA can decide D13 and confirm D5 for P4 | FINDINGS.md |
+| P3-T16 | Standing-rule audit: confirm no app files touched (`git status` clean except `spikes/` + docs), no credentials in any captured file (grep for `apiKey`, `authorization`, `token` values in evidence before commit), temp dirs cleaned; confirm Rule 11 held (no child session was ever created with a parentID by a spike probe; native subagents were only observed) | FINDINGS.md checklist |
 
 ## Data formats
 
@@ -138,11 +145,14 @@ models: [...3 chosen...], maxTurns: 6}` — agents/models must come from the use
 ## Acceptance criteria
 
 - All 12 items have verdicts; none says "TBD".
+- P3-T11b evidence exists: native child-session payload with `parentID`+agent+title, the
+  native-vs-direct-create comparison, native subagent-type restriction options (or "none
+  found"), and the `--pure` side-effect report for D5/D13.
 - A go/no-go line exists with at least the open questions listed.
 - `git status` on the app repo shows changes only under `spikes/opencode-control/` and (this
   phase's report) `docs/`.
 - No leftover opencode processes after cleanup (verified by `Get-Process opencode`).
-- Standing rules 1–10 checklist signed (esp. 4, 7, 9, 10).
+- Standing rules 1–11 checklist signed (esp. 4, 7, 9, 10, 11).
 
 ## Risks with fallbacks
 
@@ -166,5 +176,6 @@ M (~2–3 working sessions of experiments + evidence writing).
 ## STOP gate
 
 User reviews: FINDINGS.md (verdicts + go/no-go), the evidence sample set, the open questions,
-and decisions D4 (spend approved), D5 (`--pure` for managed sessions) which the findings should
-inform. Phase 4 starts only on an explicit go with P2 complete.
+the P3-T11b Rule 11 evidence (native subagent payload, native-vs-direct-create difference,
+native deny/allow mechanisms → decides D13), and the `--pure` side-effect report (confirms D5
+for managed servers). Phase 4 starts only on an explicit go with P2 complete.

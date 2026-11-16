@@ -7,20 +7,21 @@ true decisions for the human are ALSO in master-plan §13 (NEEDS HUMAN DECISION)
 
 | # | Question | Known | Options | Recommendation |
 | --- | --- | --- | --- | --- |
-| OQ-A01 (D1) | Add a real exterior front door to the map? | Perimeter has no opening (STATE §4); P2 uses a marked spawn/exit overlay unless approved. | (a) overlay forever; (b) real door + walkway now (requires one-time structure-lock baseline regeneration, documented in a proposal). | (b) — the summon/evict metaphor deserves a real door; do it once, before P2 builds overlays on top. |
-| OQ-A02 (D2) | Author the 5 missing sprites (bag, suitcase, folder, lanyard, ON AIR) + P7's crown/rules poster? | None exist (verified against atlas sprite list). | (a) author originals (recommended); (b) block P2/P7 on art; (c) substitute unrelated props (not recommended — breaks the metaphor). | (a). |
-| OQ-A03 | `assets/third-party/oddboro/` appears to contain only the license/NOTICE files (listing was empty of extra files in the audit); confirm the Apache-2.0 license text + Oddboro NOTICE files are actually present there. | NOTICE references them; audit doc describes them. | (a) confirm and keep; (b) if missing, add them (docs task, allowed in a docs-only pass — but the planning pass did not touch assets). | Confirm during P2's Rule-3 audit; add if absent. |
-| OQ-A04 (D3) | Where do queued askers stand? | Confession room is 8×10 with one chair. | (a) queue line inside the room's east wall; (b) queue outside the room in the hallway; (c) overflow spots in adjacent rooms. | (a) inside, along the east wall — keeps them visible on CAM CONFESSION. |
-| OQ-A05 (D4) | Approve the P3 spend (harmless prompts, ≤6 turns, plus up to 3 concurrent sessions)? | The whole P4+ plan depends on real API evidence. | (a) approve; (b) limit to 2 sessions; (c) no real spend (spike degrades to CLI-only evidence — much weaker). | (a). |
-| OQ-A06 (D5) | Run managed opencode servers with `--pure`? | Flag exists (`serve --help`); effect = no external plugins. | (a) `--pure` for managed housemates; (b) allow plugins. | (a) — determinism + isolation; the user's own TUI keeps its plugins. |
-| OQ-A07 (D6) | Default housemate cap? | Spec says "housemate cap (config)". | 2 / 4 / 6. | 4. |
-| OQ-A08 (D7) | First-squad mapping + new `proofreader.md` agent file? | 11 agents exist; no proofreader (STATE §11). | see master-plan D7 options. | As recommended there; approve the new agent file at P5 STOP. |
-| OQ-A09 (D8) | Exact gate commands for this repo? | No lint/build scripts exist today; validators + tests exist. | (a) tsc + validators + bun test (+ a `generate-map --check` mode to be added in P5); (b) add a lint config first. | (a); adding eslint can be a P8 candidate. |
-| OQ-A10 (D9) | Default Approve target branch? | Spec: "never main by default". | `kuya/ready` staging branch vs per-job `kuya/job-<id>-approved`. | `kuya/ready`. |
-| OQ-A11 (D10) | Nomination cadence? | Spec offers per-job or weekly. | per-job / weekly. | per-job. |
-| OQ-A12 (D11) | Accept the 5 P1 visual debts (dining chairs, gym mirror, gym cooler, pool scale, spotlight cone)? | Listed in `docs/visual-check.md`. | (a) accept; (b) commission art; (c) propose structure change for the mirror. | (a) now, revisit in P8. |
-| OQ-A13 (D12) | Default per-job token budget? | Spec: token or cost budget from verified usage. | 0.5M / 1.5M / no cap. | 1.5M input + 300k output, hard stop + confession escalation. |
+| OQ-A01 (D1 RESOLVED) | Real exterior front door approved — tiny change only: exactly one door opening in the south exterior wall; the agent must show that the structure diff is only those tiles before `docs/structure-baseline.json` is regenerated; if anything else changes, STOP and re-propose. | Perimeter had no opening (STATE §4); D1 reply. | — | Implemented in P2-T8/T8b with the diff gate. |
+| OQ-A02 (D2 RESOLVED) | Author the 5 missing sprites (bag, suitcase, folder, lanyard, ON AIR) + P7's crown/rules poster, original and in the existing style — with a mandatory sprite-sheet approval by KUYA before use. | None exist (verified against atlas sprite list). | — | P2 §Art workflow; preview sheet at `docs/screenshots/phase-2/sprite-sheet-draft.png`. |
+| OQ-A03 | `assets/third-party/oddboro/` appears to contain only the license/NOTICE files (listing was empty of extra files in the audit); confirm the Apache-2.0 license text + Oddboro NOTICE files are actually present there. | NOTICE references them; audit doc describes them. | (a) confirm and keep; (b) if missing, add them. | Confirm during P2's Rule-3 audit; add if absent. |
+| OQ-A04 (D3 RESOLVED) | Confession queue stands inside the room along the east wall (POIs `confession_queue_1..4`) — keeps the hallway clear. | Confession room is 8×10 with one chair; D3 reply. | — | P2 data formats. |
+| OQ-A05 (D4 RESOLVED) | Spike spend approved: harmless prompts, ≤6 turns, 3 sessions, cheapest connected model for bulk probes. | Whole P4+ plan depends on real API evidence; D4 reply. | — | P3 safety section. |
+| OQ-A06 (D5 RESOLVED with condition) | `--pure` accepted for the spike; the spike must report what the flag disables and whether the user's agents rely on anything it turns off before P4 pins it. | Flag exists (`serve --help`); P3-T17 probe. | — | P3/P4 tasks updated. |
+| OQ-A07 (D6 RESOLVED) | Housemate cap = 6; guests capped separately (8); ≤3 turns running at once. | The example squad is 5 housemates; D6 reply. | — | P4-T21, P5-T8. |
+| OQ-A08 (D7 RESOLVED with condition) | Squad mapping approved with the user's own agent files; proofreader drafted as a PROPOSED review-only file (`docs/housemates/proofreader-PROPOSED.md`), never installed; tester-2 uses a model from a different provider than tester-1. | 11 agents exist; no proofreader; D7 reply. | — | P5-T9/T10. |
+| OQ-A09 (D8 RESOLVED) | Default gates: `bunx tsc --noEmit`, `bun run structure-lock`, `bun run validate-furniture`, `bun test`. | D8 reply; no lint/build exist today. | — | P5 template. |
+| OQ-A10 (D9 RESOLVED) | Approve merge target: `kuya/ready`, never `main`/`master`. | D9 reply. | — | P5-T19. |
+| OQ-A11 (D10 RESOLVED) | Nominations per job. | D10 reply. | — | P7-T3. |
+| OQ-A12 (D11 RESOLVED) | The 5 P1 visual debts accepted for now and moved into the P8 backlog; dining-chair/bin-cup items fixable with the E editor. | `docs/visual-check.md`; D11 reply. | — | P8-T10b. |
+| OQ-A13 (D12 RESOLVED with condition) | Default budget 1.5M in / 300k out; the FIRST fixture job runs 500k in / 100k out. | D12 reply. | — | P5-T8, template `firstRunBudget`. |
 | OQ-A14 | Should P4 also retrofit rate-limit + audit to the v1 endpoints beyond what P4-T30/31 already include? | P4-T31 covers all endpoints. | yes (default) / minimal. | yes. |
+| OQ-A15 (D13 OPEN) | Denied guest types: after P3-T11b shows what opencode natively supports, KUYA chooses (a) an opencode permission/task config change proposed in docs and applied by KUYA himself, or (b) house-side abort of observed denied-type guests via the verified abort call (banner + Confession Room notice). Rule 11 forbids a house-made replacement subagent in both cases. | P3-T11b will capture native mechanisms; D13 opened by the Rule 11 directive. | (a) config proposal; (b) verified abort with banner/audit. | Decide at the P4 STOP gate with the P4-T20b proposal in hand; if opencode supports neither cleanly, prefer documenting the limitation over inventing a mechanism. |
 
 ## B. Technical questions the phases must answer (verification tasks)
 
@@ -33,7 +34,8 @@ true decisions for the human are ALSO in master-plan §13 (NEEDS HUMAN DECISION)
 | OQ-B05 | Can one opencode server safely host sessions in different worktrees of the same repo simultaneously (DB contention)? | P3-T4/T11 | Concurrency probe + DB lock observation. |
 | OQ-B06 | What is the cheapest reliable way to detect "retry/rate-limit" state for the P7 brownout? | P3-T5/T7 + P7 | Event sample; fallback = error-event string matching, documented. |
 | OQ-B07 | Does `opencode export <sessionID>` give a stable transcript for the read-only eavesdrop click-through, or is the live stream the only source? | P3-T7 | probe5 evidence; P6 implements whichever is verified. |
-| OQ-B08 | Are subagent (guest) sessions visible to the parent server as separate sessions with `parentID` on create (and do their permissions surface via the parent)? | P3-T11 | probe9 evidence. |
+| OQ-B08 | Are subagent (guest) sessions visible to the parent server as separate sessions with `parentID` on create (and do their permissions surface via the parent)? How does a NATIVE subagent differ from a direct session create with a parentID (Rule 11 evidence)? | P3-T11, P3-T11b | probe9 + P3-T11b evidence. |
+| OQ-B08b | What does opencode natively support for restricting subagent agent types (permission config? task config? nothing)? — feeds D13. | P3-T11b | probe9/probe13 evidence; if none found, D13 falls to option (b) or documented limitation. |
 | OQ-B09 | Does the layout editor need "add new prop" (the spec only says remove/move/rotate)? Adding changes the props count and could collide with POI placement rules. | P4/P5 (editor maintenance) | Only if a phase needs it; current editor is move/rotate/delete as spec'd. |
 | OQ-B10 | Will the P2 guest desks pass `validate-furniture` (clearance + reachability) at their chosen tiles? | P2 | Validator run + overlay screenshot during P2. |
 | OQ-B11 | Is there a rear-facing kitchen chair variant to fix the P1 dining-chair debt without new art? | P2/P8 art audit | Atlas frame list check (currently no; listed as art debt D11). |
@@ -41,6 +43,12 @@ true decisions for the human are ALSO in master-plan §13 (NEEDS HUMAN DECISION)
 
 ## C. Plan-internal notes (resolved here, recorded for the trace)
 
+- **Rule 11 guest correction (2026-11-16)**: the user clarified that opencode housemates summon
+  their own subagents/houseguests natively — "we don't touch what opencode does". The earlier
+  wording that implied house-side `allowed`/`denied` session filtering (and any house-created
+  guest session) is superseded: guests are observed-only renderings of child sessions created by
+  the housemates themselves; type denial rides opencode config or a verified abort (D13), and
+  the guard/tests enforce the boundary (A-16, A-32).
 - **P2 vs P4 confession ownership**: specified once in P2 (queue + panel + payloads), consumed
   by P4. No second mechanism will be built (master-plan §15).
 - **Dispatcher auto-delete vs Rule 8**: fixed in P4 for both the housemate path and the legacy

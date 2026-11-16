@@ -68,6 +68,42 @@ These are quoted-or-derived from the KUYA directive; each phase doc repeats them
     `docs/plan/phase-<n>-<name>-report.md`): what works, what is stubbed, what to test by hand,
     files changed, tests run, anything unsupported or UNVERIFIED, NEEDS HUMAN DECISION items.
     All existing tests, `structure-lock` and `validate-furniture` must pass at every STOP gate.
+11. **No custom subagents.** Subagents are opencode's own mechanism, never the house's:
+    - The house NEVER creates, spawns, simulates or fakes subagents. A subagent exists only when
+      an opencode housemate itself invokes opencode's built-in mechanism (the task tool and
+      agents in subagent mode defined in the user's opencode config). It appears to the house as
+      a CHILD SESSION (`parentID`). The house only OBSERVES child sessions and renders them as
+      GUESTS (read-only: arrival, work, usage rollup, leaving).
+    - The house must not create child sessions itself (never call session create with a
+      `parentID` or any equivalent) and must not start any extra opencode process, session or
+      LLM call for helper purposes. The only sessions the house ever creates are the PRIMARY
+      sessions of housemates that the user explicitly summons (or that a job template the user
+      started lists).
+    - Squad roles (frontend, backend, testers, proofreader) are separate primary housemates,
+      never subagents. Cross-housemate communication goes through the house message layer,
+      never through spawned agents.
+    - The house engine contains no LLM calls and no hidden helper agents (recaps, scoring,
+      routing and summaries are deterministic code).
+    - The house does not create, edit or delete opencode agent definitions. The only agent file
+      ever proposed is a review-only `proofreader.md`, written as a PROPOSED file for approval,
+      never installed automatically.
+    - "Denied guest types" must not be implemented by replacing a subagent with a house-made
+      one. It is planned as either (a) opencode's own permission or task configuration
+      (verified in the spike; a config change is PROPOSED in docs for the user to apply
+      themselves), or (b) aborting the child session through the verified abort call with a
+      banner and a Confession Room notice. See decision D13.
+    - The Phase 7 "wildcard housemate" is only an ordinary primary housemate that the user
+      summons manually with a narrow brief and that the user (or its job) later evicts. It is
+      never a child session and never auto-summoned by the house or by another housemate.
+    - Enforcement: (a) guard script `scripts/guard-no-custom-subagents.ts` registered as
+      `bun run guard` and run by the test suite, failing if any source file outside the
+      housemate-summon path creates sessions, passes a `parentID` on create, or spawns agent
+      processes; (b) unit tests proving guests are created only from observed child-session
+      events and never from house actions; (c) a spike item (P3-T11b) confirming native
+      task-tool child sessions carry `parentID`, agent name and title, and recording how a
+      native subagent differs from a direct session create with a `parentID`; (d) a runtime
+      assertion plus audit log entry if the house ever sees a child session it did not observe
+      being created by an opencode housemate (flagged as an anomaly in the Confession Room).
 
 ## 2. Current state in one paragraph
 
@@ -155,7 +191,8 @@ Dependency graph and reasons:
 | R11 | PixiJS/UI complexity regresses 60 fps with 20 characters + overlays | 2,6,8 | existing 0.083 ms/tick headroom, visibilitychange pause already in place, P8 perf pass re-benchmark |
 | R12 | Protocol v2 breaks v1 consumers (adapters/console) | 2 | additive-only: new event types + new optional fields; old fields keep meaning; v1 tests keep passing |
 | R13 | User-config drift (Orca rewrites codex hooks etc.) | all | out of scope going forward; opencode-only control needs no hooks/config changes (server API path) — verified in P3 |
-| R14 | Missing art (bag, suitcase, folder, lanyard, ON AIR sign) blocks P2 | 2 | STOP and list per Rule 3; alternatives recorded in P2 §Art and NEEDS HUMAN DECISION |
+| R14 | Missing art (bag, suitcase, folder, lanyard, ON AIR sign, crown, rules poster) blocks P2/P7 | 2,7 | D2 approved authoring; sprite sheet MUST be approved by KUYA before use; STOP and list per Rule 3 if quality is rejected |
+| R15 | House accidentally creating subagents or helper sessions (Rule 11 violation) | 2,3,4,5,7 | guard script (`bun run guard`) in the test suite; guests only from observed child-session events; spike proves native subagent vs parentID-create; runtime anomaly assertion + audit + confession banner |
 
 ## 6. Config files and data stores (full list)
 
@@ -167,7 +204,7 @@ Existing today (touched only per phase as listed):
 | `config/pois.json` (+ `public/pois.json` mirror) | exists | house-life POIs `{id,room,x,y,facing,action,minSec,maxSec,capacity,tags}` |
 | `config/runners.json` | exists | runner commands per harness + `allowlistedRoots` (wired into security in P4) |
 | `config/housemates.json` | P4 | summon presets: `{id,name,harness,agent,model,provider,reasoning,persona,permissions,projectRoots,sprite,maxConcurrentTasks}` |
-| `config/guests.json` | P4 | subagent policy: allow/deny lists, caps, depth, queue spots, time limit |
+| `config/guests.json` | P4 | guest OBSERVATION policy (read-only): caps, visibility, time limit; deny handling per Rule 11 + D13 (opencode config or verified abort) |
 | `config/house.json` | P4 | general house settings: housemate cap, ports, token policy, budget defaults |
 | `config/jobs/*.json` | P5 | job templates (team, brief, rubric, gates, rounds, exit, caps) |
 | `config/scoring.json` | P7 | scoring weights, penalties, nomination rules |
@@ -350,6 +387,8 @@ scripts/
   fake-events.ts                (P2 extended) full fake flow
   fake-squad.ts                 (P5) simulated squad events for tests/demo
   kuya-cli.ts                   (P5) `kuya` command (roster|message|finding|update|ask|handoff|status)
+  guard-no-custom-subagents.ts  (P2, wired from P2 onward) `bun run guard` — Rule 11 enforcement
+docs/housemates/proofreader-PROPOSED.md  (P5) proposed agent file for review, never installed
 spikes/opencode-control/        (P3) sample repo + probe scripts + FINDINGS.md
 docs/plan/phase-<n>-<name>.md   each phase
 docs/screenshots/<phase>/       each visual phase
@@ -378,6 +417,10 @@ docs/opencode-evidence/*.md|txt (P3/P4) captured real outputs
   (P4, P5): throwaway git repo in `%TEMP%`, guarded by an env flag, cleaned by PID-tree kill,
   marked `// REAL` in the test name so it can be skipped in CI-like runs.
 - **Visual**: per-phase before/after screenshots + `docs/visual-check.md` walkthrough (Rule 6).
+- **Guard (Rule 11)**: `bun run guard` (`scripts/guard-no-custom-subagents.ts`) runs inside
+  `bun test` from Phase 2 onward: static scan + runtime assertions proving the house never
+  creates child sessions, passes a `parentID` on session create, or spawns agent/helper
+  processes outside the housemate-summon path (details in P2-T20, P3-T11b, P4-T24).
 - **Perf**: existing 20-character benchmark (P8 re-run target 60 fps / <5 ms tick).
 - Existing 37 tests must keep passing at every STOP gate; any test made obsolete by a design
   change is updated in the same phase, never deleted silently.
@@ -441,7 +484,8 @@ rather than build tasks, per STATE §10–13.
 | Taglish lines in config/kuya-lines.json | P2-T16 |
 | bun run fake plays full flow (summon×2, question, queued question, answer, call, guest in/out, evict) | P2-T17 |
 | STOP with recording/screenshots | P2-T18 |
-| Standing rules 1–10 acceptance | P2-T19 |
+| Standing rules 1–11 acceptance | P2-T19 |
+| Rule 11 enforcement: guard script, fake-subagent ban, parentID-create ban | P2-T20 |
 
 ### Phase 3 (opencode feasibility spike)
 
@@ -458,6 +502,7 @@ rather than build tasks, per STATE §10–13.
 | (7) tokens/cost exposure (per message/session; in/out/reasoning/cache) + real sample | P3-T9 |
 | (8) agents list (mode, default model), providers/models, reasoning/variants; compare with config | P3-T10 |
 | (9) subagent lifecycle: child create (parentID, agent, title), busy/finish/error/abort, completion signal, where child permissions surface | P3-T11 |
+| Rule 11 evidence: native child sessions carry parentID+agent+title; native-subagent vs direct parentID-create; what --pure disables; deny/guest-type mechanisms in opencode config | P3-T11b |
 | (10) agent/model override semantics | P3-T12 |
 | (11) existing login reuse; Windows orphan behavior + exact cleanup command | P3-T13 |
 | (12) CPU/memory with 3 active sessions | P3-T14 |
@@ -477,12 +522,16 @@ rather than build tasks, per STATE §10–13.
 | Real CONFESSION: question_asked mapping, verified reply calls, queue, never auto-answer, dead sessions removed with banner | P4-T18 |
 | Real CALL/TALK: send message, "after current turn"/"interrupt now" (confirm), replies stream to chat panel | P4-T19 |
 | GUESTS: parentID children via P2 visuals, min visible time, config/guests.json (allow/deny, per-host 3, total cap, depth 2, queue spots, time limit→confession), guest questions in same queue | P4-T20 |
-| Housemate cap (config) | P4-T21 |
+| Rule 11: guests are observed-only child sessions; no house-created subagents; anomalous child session flagged (runtime assertion + audit + confession banner) | P4-T20a |
+| Denied guest types via opencode config or verified abort (never house-made subagents); config proposed in docs, applied by Kuya | P4-T20b |
+| Housemate cap (config; 6 per D6) + concurrency cap 3 turns (D6) | P4-T21 |
 | Audit log every action | P4-T22 |
 | Tests: simulated events + ≥1 real E2E on throwaway repo | P4-T23 |
+| Rule 11 tests: guests only from observed child-session events; house never passes parentID on create | P4-T24 |
+| Housemates only from explicit summon or user-started job template; presets may pre-fill but never auto-summon | P4-T25 |
 | Security rule 7 for new endpoints (incl. rate limits, rejected tests, allowlistedRoots wiring fix) | P4-T30..T32 |
-| Standing rules 1–10 acceptance | P4-T33 |
-| STOP demo (2 housemates different agent/model, permission answered, guest spawned, one evicted) | P4-T34 |
+| Standing rules 1–11 acceptance | P4-T33 |
+| STOP demo (2 housemates different agent/model, permission answered, a native subagent observed as guest, one evicted) | P4-T34 |
 
 ### Phase 5 (squad jobs)
 
@@ -497,7 +546,8 @@ rather than build tasks, per STATE §10–13.
 | exit rule (gates pass AND zero blocker/major open AND reviewers approve N consecutive, default 2) | P5-T7 |
 | caps (maxRounds 8, wall time, turns/role, token/cost budget, max concurrent, stagnation rule) | P5-T8 |
 | First squad frontend/backend/tester-1/tester-2/proofreader mapped to existing agents | P5-T9 |
-| proofreader agent proposal (new file, approval; never overwrite) | P5-T10 |
+| proofreader agent proposal (PROPOSED file in docs/housemates/, approval; never overwrite; review-only) | P5-T10 |
+| Rule 11 in jobs: roles are primary housemates; messages route cross-housemate talk; fixture budgets (500k/100k per D12) | P5-T9, P5-T22 |
 | bun:sqlite tables jobs/rounds/turns/findings/messages/artifacts/audit_log | P5-T11 |
 | Finding schema {id,severity,area,path,evidence,repro,ownerRole,status,raisedBy,round} | P5-T12 |
 | Findings from gates (parsed, routed by path) + `kuya finding add` | P5-T13 |
@@ -509,7 +559,7 @@ rather than build tasks, per STATE §10–13.
 | Job panel UI (roster badges, timeline, gates, findings, meters, Pause/Resume/Stop, transcript tail, Ready-for-Kuya screen with Approve/Request changes/Discard) | P5-T19 |
 | Scene: office desks, round banners, folder walk-over, facepalm on failed gate, thumbs-up on approval | P5-T20 |
 | Acceptance: fixture repo seeded bug+missing feature+failing tests loops to pass; broken squad stopped by enforcement/caps; server kill/restart reconciles | P5-T21 |
-| Standing rules 1–10 acceptance | P5-T22 |
+| Standing rules 1–11 acceptance | P5-T22 |
 | STOP with recording | P5-T23 |
 
 ### Phase 6 (conversation layer)
@@ -525,7 +575,8 @@ rather than build tasks, per STATE §10–13.
 | Eavesdrop mode (T hotkey, docked feed): avatar, color, type tag, text, round, time; filters housemate/job/type; search; pause+auto-scroll; thread view per pair; click-through to finding/diff/raw transcript (read-only); Kuya input box (housemate/role/all) with Announce (next turn) and Interrupt (abort+re-prompt, confirm); export markdown; replay with timeline scrubber | P6-T7 |
 | Scene: speech bubbles truncated, dotted line to recipient, folder walk-over handoffs, CAM: CHAT pan to talking pair | P6-T8 |
 | Tests: inbox order, limits, thread escalation, missing-update, redaction, restart persistence, interrupt semantics; fixture job with backend API contract consumed by frontend next turn | P6-T9 |
-| Standing rules 1–10 acceptance | P6-T10 |
+| Rule 11: message layer is the only cross-housemate channel; no agent spawns for delivery | P6-T4 |
+| Standing rules 1–11 acceptance | P6-T10 |
 | STOP | P6-T11 |
 
 ### Phase 7 (season 1)
@@ -541,8 +592,9 @@ rather than build tasks, per STATE §10–13.
 | Kuya cam: auto-cut to failing gate/dispute/escalation/completion, manual override; daily recap panel deterministic from DB | P7-T7 |
 | House rules and strikes: rules poster, Kuya warning on violation, three strikes → nominated | P7-T8 |
 | Wildcard housemate: one-job specialist enters, works, leaves (guest-like with mission) | P7-T9 |
+| Rule 11: wildcard is a manually summoned primary housemate; never a child session, never auto-summoned | P7-T9 |
 | Optional cheap items: secret mission, whisper corner, moods/friendship lines, lights out/wake-up scheduling, finale ceremony | P7-T10 |
-| Standing rules 1–10 acceptance | P7-T11 |
+| Standing rules 1–11 acceptance | P7-T11 |
 | STOP | P7-T12 |
 
 ### Phase 8 (polish and backlog — each item needs approval first)
@@ -558,25 +610,30 @@ rather than build tasks, per STATE §10–13.
 | README with screenshots/GIF | P8-T7 |
 | License file, NOTICE, assets manifest review | P8-T8 |
 | Final security review (all endpoints, token handling, redaction, audit log) | P8-T9 |
-| Standing rules 1–10 acceptance | P8-T10 |
+| P1 visual leftovers accepted into backlog (D11): editor-fixable items + re-proposed art/structure items | P8-T10b |
+| Standing rules 1–11 acceptance | P8-T10 |
 | STOP | P8-T11 |
 
 ## 13. NEEDS HUMAN DECISION (consolidated list; details + recommendation per phase doc)
 
-| # | Decision | Where | Recommendation |
-| --- | --- | --- | --- |
-| D1 | P2 entrance: approve adding a real exterior front door + walkway tiles to the map (structure-lock baseline regeneration), or keep the marked spawn/exit overlay on the south wall | P2 §Entrance | Recommend approve the real door (front door on the south wall between kitchen and gameroom); a "house" without a front door undermines the summon/evict metaphor permanently |
-| D2 | P2 art: bag, suitcase, folder, lanyard, ON AIR sign sprites do not exist | P2 §Art | Recommend authoring 5 original sprites in Oddboro style (+ MANIFEST rows); no PBB trade dress |
-| D3 | P2 confession queue spots: the confession room is 8×10 with a single chair; where do waiting housemates stand | P2 §Confession | Recommend a marked queue line along the confession room's east wall inside the room |
-| D4 | P3 scope guard: allow the spike to run 3 concurrent opencode sessions + one subagent session against the throwaway repo (real API spend) | P3 §Safety | Recommend yes with a token budget cap; the whole plan depends on real evidence |
-| D5 | P4: pin managed opencode sessions to `--pure` (no user plugins) or run with plugins | P4 §Supervisor | Recommend `--pure` for managed housemates (determinism, isolation), keep user TUI untouched |
-| D6 | P4 default housemate cap (concurrent real opencode housemates) | P4 §Caps | Recommend 4 (matches the 8+4 desk capacity with headroom and cost sanity) |
-| D7 | P5 first squad mapping: frontend→`frontend-ui-engineer`, backend→`backend-systems-engineer`, tester-1→`qa-engineer`, tester-2→`code-reviewer` (read-only) vs a second tester model, proofreader→new `proofreader.md` agent file I must approve | P5 §Squad | Recommend the listed mapping + approve new `proofreader.md`; decide tester-2's model at STOP |
-| D8 | P5 gate commands for this repo: exact typecheck/lint/test/build commands and timeouts | P5 §Gates | Recommend `bun run structure-lock`, `bun run validate-furniture`, `bun test`, `bunx tsc --noEmit` (no lint/build exist today); approve additions |
-| D9 | P5 merge target default branch for Approve | P5 §Panel | Recommend a `kuya/ready` staging branch, never `master`/`main` |
-| D10 | P7 nomination cadence: after every job vs weekly | P7 §Nomination | Recommend after every job (more feedback), weekly as fallback |
-| D11 | Kitchen dining-chair art debt and gym mirror offset (from P1) — accept as-is or commission art/structure change | STATE §13 | Recommend accept as-is for now; list in P8 candidates |
-| D12 | Cost ceiling per squad job (token budget default) | P5 §Caps | Recommend 1.5M input + 300k output tokens per job with a hard stop and confession escalation |
+All of D1–D12 were answered by KUYA on 2026-11-16; the chosen options below are binding
+constants for the plan. D13 is new and still open.
+
+| # | Decision (as answered) | Where |
+| --- | --- | --- |
+| D1 **RESOLVED** | Real exterior front door APPROVED, tiny change only: exactly one door opening in the south exterior wall; the agent must show the structure diff is only those tiles before `docs/structure-baseline.json` is regenerated; arrival through a bare wall is not accepted. If the diff shows anything else, STOP and re-propose. | P2 §Entrance |
+| D2 **RESOLVED** | Author the 5 sprites (bag, suitcase, folder, lanyard, ON AIR) + crown + rules poster, original and in the existing Oddboro style. The sprite sheet must be shown to KUYA and APPROVED before any of it is used in the scene (art quality is the known pain point). | P2 §Art, P7 §Art |
+| D3 **RESOLVED** | Confession queue inside the room along the east wall — keeps the hallway clear. | P2 §Confession |
+| D4 **RESOLVED** | Spike spend approved: harmless prompts, ≤6 turns, 3 sessions — using the CHEAPEST connected model for the bulk probes. | P3 §Safety |
+| D5 **RESOLVED (with condition)** | `--pure` accepted for the spike; the spike must report what the flag disables and whether the user's agents rely on anything it turns off, before P4 pins it for managed servers. | P3/P4 |
+| D6 **RESOLVED** | Housemate cap = **6** (the example squad is 5); guests capped separately (unchanged); **no more than 3 turns running at once** (concurrency cap). | P4 §Caps, P5 §Caps |
+| D7 **RESOLVED (with condition)** | Squad mapping approved with the user's own agent files as the roles. The proofreader is drafted by the agent as a **PROPOSED file with no edit/write permissions**, written to `docs/housemates/proofreader-PROPOSED.md` for review — never installed. Tester-2 must use a model from a **different provider** than tester-1. | P5 §Squad |
+| D8 **RESOLVED** | Default gates approved: `bunx tsc --noEmit`, `bun run structure-lock`, `bun run validate-furniture`, `bun test`. | P5 §Gates |
+| D9 **RESOLVED** | Approve merge target is `kuya/ready`; **never `main`/`master`.** | P5 §Panel |
+| D10 **RESOLVED** | Nominations happen **per job**. | P7 §Nomination |
+| D11 **RESOLVED** | The five P1 visual leftovers are accepted for now and moved into the P8 polish backlog; some (dining chairs, bin/cup) are fixable with the E layout editor. | P8 backlog |
+| D12 **RESOLVED (with condition)** | Default per-job budget 1.5M in / 300k out, BUT the first fixture job runs lower: **500k in / 100k out** so the first run cannot surprise. | P5 §Caps |
+| D13 **OPEN** | Denied guest types: once the spike (P3-T11b) shows what opencode natively supports (permission/task config vs none), KUYA chooses between (a) an opencode config change proposed in docs and applied by KUYA himself, or (b) house-side abort of the child session via the verified abort call (banner + Confession Room notice). Rule 11 forbids a house-made replacement subagent in both cases. | P4 §Guests |
 
 ## 14. "Later" note — other harnesses
 
@@ -586,7 +643,9 @@ squad membership for them. When opencode proves the control model, the `harness`
 `adapters/` pattern are the extension points; a "later" doc should be written before any
 codex/pi/omp/hermes control work. Nothing in this plan should block them structurally: schemas
 are keyed by harness, endpoints accept `harness` but validate `"opencode"` only for control
-routes until explicitly widened.
+routes until explicitly widened. Rule 11 applies identically to any future harness: subagents
+are always the harness's own mechanism, observed as child sessions — never created or faked by
+the house.
 
 ## 15. Where phases conflict or overlap — resolutions
 
@@ -609,3 +668,8 @@ routes until explicitly widened.
   to jobs. Both are append-only; the file is the source of truth for non-job actions.
 - **Budget/groceries (P5 caps vs P7 fridge)**: P5 enforces budgets mechanically; P7 only
   visualizes them (fridge) and handles restock interaction — no second accounting.
+- **Subagent ownership (any phase vs Rule 11)**: the old wording that read as house-side
+  spawning of guests is superseded everywhere: guests are observed-only child sessions created
+  by opencode housemates themselves (task tool + subagent-mode agents in the user's config);
+  the house never creates child sessions, never passes a parentID on create, never spawns
+  helper processes/LLM calls; type denial is opencode config or a verified abort (D13).

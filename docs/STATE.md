@@ -447,7 +447,7 @@ Legend: **DONE** = working today; **PARTIAL** = exists but incomplete vs the vis
 | PBB summon/evict choreography (walk in/out, bag/suitcase) | TODO | F-HOUSE-01, F-VIS-02 |
 | Confession Room as real Q&A surface (diary panel, ON AIR, queue) | TODO | F-HOUSE-02/03 |
 | Kuya "call to confession" talk flow | TODO | F-HOUSE-03 |
-| Guests (subagents) with lanyard/host desk/folder handoff | PARTIAL | tether + desks exist; no guest visuals/flow |
+| Guests (subagents) with lanyard/host desk/folder handoff | PARTIAL | tether + desks exist; no guest visuals/flow; Rule 11 pins guests as observed-only child sessions (P2-T13, P4-T20) |
 | opencode background server control (summon = create session) | TODO | Phase 3 spike first |
 | Agent/model picker with live agent+model lists | TODO | UNVERIFIED API surface |
 | Live token usage / cost per housemate | TODO | `opencode stats` exists; server API UNVERIFIED |

@@ -19,9 +19,11 @@ acceptance demo.
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P6: Rule 7 (Kuya input box and interrupt are control actions →
+Rules 1–11 apply. Specific to P6: Rule 7 (Kuya input box and interrupt are control actions →
 Bearer + rate limit + audit), Rule 9 (persistence survives restart — tested), Rule 3 (folder
-walk-over reuses the P2 folder prop; no new art needed).
+walk-over reuses the P2 folder prop; no new art needed), Rule 11 (the message layer is the ONLY
+cross-housemate channel — delivery, summaries and routing are deterministic code; no helper
+agents are spawned to deliver or summarize messages).
 
 ## Ordered task list
 
@@ -30,14 +32,14 @@ walk-over reuses the P2 folder prop; no new art needed).
 | P6-T1 | `messages` schema (master-plan §8 DDL) implemented with migration; record `{id, jobId, round, turnId, from, to, type, text≤400, details_json?, replyTo?, ts, deliveredInTurn}`; `from` ∈ `housemate:<key>` \| `kuya` \| `house`; `to` ∈ `housemate:<key>` \| `role:<role>` \| `all` \| `kuya`; `type` ∈ `update|question|answer|finding|handoff|gate|system|kuya`; persisted in `data/bahay.db` (WAL); survives restarts (tested) | `src/messages.ts`, `src/db.ts` |
 | P6-T2 | Turn contract: every housemate turn MUST end with `kuya update "<summary>" [--to <role|housemate|all|kuya>] [--needs <…>] [--blocked <…>]`; engine detects missing update at turn end: posts a `system` message "walang update si <name>" and re-prompts that role **once**; a second miss becomes a `minor` finding (`raisedBy: house`) | `src/jobs/engine.ts`, `src/jobs/prompts.ts`, `scripts/kuya-cli.ts` |
 | P6-T3 | Update quality rule (enforced as guidance, not a hard block): `update` summaries MUST mention interfaces/contracts created or changed (prompt section tells the role; a summary that names no artifact and no interface is flagged by the engine as a `nit` finding "vague update") and reference artifacts (file paths, artifact ids) instead of pasting content (text >400 chars is rejected by the CLI with guidance to attach via `details` path reference) | `scripts/kuya-cli.ts`, `src/jobs/prompts.ts` |
-| P6-T4 | Inbox: messages addressed to a role (or to the housemate) are included in its next turn prompt — unresolved (replied-to=false) first, then latest N (default 5, `config/house.json.inboxN`); delivery never interrupts a running turn (delivery happens at turn assembly); each delivered message sets `delivered_in_turn` | `src/jobs/prompts.ts`, `src/messages.ts` |
-| P6-T5 | Stand-up at the start and end of every round: living-room meeting animation — participating housemates walk to `living_sofa_*` POIs (or stand), Kuya banner "Round N start (stand-up)"; end-of-round stand-up summarizes gate results as `gate` type messages from `house` | `src/jobs/engine.ts`, `public/main.ts`, `public/flow.ts` |
+| P6-T4 | Inbox: messages addressed to a role (or to the housemate) are included in its next turn prompt — unresolved (replied-to=false) first, then latest N (default 5, `config/house.json.inboxN`); delivery never interrupts a running turn (delivery happens at turn assembly); each delivered message sets `delivered_in_turn`. Rule 11: inbox delivery is deterministic code inside the prompt assembler — no agent session, no summarizer LLM, no helper process is ever spawned to deliver, filter or summarize the inbox. | `src/jobs/prompts.ts`, `src/messages.ts` |
+| P6-T5 | Stand-up at the start and end of every round: living-room meeting animation — participating housemates walk to `living_sofa_*` POIs (or stand), Kuya banner "Round N start (stand-up)"; end-of-round stand-up summarizes gate results as `gate` type messages from `house` (the summary is string formatting over gate records — deterministic code, Rule 11) | `src/jobs/engine.ts`, `public/main.ts`, `public/flow.ts` |
 | P6-T6 | Limits and safety: max 3 messages per turn per housemate (CLI rejects the 4th with guidance); text ≤400 chars (hard); thread depth 4 (reply chains) then escalate to Kuya (a `question` asking Kuya to arbitrate, thread locked); per-round chatter budget (default 20 messages/round, `config/house.json.chatterBudget` — excess messages dropped with a `system` note); no tool-output dumps (text matching `^\s*(bun|npm|tsc|git)\b.*\n(\s|.{200,})` heuristics or >800 chars of console-like output is refused by the CLI); **secret redaction** before store/display: keys/tokens/passwords/env values/private keys (patterns: `sk-…`, `Bearer …`, `AKIA…`, `-----BEGIN … PRIVATE KEY-----`, `password=…`, `token=…`, `apiKey` JSON fields, long base64/hex ≥32) replaced with `[REDACTED:<type>]`; redaction applied to every message path (CLI, API, engine-generated) with tests using sample secrets | `src/messages.ts`, `scripts/kuya-cli.ts`, `config/house.json` |
 | P6-T7 | Eavesdrop mode (T hotkey, docked feed `#eavesdrop`): rows with avatar (chibi head frame), housemate color, type tag chip, text, round, time; filters by housemate, job, type; search box; pause + auto-scroll toggle; thread view per pair (click a row to expand its `replyTo` chain); click-through to the finding (findings panel), diff (turn diff stat view), or raw turn transcript (read-only, from turn records); Kuya input box (target: housemate / role / all) with two actions: **Announce** (queued for next turn — becomes a `kuya` type message delivered in inbox) and **Interrupt** (abort the target's running turn and re-prompt, with confirm); export to markdown (`GET /api/eavesdrop/export`); replay with a timeline scrubber (messages joined to round/turn times; scrubbing shows the state at that ts) | `public/eavesdrop.ts`, `public/index.html`, `src/server.ts` |
 | P6-T8 | Scene: speech bubbles with truncated text (≤2 lines, 32 chars), dotted line to the recipient while delivering, folder walk-over for handoffs (P2 prop), and a `CAM: CHAT` feed mode that pans the camera to the pair currently talking (auto-cut with manual override, like P2 confession) | `public/main.ts`, `public/flow.ts`, `public/renderer.ts` |
 | P6-T9 | Tests (named): `test/phase6-inbox.test.ts` (order: unresolved first then latest N; no interrupt of running turn; deliveredInTurn stamping), `test/phase6-limits.test.ts` (3/turn, 400 chars, chatter budget, dump refusal), `test/phase6-thread.test.ts` (depth 4 → escalation), `test/phase6-missing-update.test.ts` (system message + one re-prompt; second miss → finding), `test/phase6-redaction.test.ts` (sample secrets list redacted in store and display paths), `test/phase6-restart.test.ts` (messages survive restart), `test/phase6-interrupt.test.ts` (interrupt aborts turn, re-prompt recorded, audited) | test dir |
 | P6-T9b | Fixture demo: a fixture job where the backend posts an API contract (a `handoff` message with artifact path) and the frontend's next turn prompt contains it and references it in its update — asserted in `test/phase6-inbox.test.ts` + shown in the demo recording | `test/phase6-inbox.test.ts` |
-| P6-T10 | Standing rules 1–10 checklist | report |
+| P6-T10 | Standing rules 1–11 checklist (incl. Rule 11: message layer only — no helper agents for delivery/summary) | report |
 | P6-T11 | STOP: demo recording (contract handoff + eavesdrop + interrupt) + screenshots | screenshots |
 
 ## Data formats
@@ -137,7 +139,9 @@ the same DB file in a second store instance. Redaction test includes the sample 
 - Limits enforced (3/turn, 400 chars, depth 4, chatter budget, dump refusal).
 - Secrets redacted before store AND display (sample corpus test passes).
 - Messages survive restart; replay scrubber reproduces the demo timeline.
-- Standing rules 1–10 signed.
+- Rule 11 held: delivery, stand-up summaries and the eavesdrop render are deterministic code;
+  no agent session is spawned for any message purpose (guard stays green).
+- Standing rules 1–11 signed.
 
 ## Risks with fallbacks
 

@@ -18,10 +18,11 @@ running a squad.
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P5: Rule 8 (all jobs in one integration worktree `kuya/job-<id>`;
+Rules 1–11 apply. Specific to P5: Rule 8 (all jobs in one integration worktree `kuya/job-<id>`;
 never auto-delete; never auto-merge — Approve only, into a user-chosen target), Rule 7 (job
 control endpoints secured; gates run only by the house), Rule 4 (token/cost budgets use verified
-usage data from P3/P4).
+usage data from P3/P4), Rule 11 (no custom subagents — squad roles are primary housemates; the
+proofreader is a PROPOSED file, never installed; cross-housemate talk rides the message layer).
 
 ## Ordered task list
 
@@ -34,9 +35,9 @@ usage data from P3/P4).
 | P5-T5 | `gates`: array of `{name, cmd, args[], cwd?, timeoutMs}` the HOUSE runs (never agents): `typecheck`, `lint`, `tests`, `build`, optional `e2e` / `screenshot`; each with a timeout (default 120 000 ms); gate results recorded `{gate, ok, durationMs, outputTail(50)}` | template + `src/jobs/gates.ts` |
 | P5-T6 | `rounds`: ordered steps; default sequence `build (parallel write-scoped roles on disjoint paths) → gateA (typecheck+lint) → test (tester roles) → proofread → gateB (tests+build) → verdicts`; configurable order in the template | engine |
 | P5-T7 | Exit rule: all gates pass AND zero open blocker/major findings AND every reviewer approves N consecutive rounds (`approvalsRequired` default 2) ⇒ status `awaiting_kuya` (Ready for Kuya panel) | engine |
-| P5-T8 | Caps: `maxRounds` (default 8), `wallTimeMs`, `turnsPerRole`, `tokenBudget` / `costBudget` (from verified usage; skipped when `{"available":false}` with a logged warning), `maxConcurrentHousemates`, stagnation rule: same finding signature 3× or 2 consecutive rounds with no diff ⇒ `paused` + escalation question to the Confession Room ("paano tayo makakausad?") | engine |
-| P5-T9 | First squad: `frontend` (agent `frontend-ui-engineer`), `backend` (agent `backend-systems-engineer`), `tester-1` (agent `qa-engineer`), `tester-2` (agent `code-reviewer`, read-only, different model), `proofreader` (NEW agent, see P5-T10) — all opencode, mapped to existing agents (D7); roles own disjoint path sets in the template | `config/jobs/first-squad.json` |
-| P5-T10 | Proofreader agent: review-only (copy, comments, docs, UI text; cannot edit code) — propose `~/.config/opencode/agent/proofreader.md` **as a new file for approval** (D7); never overwrite existing agent files; the proposal text ships in the phase report; the job template references it only after approval (fallback: `code-reviewer` doubles as proofreader until approved) | report + template |
+| P5-T8 | Caps: `maxRounds` (default 8), `wallTimeMs`, `turnsPerRole`, `tokenBudget` / `costBudget` (from verified usage; skipped when `{"available":false}` with a logged warning; **default 1.5M in / 300k out, but the FIRST fixture job runs 500k in / 100k out per D12** — set in the template, not hard-coded), `maxConcurrentHousemates` (≤ housemate cap 6), **`maxConcurrentTurns: 3` per resolved D6** (the engine never starts a 4th turn while 3 run — it waits for the next step boundary), stagnation rule: same finding signature 3× or 2 consecutive rounds with no diff ⇒ `paused` + escalation question to the Confession Room ("paano tayo makakausad?") | engine |
+| P5-T9 | First squad: `frontend` (agent `frontend-ui-engineer`), `backend` (agent `backend-systems-engineer`), `tester-1` (agent `qa-engineer`, model from provider A), `tester-2` (agent `code-reviewer`, read-only, model from a **DIFFERENT provider** than tester-1 per D7), `proofreader` (PROPOSED agent, see P5-T10) — all opencode primary housemates, mapped to the user's existing agent files (D7); roles own disjoint path sets in the template. Rule 11: roles are separate primary housemates summoned as a job team (a job template KUYA started); they are never subagents, and they talk to each other only through the house message layer (P6) and findings. | `config/jobs/first-squad.json` |
+| P5-T10 | Proofreader agent (D7 RESOLVED with condition): review-only (copy, comments, docs, UI text; **no edit/write permissions**). Draft it as a PROPOSED file at `docs/housemates/proofreader-PROPOSED.md` — a full agent definition ready to paste, shown to KUYA for review; **never write into `~/.config/opencode/agents/`** (Rule 11 + D7); the job template references the real agent name ONLY after KUYA applies the file himself; until approved, `code-reviewer` doubles as proofreader and the template notes the substitution. | `docs/housemates/proofreader-PROPOSED.md`, report |
 | P5-T11 | bun:sqlite `data/bahay.db` with tables `jobs, rounds, turns, findings, messages(minimal), artifacts, audit_log` (DDL in master-plan §8; migrations are versioned `PRAGMA user_version` steps in `src/db.ts`); WAL mode; all writes through one module | `src/db.ts` |
 | P5-T12 | Finding record: `{id, severity: blocker|major|minor|nit, area?, path?, evidence, repro?, ownerRole, status: open|fixed|disputed|wontfix, raisedBy, round, signature}` (schema in master-plan §8) | `src/jobs/findings.ts` |
 | P5-T13 | Findings from two sources: (a) house-run gates — failing output parsed (TS/tsc/test-runner line patterns; parser keeps raw tail as `evidence`) and routed by file path to the owning role; (b) agents via `kuya finding add` CLI/API | `src/jobs/findings.ts`, `src/jobs/gates.ts` |
@@ -48,7 +49,7 @@ usage data from P3/P4).
 | P5-T19 | Job panel UI `public/jobpanel.ts` + `#job-panel`: roster (role + model badges + live state), round timeline (steps × rounds), gate results chips, findings by severity, budget/cap meters, buttons Pause / Resume / Stop, per-housemate read-only transcript tail (last 30 lines from `usage`/turn records — read-only, never the agent's private stream beyond verified data), final "Ready for Kuya" screen: diff stat, gate results, reviewer verdicts, buttons **Approve** (merge into a target branch I choose — default suggestion `kuya/ready`, never `main`; D9), **Request changes** (note becomes a finding addressed to the named role), **Discard** | `public/jobpanel.ts`, `public/index.html`, `src/server.ts` |
 | P5-T20 | Scene: working housemates sit at office desks (existing), Kuya banner per round ("Round 3: testing"), folder walk-over when a finding is routed (P2 folder prop reused), facepalm emote on a failed gate (the role's emote), thumbs-up on approval | `public/main.ts`, `public/flow.ts` |
 | P5-T21 | Acceptance: fixture repo (`%TEMP%/bahay-fixture-<ts>/`, seeded by `scripts/make-fixture.ts` shared with P3): a seeded bug, a missing feature and failing tests; a scripted squad (fake housemate client for CI, real housemates for the demo) loops until gates pass and reviewers approve within the caps; a deliberately broken squad config (an agent that edits tests — enforced by the hash lock — or a looping agent — enforced by stagnation/caps) is stopped by enforcement or caps; killing the server mid-job and restarting reconciles cleanly (jobs/rounds/turns persisted; supervisor adopts live sessions) | `scripts/make-fixture.ts`, `test/phase5-*.test.ts` |
-| P5-T22 | Standing rules 1–10 checklist in the report | report |
+| P5-T22 | Standing rules 1–11 checklist in the report | report |
 | P5-T23 | STOP with a recording of a full job + the broken-squad stop | screenshots |
 
 ## Data formats
@@ -69,39 +70,44 @@ usage data from P3/P4).
     { "name": "tora", "agent": "qa-engineer", "model": "chatgpt-free/gpt-5.5",
       "role": "tester", "ownedPaths": ["test/**"], "mayEditTests": true,
       "mayRunShell": false, "persona": "…" },
-    { "name": "reva", "agent": "code-reviewer", "model": "omniroute/kr/claude-sonnet-4.5",
+    { "name": "reva", "agent": "code-reviewer",
+      "model": "omniroute-local/antigravity/claude-sonnet-4-6",
       "role": "tester", "ownedPaths": [], "mayEditTests": false,
-      "mayRunShell": false, "persona": "read-only reviewer…" },
+      "mayRunShell": false, "persona": "read-only reviewer; provider differs from tester-1 (D7)" },
     { "name": "pok", "agent": "proofreader", "model": "agent default",
       "role": "proofreader", "ownedPaths": [], "mayEditTests": false,
-      "mayRunShell": false, "persona": "copy/docs/UI text only; cannot edit code" }
+      "mayRunShell": false,
+      "persona": "copy/docs/UI text only; cannot edit code (PROPOSED agent pending D7 approval)" }
   ],
   "briefMd": "<goal markdown>",
   "rubricMd": "<checklist markdown>",
   "gates": [
     { "name": "typecheck", "cmd": "bunx", "args": ["tsc", "--noEmit"], "timeoutMs": 120000 },
-    { "name": "lint", "cmd": "bun", "args": ["run", "validate-furniture"], "timeoutMs": 60000 },
     { "name": "structure", "cmd": "bun", "args": ["run", "structure-lock"], "timeoutMs": 60000 },
-    { "name": "tests", "cmd": "bun", "args": ["test"], "timeoutMs": 300000 },
-    { "name": "build", "cmd": "bun", "args": ["run", "generate-map", "--check"], "timeoutMs": 60000 }
+    { "name": "lint", "cmd": "bun", "args": ["run", "validate-furniture"], "timeoutMs": 60000 },
+    { "name": "tests", "cmd": "bun", "args": ["test"], "timeoutMs": 300000 }
   ],
   "roundSteps": ["build", "gateA", "test", "proofread", "gateB", "verdicts"],
   "approvalsRequired": 2,
   "caps": { "maxRounds": 8, "wallTimeMs": 3600000, "turnsPerRole": 24,
-            "tokenBudget": 1500000, "costBudget": null, "maxConcurrentHousemates": 4 },
+            "tokenBudget": 1500000, "outputTokenBudget": 300000, "costBudget": null,
+            "maxConcurrentHousemates": 6, "maxConcurrentTurns": 3 },
+  "firstRunBudget": { "tokenBudget": 500000, "outputTokenBudget": 100000 },
   "routing": { "tags": { "public/": "frontend", "assets/": "frontend",
                          "src/": "backend", "scripts/": "backend", "test/": "tester" } }
 }
 ```
 
-(Gate commands are placeholders pending decision D8; final list confirmed at P5 STOP.)
+(Gates per D8 RESOLVED: typecheck, structure-lock, validate-furniture, `bun test` — the
+`build`/`generate-map --check` gate was dropped until that mode exists; adding it back is a
+P5 STOP note. `firstRunBudget` (D12) applies to the first fixture job only.)
 
 **Engine loop pseudocode:**
 
 ```
 loop rounds:
   if paused or capsExceeded: escalate(confession); break
-  step build:    for role in writeScopedRoles: turn(role, prompt=assemble(role))  // parallel, disjoint paths
+  step build:    for role in writeScopedRoles: turn(role, prompt=assemble(role))  // parallel, disjoint paths, ≤3 concurrent turns (D6)
   step gateA:    gates(typecheck, lint); failures → findings(routed)
   step test:     turn(tester1), turn(tester2)  // may add tests
   step proofread: turn(proofreader)            // findings only, no edits
@@ -190,7 +196,8 @@ waiting with a `question` emote; brownout-style visuals come in P7.
 
 Unit:
 - `test/phase5-template.test.ts` — template validation (team constraints, disjoint paths, gate
-  shape, caps ranges); invalid file ⇒ clear error list.
+  shape, caps ranges incl. `maxConcurrentTurns: 3` and `firstRunBudget` presence); invalid file
+  ⇒ clear error list.
 - `test/phase5-findings.test.ts` — gate output parser routes by path; router picks ownerRole;
   unroutable → kuya; signature dedupe (same signature 3× ⇒ stagnation).
 - `test/phase5-enforcement.test.ts` — out-of-scope edit → patch saved to `.kuya/rejected/` +
@@ -199,7 +206,11 @@ Unit:
 - `test/phase5-prompts.test.ts` — prompt assembly = brief + rubric + persona + role findings +
   gate results + inbox only (assert exact sections, no extra content).
 - `test/phase5-engine.test.ts` — round machine ordering; exit rule (N consecutive approvals);
-  caps and stagnation pauses; pause/resume/stop; reconcile after simulated restart (reopen DB).
+  caps, stagnation and the 3-concurrent-turn limit (a 4th queued turn waits); pause/resume/stop;
+  reconcile after simulated restart (reopen DB).
+- `test/phase5-no-hidden-agents.test.ts` — Rule 11: the engine's turn starts go through the
+  housemate path only (no direct session create with parentID, no helper processes); `bun run
+  guard` passes on `src/jobs/`.
 
 Integration:
 - `test/phase5-e2e-fixture.test.ts` (scripted fake housemates): seeded fixture repo (bug +
@@ -229,13 +240,18 @@ Visual:
 
 ## Acceptance criteria
 
-- Engine contains no LLM calls (grep-verifiable: no opencode client import in `engine.ts`).
-- All squad jobs run in `kuya/job-<id>` worktree; no auto-delete; no auto-merge.
+- Engine contains no LLM calls (grep-verifiable: no opencode client import in `engine.ts`) and
+  no hidden helper agents (Rule 11).
+- All squad jobs run in `kuya/job-<id>` worktree; no auto-delete; no auto-merge; Approve merges
+  only into the chosen target branch (`kuya/ready` default, never `main` — D9).
 - Enforcement blocks out-of-scope edits and test tampering with evidence in `.kuya/rejected/`.
-- Caps and stagnation stop runaway jobs; server restart reconciles.
+- Caps stop runaway jobs (rounds, wall time, turns, budget — first fixture job 500k/100k per
+  D12; ≤3 concurrent turns per D6); server restart reconciles.
 - `kuya` CLI works from a worktree with a scoped token; roster/message/finding/update/ask/
   handoff/status all exercised in tests.
-- Standing rules 1–10 signed; decisions D7–D9/D12 confirmed in the report.
+- The proofreader exists only as `docs/housemates/proofreader-PROPOSED.md` (no edit/write
+  permissions) until KUYA applies it (D7).
+- Standing rules 1–11 signed; decisions D7–D9/D12 confirmed in the report.
 
 ## Risks with fallbacks
 
@@ -243,8 +259,11 @@ Visual:
 - R5 (out-of-scope edits) → enforcement with patch retention (no silent loss).
 - R6 (noisy findings/disputes) → severity router + disputes to Kuya; N-consecutive-approval exit.
 - R9 (flaky real E2E) → scripted fake housemates for CI; the real run is opt-in.
-- Missing proofreader agent (D7 unapproved) → `code-reviewer` covers proofreading temporarily;
-  template notes the substitution.
+- Missing proofreader agent (D7 not yet applied by KUYA) → `code-reviewer` covers proofreading
+  temporarily; template notes the substitution; the PROPOSED file ships in the P5 report.
+- Rule 11 in squads: roles are always primary housemates; if an agent's own opencode config
+  makes it spawn native subagents during a job, those appear as guests (observed, read-only,
+  usage rolled into the host) — the house neither encourages nor creates them.
 - Gate flakiness (e.g. `bun test` machine-dependent real-opencode test) → gates exclude `// REAL`
   tests via a documented marker filter; the P1-GAP-1 validator fixture tests land here if
   approved (they are fast and deterministic).

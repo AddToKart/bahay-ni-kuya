@@ -17,9 +17,11 @@ without ever giving an agent boss power: every meta decision stays with KUYA.
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P7: Rule 5 (scoring is config, transparent, never gamed by agents
+Rules 1–11 apply. Specific to P7: Rule 5 (scoring is config, transparent, never gamed by agents
 — agents cannot write scores; only the engine scores), Rule 7 (nomination actions are control
-endpoints with security), Rule 3 (crown = an original sprite/overlay, no PBB trade dress).
+endpoints with security), Rule 3 (crown = an original sprite/overlay with the D2 approval gate,
+no PBB trade dress), Rule 11 (wildcard is a manually summoned primary housemate — never a child
+session, never auto-summoned; scoring, nomination stats and recaps are deterministic code).
 
 ## Ordered task list
 
@@ -33,9 +35,9 @@ endpoints with security), Rule 3 (crown = an original sprite/overlay, no PBB tra
 | P7-T6 | Brownout: when opencode reports retry or rate-limit state (P3-verified event/shape; detection in `src/opencode-client.ts`), the house lights dim (renderer global tint multiplier 0.6 with warm flicker), housemates stop and wait with `sweat` emote, Kuya banner "brownout — naghihintay", auto-resume on recovery (state restored, job continues) | `src/season.ts`, `public/renderer.ts`, `public/main.ts` |
 | P7-T7 | Kuya cam: auto-cut camera to what matters — failing gate (the owning role's desk), dispute (confession room), escalation (confession), completion (winning desk) — with a manual override that wins for 10 s; daily recap panel `#daily-recap` ("Day N: X jobs, Y findings, Z fixed, pass rate P%") built deterministically from the DB (jobs/rounds/findings/aggregates; no LLM) | `public/season.ts`, `src/season.ts` |
 | P7-T8 | House rules and strikes: the P5 enforcement rules rendered as a rules poster sprite on the office wall (overlay); violations (out-of-scope edit, test tamper attempt, missed update ×2, dump attempt) produce a Kuya warning line and a strike on the housemate; three strikes ⇒ nominated (appears on the next nomination night regardless of score) | `public/season.ts`, `src/season.ts` |
-| P7-T9 | Wildcard housemate: summon a one-job specialist (e.g. security reviewer with a narrow scope) via the casting dialog with `wildcard: true` + a mission note; enters through the P2 entrance (guest-like), does exactly its review/task, hands the folder, leaves; not persisted as a regular housemate (no nomination exposure unless KUYA keeps them — an explicit "keep" action converts them) | `public/season.ts`, `src/housemates.ts` |
-| P7-T10 | Optional cheap items (each needs explicit approval at P7 STOP; implement only if cheap): secret mission (red-team tester with hidden brief), whisper corner (side-thread messages visible only to the pair until job end), moods/friendship-rivalry lines (deterministic from score deltas), lights-out and wake-up call for scheduled jobs, finale ceremony on final approval | `config/house.json` flags |
-| P7-T11 | Standing rules 1–10 checklist | report |
+| P7-T9 | Wildcard housemate (Rule 11 compliant): summon a one-job specialist (e.g. security reviewer with a narrow scope) via the casting dialog with `wildcard: true` + a mission note — **an ordinary primary housemate that KUYA summons manually**; it enters through the front door (P2 visuals, guest-like), does exactly its review/task, hands the folder, leaves (KUYA — or its job's Stop action — evicts it). It is NEVER a child session, NEVER auto-summoned by the house or by another housemate; not persisted as a regular housemate (no nomination exposure unless KUYA keeps them — an explicit "keep" action converts them). | `public/season.ts`, `src/housemates.ts` |
+| P7-T10 | Optional cheap items (each needs explicit approval at P7 STOP; implement only if cheap; all must respect Rule 11 — a "secret mission" is a brief on a normally summoned primary housemate, never a hidden child session): secret mission (red-team tester with hidden brief), whisper corner (side-thread messages visible only to the pair until job end), moods/friendship-rivalry lines (deterministic from score deltas), lights-out and wake-up call for scheduled jobs, finale ceremony on final approval | `config/house.json` flags |
+| P7-T11 | Standing rules 1–11 checklist | report |
 | P7-T12 | STOP: nomination night + fridge + brownout + kuya-cam demo recording | screenshots |
 
 ## Data formats
@@ -133,6 +135,8 @@ sprites (D2-style decision recorded in the phase report). No PBB trade dress any
   resume.
 - `test/phase7-recap.test.ts` — recap numbers match DB aggregates for a scripted day.
 - `test/phase7-strikes.test.ts` — violations increment strikes; 3 strikes ⇒ nominated.
+- `test/phase7-wildcard-rule11.test.ts` — wildcard summon goes through the primary summon path
+  only; no child session, no auto-summon trigger anywhere; eviction is manual/job-driven.
 
 ## Verification steps with evidence to capture
 
@@ -151,8 +155,10 @@ sprites (D2-style decision recorded in the phase report). No PBB trade dress any
   is unavailable.
 - Brownout engages on rate-limit/retry reports and resumes cleanly.
 - Rules poster lists the real enforcement rules; three strikes ⇒ nominated.
+- Wildcard is a manually summoned primary housemate (Rule 11): tests assert no child session
+  and no auto-summon path exists for it.
 - Optional features exist only as config flags (off) unless individually approved.
-- Standing rules 1–10 signed.
+- Standing rules 1–11 signed.
 
 ## Risks with fallbacks
 

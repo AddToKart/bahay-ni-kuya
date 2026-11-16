@@ -19,10 +19,11 @@ visuals or contracts. This is the phase that turns the display into the stage.
 
 ## Standing rules (verbatim from master-plan §1)
 
-Rules 1–10 apply. Specific to P2: Rule 2 (structure lock — the entrance solution must not change
-the map structure unless D1 is approved; the "door opens" overlay is not a structure change),
-Rule 3 (missing art ⇒ STOP and list), Rule 6 (screenshots + visual-check), Rule 7 (security for
-the new control endpoints), Rule 9 (no required build step).
+Rules 1–11 apply. Specific to P2: Rule 2 (structure lock — the door change is APPROVED by D1
+but must be exactly the approved tiles and shown as a diff before the baseline is regenerated),
+Rule 3 (missing art ⇒ STOP and list; D2 approves authoring with a sprite-sheet approval gate),
+Rule 6 (screenshots + visual-check), Rule 7 (security for the new control endpoints), Rule 9
+(no required build step), Rule 11 (no custom subagents — guests are visuals only in this phase).
 
 ## Ordered task list
 
@@ -37,8 +38,8 @@ the new control endpoints), Rule 9 (no required build step).
 | P2-T5 | Add `chat_message {role: "housemate"\|"kuya", text}` (≤400 chars, clipped); diary panel appends; nothing else changes state | `src/types.ts` |
 | P2-T6 | Add `guest_arrived {guestKey, hostKey}` and `guest_left {guestKey}`; guest registry entry with tether to host | `src/types.ts`, `src/store.ts` |
 | P2-T7 | Add states `arriving`, `evicting`, `queued_for_confession`, `in_confession`, `called` to `SessionState`; `workingUntil` semantics: `arriving`/`evicting`/`called`/`in_confession` persist until their paired end event (no auto-decay); `queued_for_confession` persists until promoted. Backward compat: unknown states in v1 consumers are rendered as idle (frontend default), and v1 events never emit the new states | `src/types.ts`, `src/store.ts` |
-| P2-T8 | Entrance: scan the map for an existing exterior opening (verified: none — perimeter walls are solid at rows 0/26 and columns 0/41, `docs/STATE.md` §4). Therefore: marked spawn/exit point on the building edge + "door opens" overlay, NO structure change. Proposal for a real door goes in the phase report (decision D1). Implementation: `config/house.json` (new) `entrance: {tileX: 26, tileY: 26, facing: "up", overlaySprite: null}` + `public/flow.ts` draws an opening overlay (2-tile dark opening + light spill) at the marked tiles when someone is entering/leaving | `config/house.json`, `public/flow.ts` |
-| P2-T8b | Spawn/exit path: walk route enters at the marked edge tile → nearest hallway tile (y 12–14) → target room door → POI. Implemented as explicit waypoint injection in `calculateAStarPath` when state is `arriving`/`evicting` (edge tile is off the nav grid; route = fixed hallway approach + A* from hallway) | `public/flow.ts`, `public/main.ts` |
+| P2-T8 | Entrance (D1 RESOLVED: real door, tiny change): implement EXACTLY ONE door opening in the south exterior wall at the planned tiles (south wall row 26, at x=26 adjacent to the hallway approach x26 y13; opening = row 26 tiles x26 (and x27 only if the door sprite needs 2 tiles) — nothing else). Workflow: (1) edit `scripts/generate-map.ts` so ONLY those tiles change (door tile in `doorsLayer`, wall cleared, collision cleared, floor `FLOOR_HALLWAY_*` under the opening); (2) run `git diff` on the generated map and show that the ONLY structural-layer changes are those tiles — capture the diff in the phase report; (3) if the diff shows anything else, STOP and re-propose (never widen the change to make it pass); (4) regenerate `docs/structure-baseline.json` via `bun run structure-lock --init` ONLY after KUYA sees the diff; (5) record the new hash in the report. Arrival through a bare wall is not accepted. | `scripts/generate-map.ts`, `public/map/house.json`, `docs/structure-baseline.json` |
+| P2-T8b | Spawn/exit path: walk route enters at the new front-door tile → nearest hallway tile (y 12–14) → target room door → POI. Implemented as explicit waypoint injection in `calculateAStarPath` when state is `arriving`/`evicting`; the door tile is walkable after P2-T8. Keep the "door opens" overlay as a swing/light effect on the real door (welcome flourish), not as a fake opening. | `public/flow.ts`, `public/main.ts` |
 
 ### B. Choreography (frontend)
 
@@ -48,7 +49,7 @@ the new control endpoints), Rule 9 (no required build step).
 | P2-T10 | EVICT: on `housemate_evict_started`, Kuya banner (`evict_line`), emote `exclamation` 3 s, pick up **suitcase** (see Art), walk to entrance, `housemate_evicted` → character removed (poof fade 300 ms) | `public/flow.ts`, `public/main.ts` |
 | P2-T11 | CONFESSION: on `question_asked` → if chair free: walk to `confession_chair`, ON AIR light on, diary panel opens; else: state `queued_for_confession`, stand in queue spots (D3), show queue position in HUD. Enter one at a time (promotion when chair frees). On `question_answered`: ON AIR off, relieved exit (emote `thumbs_up` 2 s), walk back to previous POI. If the asker was working, return to its desk; if idle, resume house life | `public/confession.ts` (new), `public/main.ts`, `public/flow.ts` |
 | P2-T12 | CALL: on `kuya_call` → stop activity (release POI, remember it), walk to confession room, diary panel in chat mode (no options), `ON AIR` on for the called housemate; replies posted as `chat_message`; on `kuya_call_ended` walk back to the remembered POI | `public/confession.ts`, `public/main.ts` |
-| P2-T13 | GUESTS: on `guest_arrived` → GUEST lanyard character (see Art) enters through the front entrance, **dotted tether line to host** (reuses subagent tether renderer), sits at a **guest desk near the host** (new POIs `guest_desk_1..4` in the office, see Data), on `guest_left` hands **folder** to host (folder sprite hops guest→host, 600 ms), then walks out and disappears | `public/guests.ts` (new), `public/flow.ts`, `public/main.ts` |
+| P2-T13 | GUESTS (visuals only; Rule 11: the house never creates subagents — in P2 the fake script *simulates the OBSERVATION* of a guest by posting `guest_arrived`/`guest_left`, exactly what P4 will receive from real child sessions; the fake script itself is marked demo-only): on `guest_arrived` → GUEST lanyard character enters through the front door, **dotted tether line to host** (reuses subagent tether renderer), sits at a **guest desk near the host** (new POIs `guest_desk_1..4` in the office, see Data), on `guest_left` hands **folder** to host (folder sprite hops guest→host, 600 ms), then walks out and disappears. No code path anywhere creates a child session or posts events from house logic (the fake script is the only poster and it is external). | `public/guests.ts` (new), `public/flow.ts`, `public/main.ts` |
 
 ### C. UI
 
@@ -62,14 +63,20 @@ the new control endpoints), Rule 9 (no required build step).
 
 | ID | Task | Files |
 | --- | --- | --- |
-| P2-T17 | Extend `bun run fake` to play the full flow: summon two housemates → housemate 1 asks a question (`choice`) → housemate 2 asks while 1 is inside (queue) → answer 1 → housemate 2 enters → answer → kuya call for chat (2 chat_messages) → guest arrives and leaves → one housemate evicted. Timings ~35 s total, `FAKE_SCALE` respected; each step logs `label` | `scripts/fake-events.ts` |
+| P2-T17 | Extend `bun run fake` to play the full flow: summon two housemates → housemate 1 asks a question (`choice`) → housemate 2 asks while 1 is inside (queue) → answer 1 → housemate 2 enters → answer → kuya call for chat (2 chat_messages) → guest arrives and leaves → one housemate evicted. Timings ~35 s total, `FAKE_SCALE` respected; each step logs `label`. Header comment marks the script demo-only and states that from P4 onward it simulates observation only (Rule 11). | `scripts/fake-events.ts` |
 
-### E. Verification & rules
+### E. Rule 11 enforcement
+
+| ID | Task | Files |
+| --- | --- | --- |
+| P2-T20 | Guard script `scripts/guard-no-custom-subagents.ts` + `bun run guard` script entry (Rule 11a): fails if any source file in `src/`, `public/`, `scripts/` (excluding `scripts/fake-events.ts` and the guard itself) contains a session-create call carrying a `parentID`/parent field, spawns an opencode/harness process, or references subagent-creation APIs; registered in `package.json` (`"guard": "bun run scripts/guard-no-custom-subagents.ts"`) and invoked by a new test `test/guard.test.ts` so `bun test` enforces it from P2 onward. The fake script is exempted as demo-only (it posts *observation* events, creates nothing). | `scripts/guard-no-custom-subagents.ts` (new), `package.json`, `test/guard.test.ts` |
+
+### F. Verification & rules
 
 | ID | Task | Files |
 | --- | --- | --- |
 | P2-T18 | STOP deliverable: screen recording or screenshot sequence of the whole fake flow into `docs/screenshots/phase-2/` + updated `docs/visual-check.md` (Rule 6) | screenshots dir |
-| P2-T19 | Standing rules 1–10 acceptance checklist in the phase report; `CONTRACT.md` updated with the v2 table (contract file is docs — editing it is in scope for the protocol phase; it lives at repo root, the ONLY non-docs file this phase touches, per the spec's "Extend the wire protocol in CONTRACT.md") | `CONTRACT.md` |
+| P2-T19 | Standing rules 1–11 acceptance checklist in the phase report; `CONTRACT.md` updated with the v2 table (contract file is docs — editing it is in scope for the protocol phase; it lives at repo root, the ONLY non-docs file this phase touches, per the spec's "Extend the wire protocol in CONTRACT.md") | `CONTRACT.md` |
 
 ## Data formats
 
@@ -130,15 +137,21 @@ implementation; must pass `validate-furniture` clearance + reachability rules). 
 `{id:"guest_desk_n", room:"office", facing:"up", action:"type", minSec:5, maxSec:30, capacity:1,
 tags:["guest"]}`.
 
+**Confession queue spots (D3 RESOLVED — inside the room, east wall):** POIs
+`confession_queue_1..4` along the confession room's east wall column (x7, y18..21 interior;
+final tiles must pass validator clearance/reachability; hallway stays clear). Queued askers
+stand at these POIs facing the chair.
+
 **Entrance config (`config/house.json`, new):**
 
 ```jsonc
 { "entrance": { "tileX": 26, "tileY": 26, "facing": "up",
                 "hallwayApproachX": 26, "hallwayApproachY": 13 },
-  "housemateCap": null, "guestPolicy": null }
+  "housemateCap": 6, "guestPolicy": null }
 ```
 
-(P4 fills `housemateCap`/`guestPolicy`; P2 uses only `entrance`.)
+(P2-T8 replaces the overlay entrance with the real front door at these tiles; `housemateCap: 6`
+per resolved D6; `guestPolicy` filled in P4.)
 
 ## Endpoints
 
@@ -184,20 +197,22 @@ Covered above (state table). Additional small machines:
 
 Required new sprite props, none of which exist today (verified against atlas sprite list in
 STATE §3 and map props list in STATE §4): `prop-bag` (duffel), `prop-suitcase`, `prop-folder`,
-`prop-lanyard-badge`, `prop-onair-sign`. **STOP check per Rule 3: these are listed here as
-missing art; the phase must not proceed to the affected tasks until they are authored or
-approval to substitute existing props is given (decision D2).** Recommendation: author 5 original
-sprites in Oddboro conventions (16×16 / 32×16, shared 88-color palette, `.px` + compile step),
-add MANIFEST rows. Substitution fallback (if declined): bag→`bin` tinted? No — recommend
-proceeding with authored art; the metaphor items are the phase's point.
+`prop-lanyard-badge`, `prop-onair-sign`. **D2 RESOLVED: authoring is approved — original art in
+the existing Oddboro style, `.px` + compile step, MANIFEST rows — but the completed sprite sheet
+MUST be shown to KUYA and approved BEFORE any of it is used in the scene.** Workflow: compile
+sprites into a preview sheet at `docs/screenshots/phase-2/sprite-sheet-draft.png`, present it at
+the STOP gate (or mid-phase review), incorporate feedback, and only then wire the props into
+`public/flow.ts`. If the sheet is rejected, iterate or STOP; substitution with unrelated props is
+not allowed (the metaphor items are the phase's point).
 
 ## Configuration files and fields
 
 - `config/house.json` (new): `entrance {tileX, tileY, facing, hallwayApproachX,
-  hallwayApproachY}`. Validated at load (tiles inside map bounds, approach tile walkable).
+  hallwayApproachY}` (the real front door per D1), `housemateCap: 6` (D6). Validated at load
+  (tiles inside map bounds, approach tile walkable).
 - `config/kuya-lines.json` + `public/kuya-lines.json`: new categories listed in P2-T16 (schema:
   `{category: string[]}`, every line starts `KUYA:` per existing test convention).
-- `config/pois.json` + `public/pois.json`: `guest_desk_1..4`.
+- `config/pois.json` + `public/pois.json`: `guest_desk_1..4` and `confession_queue_1..4` (D3).
 
 ## Security considerations
 
@@ -207,6 +222,8 @@ proceeding with authored art; the metaphor items are the phase's point.
   gap, tracked as P4-T30/31 scope).
 - The diary panel renders question text as textContent only (no innerHTML) — question text comes
   from harnesses and could contain markup; XSS guard by construction.
+- Rule 11: no code in `src/`/`public/` may create a session or pass a `parentID`; enforced by
+  P2-T20's guard script in `bun test`.
 
 ## Test plan
 
@@ -226,6 +243,13 @@ Integration:
   `test/phase2-fake-smoke.test.ts` posts the 12 scripted events to a test-port server and asserts
   store snapshot states after each).
 
+Rule 11 tests:
+- `test/guard.test.ts` — runs `bun run guard` and asserts it passes on the shipped source; a
+  planted `parentID`-carrying create in a fixture file must make the guard fail (negative case
+  exercised on a temp copy, not the real tree).
+- `test/phase2-guests-observe-only.test.ts` — posting `guest_arrived` renders a guest without any
+  call into an opencode client or process spawn (guests derive purely from events).
+
 Visual:
 - Screenshot sequence of the fake flow (`docs/screenshots/phase-2/`), at minimum: arrival walk-in
   with bag + door overlay; two askers (one in chair, one queued); diary panel with options;
@@ -234,11 +258,14 @@ Visual:
 
 ## Verification steps with evidence to capture
 
-1. `bun run structure-lock` passes (unchanged hash) — capture output.
-2. `bun run validate-furniture` passes after guest desks are placed — capture.
-3. `bun test` all pass including new phase-2 files — capture.
+1. `bun run structure-lock` passes with the NEW baseline (after the D1 door diff is shown and
+   approved) — capture both the diff and the new hash.
+2. `bun run validate-furniture` passes after guest desks and queue spots are placed — capture.
+3. `bun test` all pass including new phase-2 files and `test/guard.test.ts` — capture.
 4. Fake flow recording/screenshots + visual-check list (fixable items must be zero at STOP).
 5. `CONTRACT.md` diff showing only additive protocol rows.
+6. Sprite sheet draft shown and approved (D2) before props appear in the scene — capture the
+   approved sheet path in the report.
 
 ## Acceptance criteria
 
@@ -248,16 +275,21 @@ Visual:
 - Diary panel opens for `permission/question/choice/text`, renders options, accepts an answer
   through `/api/confession/answer`, and closing never answers.
 - Queue: two simultaneous askers demonstrable in one run; one at a time inside.
-- No structure-lock violation; no new art invented beyond the D2 decision.
-- Standing rules 1–10 checklist signed in the phase report.
+- Front door (D1): the structure diff shown in the report touches ONLY the approved south-wall
+  tiles; `structure-lock` passes with the regenerated baseline; arrival goes through the door.
+- Art (D2): sprite sheet approved before props are used; no substituted props.
+- Guests are event-driven visuals only; `bun run guard` passes and its negative case is tested.
+- Standing rules 1–11 checklist signed in the phase report.
 
 ## Risks with fallbacks
 
-- R7 (structure lock): the entrance overlay must live in an overlay/HUD container, not the map's
-  structural layers. Fallback if the overlay approach reads badly: propose the real door (D1)
-  and wait for approval — never touch the baseline.
-- R14 (missing art): bag/suitcase/folder/lanyard/ON AIR do not exist; STOP per Rule 3 and decide
-  D2 before P2-T9/10/13 render.
+- R7 (structure lock): the D1 door change must be exactly the approved tiles; if the generated
+  diff shows anything else, STOP and re-propose — never widen the change to make it pass, and
+  never regenerate the baseline without showing the diff first.
+- R14 (missing art): bag/suitcase/folder/lanyard/ON AIR do not exist; D2 approves authoring but
+  requires sheet approval before use; STOP per Rule 3 if the sheet is rejected.
+- Rule 11: fake events must look exactly like real observation events; the fake script never
+  runs inside house code, and the guard keeps any future code path honest.
 - Protocol creep: fake-only events could later mismatch real opencode payloads; mitigation —
   `question_asked` fields are exactly the fields P3 must map from real opencode data; P4 adapts
   the mapper, not the protocol.
@@ -270,6 +302,6 @@ tests + screenshots ~1.
 
 ## STOP gate
 
-User reviews: (1) the recording/screenshot sequence, (2) `CONTRACT.md` v2 table, (3) decisions
-D1 (real door now or later), D2 (art), D3 (queue spots) as recorded in the phase report, (4)
-visual-check list empty of fixable items. Next phase branches only after this review.
+User reviews: (1) the recording/screenshot sequence, (2) `CONTRACT.md` v2 table, (3) the D1
+door structure diff + new baseline hash, (4) the D2 sprite sheet (approved before props ship),
+(5) visual-check list empty of fixable items. Next phase branches only after this review.
