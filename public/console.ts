@@ -378,6 +378,12 @@ export class KuyaConsole {
   private collabMaxAttempts: HTMLInputElement | null = null;
   private collabError: HTMLElement | null = null;
 
+  private hamonDetailsModal: HTMLElement | null = null;
+  private activeHamonDetailsId: string | null = null;
+  private hamonPollTimer: ReturnType<typeof setInterval> | null = null;
+  private isPollingHamon = false;
+  private currentHamonActiveKey: string | null = null;
+
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
     this.harnessSelect = document.getElementById("task-harness") as HTMLSelectElement | null;
@@ -407,6 +413,33 @@ export class KuyaConsole {
     document.getElementById("collab-submit")?.addEventListener("click", () => void this.submitCollab());
     this.collabModal?.addEventListener("click", (event) => {
       if (event.target === this.collabModal) this.closeCollab();
+    });
+
+    this.hamonDetailsModal = document.getElementById("hamon-details-modal");
+    document.getElementById("hamon-details-close")?.addEventListener("click", () => this.closeHamonDetails());
+    document.getElementById("hamon-modal-close-btn")?.addEventListener("click", () => this.closeHamonDetails());
+    this.hamonDetailsModal?.addEventListener("click", (event) => {
+      if (event.target === this.hamonDetailsModal) this.closeHamonDetails();
+    });
+    document.getElementById("hamon-modal-call-active")?.addEventListener("click", () => {
+      if (this.currentHamonActiveKey) {
+        this.closeHamonDetails();
+        void this.callHousemateByKey(this.currentHamonActiveKey);
+      } else {
+        alert("Walang aktibong housemate sa ngayon.");
+      }
+    });
+    document.getElementById("hamon-modal-cancel-task")?.addEventListener("click", () => {
+      if (this.activeHamonDetailsId) {
+        if (confirm("Kanselahin ang Lingguhang Hamon na ito?")) {
+          void this.cancelCollabTask(this.activeHamonDetailsId);
+        }
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && this.hamonDetailsModal && !this.hamonDetailsModal.hasAttribute("hidden")) {
+        this.closeHamonDetails();
+      }
     });
 
     if (this.submitBtn) {
@@ -661,6 +694,10 @@ export class KuyaConsole {
   private async callHousemate(): Promise<void> {
     const key = this.housemateSelect?.value ?? "";
     if (!key) return alert("Select a housemate first.");
+    await this.callHousemateByKey(key);
+  }
+
+  private async callHousemateByKey(key: string): Promise<void> {
     const message = await promptKuyaCall(key);
     if (!message?.trim()) return;
     try {
@@ -1036,6 +1073,9 @@ export class KuyaConsole {
         item.className = "task-item";
         item.style.borderLeft = "3px solid #8b5cf6";
         item.style.background = "rgba(139, 92, 246, 0.08)";
+        item.style.cursor = "pointer";
+        item.title = "Click to inspect live conversation and progress";
+        item.addEventListener("click", () => this.openHamonDetails(ct.id));
 
         const info = document.createElement("div");
         info.className = "task-info";
@@ -1048,7 +1088,7 @@ export class KuyaConsole {
 
         const teamSpan = document.createElement("span");
         teamSpan.className = "task-harness";
-        teamSpan.textContent = `Team: ${ct.members.map((m: any) => `${m.name} (${m.role})`).join(", ")}`;
+        teamSpan.textContent = `Team: ${ct.members.map((m: any) => `${m.name} [${m.agent || m.role || "agent"}]`).join(", ")}`;
 
         const promptSpan = document.createElement("span");
         promptSpan.className = "task-prompt";
@@ -1058,14 +1098,36 @@ export class KuyaConsole {
         info.append(badge, teamSpan, promptSpan);
         item.appendChild(info);
 
+        const actions = document.createElement("div");
+        actions.style.display = "flex";
+        actions.style.gap = "6px";
+        actions.style.alignItems = "center";
+
+        const inspectBtn = document.createElement("button");
+        inspectBtn.className = "task-cancel-btn";
+        inspectBtn.style.borderColor = "#8b5cf6";
+        inspectBtn.style.color = "#c4b5fd";
+        inspectBtn.style.background = "rgba(139, 92, 246, 0.15)";
+        inspectBtn.textContent = "🔍 View";
+        inspectBtn.title = "View live discussion and conversation";
+        inspectBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.openHamonDetails(ct.id);
+        });
+        actions.appendChild(inspectBtn);
+
         if (ct.status === "running") {
           const cancelBtn = document.createElement("button");
           cancelBtn.className = "task-cancel-btn";
           cancelBtn.textContent = "Cancel";
-          cancelBtn.addEventListener("click", () => this.cancelCollabTask(ct.id));
-          item.appendChild(cancelBtn);
+          cancelBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.cancelCollabTask(ct.id);
+          });
+          actions.appendChild(cancelBtn);
         }
 
+        item.appendChild(actions);
         this.tasksListEl.appendChild(item);
       }
 
@@ -1114,6 +1176,190 @@ export class KuyaConsole {
       /* ignore */
     } finally {
       this.isRefreshingTasks = false;
+    }
+  }
+
+  openHamonDetails(taskId: string): void {
+    this.activeHamonDetailsId = taskId;
+    if (this.hamonDetailsModal) this.hamonDetailsModal.removeAttribute("hidden");
+    void this.pollHamonDetails();
+    if (this.hamonPollTimer) clearInterval(this.hamonPollTimer);
+    this.hamonPollTimer = setInterval(() => void this.pollHamonDetails(), 1500);
+  }
+
+  closeHamonDetails(): void {
+    this.activeHamonDetailsId = null;
+    this.currentHamonActiveKey = null;
+    if (this.hamonPollTimer) {
+      clearInterval(this.hamonPollTimer);
+      this.hamonPollTimer = null;
+    }
+    if (this.hamonDetailsModal) this.hamonDetailsModal.setAttribute("hidden", "true");
+  }
+
+  private async pollHamonDetails(): Promise<void> {
+    if (!this.activeHamonDetailsId || this.isPollingHamon || document.hidden) return;
+    this.isPollingHamon = true;
+    try {
+      const res = await fetch(`/api/collab/tasks/${encodeURIComponent(this.activeHamonDetailsId)}`, {
+        headers: this.token ? { authorization: `Bearer ${this.token}` } : {},
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!res.ok) return;
+      const task = await res.json();
+      this.renderHamonDetails(task);
+    } catch {
+      /* ignore */
+    } finally {
+      this.isPollingHamon = false;
+    }
+  }
+
+  private renderHamonDetails(task: any): void {
+    if (!this.hamonDetailsModal) return;
+    this.currentHamonActiveKey = task.activeMemberKey || null;
+
+    const statusBadge = document.getElementById("hamon-modal-status-badge");
+    if (statusBadge) {
+      statusBadge.textContent = `HAMON: ${String(task.status).toUpperCase()}`;
+      if (task.status === "done") {
+        statusBadge.style.background = "#059669";
+      } else if (task.status === "failed" || task.status === "canceled") {
+        statusBadge.style.background = "#dc2626";
+      } else if (task.status === "blocked") {
+        statusBadge.style.background = "#d97706";
+      } else {
+        statusBadge.style.background = "#7c3aed";
+      }
+    }
+
+    const stepBadge = document.getElementById("hamon-modal-step-badge");
+    if (stepBadge) {
+      stepBadge.textContent = `Step: ${task.currentStep} | Attempt ${task.attempt}/${task.maxAttempts}`;
+    }
+
+    const goalEl = document.getElementById("hamon-modal-goal");
+    if (goalEl) {
+      goalEl.textContent = `🎯 Mission Goal: ${task.goal}`;
+    }
+
+    const rosterEl = document.getElementById("hamon-modal-roster");
+    if (rosterEl && Array.isArray(task.members)) {
+      rosterEl.innerHTML = "";
+      for (const m of task.members) {
+        const pill = document.createElement("div");
+        pill.style.display = "flex";
+        pill.style.alignItems = "center";
+        pill.style.gap = "6px";
+        pill.style.padding = "3px 8px";
+        pill.style.borderRadius = "4px";
+        pill.style.background = "rgba(255, 255, 255, 0.05)";
+        pill.style.border = "1px solid rgba(255, 255, 255, 0.1)";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.style.fontWeight = "600";
+        nameSpan.style.color = "#f8fafc";
+        nameSpan.textContent = `🦫 ${m.name}`;
+
+        const agentSpan = document.createElement("span");
+        agentSpan.style.color = "#94a3b8";
+        agentSpan.style.fontSize = "10px";
+        agentSpan.textContent = `[${m.agent}]`;
+
+        const stateSpan = document.createElement("span");
+        stateSpan.style.fontSize = "9px";
+        stateSpan.style.padding = "1px 5px";
+        stateSpan.style.borderRadius = "2px";
+        stateSpan.style.fontWeight = "700";
+        stateSpan.style.textTransform = "uppercase";
+
+        if (m.state === "working") {
+          stateSpan.style.background = "#059669";
+          stateSpan.style.color = "#ffffff";
+          stateSpan.textContent = "⚡ WORKING";
+        } else if (m.state === "standby") {
+          stateSpan.style.background = "#7c3aed";
+          stateSpan.style.color = "#ffffff";
+          stateSpan.textContent = "⏳ STANDBY";
+        } else if (m.state === "blocked") {
+          stateSpan.style.background = "#dc2626";
+          stateSpan.style.color = "#ffffff";
+          stateSpan.textContent = "🛑 BLOCKED";
+        } else {
+          stateSpan.style.background = "#475569";
+          stateSpan.style.color = "#cbd5e1";
+          stateSpan.textContent = String(m.state).toUpperCase();
+        }
+
+        pill.append(nameSpan, agentSpan, stateSpan);
+        rosterEl.appendChild(pill);
+      }
+    }
+
+    const logEl = document.getElementById("hamon-details-log");
+    if (logEl && Array.isArray(task.log)) {
+      const isAtBottom = logEl.scrollHeight - logEl.scrollTop <= logEl.clientHeight + 60;
+      logEl.innerHTML = "";
+
+      if (task.log.length === 0) {
+        logEl.innerHTML = `<div style="color:#64748b; font-style:italic;">Initializing task conversation...</div>`;
+      } else {
+        for (const entry of task.log) {
+          const entryEl = document.createElement("div");
+          entryEl.style.padding = "8px 10px";
+          entryEl.style.borderRadius = "4px";
+
+          const header = document.createElement("div");
+          header.style.display = "flex";
+          header.style.justifyContent = "space-between";
+          header.style.marginBottom = "4px";
+          header.style.fontSize = "10px";
+          header.style.fontWeight = "600";
+
+          const timeStr = new Date(entry.ts).toLocaleTimeString();
+          const timeSpan = document.createElement("span");
+          timeSpan.style.color = "#64748b";
+          timeSpan.textContent = timeStr;
+
+          const speakerSpan = document.createElement("span");
+
+          if (entry.agent === "kuya") {
+            entryEl.style.background = "rgba(240, 163, 58, 0.08)";
+            entryEl.style.borderLeft = "3px solid #f0a33a";
+            speakerSpan.style.color = "#f0a33a";
+            speakerSpan.textContent = `🎙️ KUYA`;
+          } else {
+            entryEl.style.background = "rgba(30, 41, 59, 0.5)";
+            entryEl.style.borderLeft = "3px solid #818cf8";
+            speakerSpan.style.color = "#818cf8";
+            speakerSpan.textContent = `🦫 ${entry.name} [agent: ${entry.agent}]`;
+          }
+
+          header.append(speakerSpan, timeSpan);
+
+          const body = document.createElement("div");
+          body.style.whiteSpace = "pre-wrap";
+          body.style.wordBreak = "break-word";
+          body.style.color = "#cbd5e1";
+          body.textContent = entry.text;
+
+          // Highlight verification pass / fail
+          if (entry.text.includes("VERIFICATION_PASSED")) {
+            entryEl.style.borderLeft = "3px solid #10b981";
+            entryEl.style.background = "rgba(16, 185, 129, 0.1)";
+          } else if (entry.text.includes("VERIFICATION_FAILED")) {
+            entryEl.style.borderLeft = "3px solid #ef4444";
+            entryEl.style.background = "rgba(239, 68, 68, 0.1)";
+          }
+
+          entryEl.append(header, body);
+          logEl.appendChild(entryEl);
+        }
+      }
+
+      if (isAtBottom) {
+        logEl.scrollTop = logEl.scrollHeight;
+      }
     }
   }
 }

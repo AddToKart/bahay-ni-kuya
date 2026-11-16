@@ -259,6 +259,42 @@
         </section>
       </div>
 
+      <div class="modal-backdrop" id="hamon-details-modal" hidden>
+        <section class="summon-panel" role="dialog" aria-modal="true" aria-labelledby="hamon-details-title" style="max-width: 680px; width: 95%;">
+          <div class="summon-head" style="border-bottom-color: rgba(139, 92, 246, 0.4);">
+            <h3 id="hamon-details-title" style="color: #a78bfa;">👥 Lingguhang Hamon: Live Discussion & Progress</h3>
+            <button class="summon-close" id="hamon-details-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="hamon-modal-summary" style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; padding: 10px 12px; margin-bottom: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span id="hamon-modal-status-badge" style="background:#7c3aed; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; text-transform:uppercase;">HAMON: RUNNING</span>
+              <span id="hamon-modal-step-badge" style="font-size:11px; color:#cbd5e1; font-weight:600;">Step: building | Attempt 1/3</span>
+            </div>
+            <div id="hamon-modal-goal" style="font-size:12px; color:#f1f5f9; line-height:1.4; margin-bottom:8px; font-weight:500;"></div>
+            <div id="hamon-modal-roster" style="display:flex; flex-wrap:wrap; gap:8px; font-size:11px;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);">Live Conversation & Handoff Logs</span>
+            <span id="hamon-modal-live-indicator" style="font-size:10px; color:#34d399; display:flex; align-items:center; gap:4px;">
+              <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#34d399;"></span> Live Updates
+            </span>
+          </div>
+
+          <div id="hamon-details-log" style="background:#090d16; border:1px solid #1e293b; border-radius:4px; padding:12px; height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; font-family:var(--font-mono, monospace); font-size:11px; line-height:1.45;">
+            <!-- Message entries populated dynamically -->
+          </div>
+
+          <div class="summon-actions" style="margin-top:12px; display:flex; justify-content:space-between;">
+            <div style="display:flex; gap:8px;">
+              <button class="dispatch-btn" id="hamon-modal-call-active" style="background:#f59e0b; color:#000; font-weight:600; font-size:11px; padding:6px 12px;">📞 Call Active to Confession</button>
+              <button class="dispatch-btn summon-cancel" id="hamon-modal-cancel-task" style="font-size:11px; padding:6px 12px; border-color:#ef4444; color:#f87171;">Cancel Hamon</button>
+            </div>
+            <button class="dispatch-btn summon-cancel" id="hamon-modal-close-btn" style="font-size:11px; padding:6px 16px;">Close</button>
+          </div>
+        </section>
+      </div>
+
       <footer class="house-footer">
         <div class="legend" id="legend" aria-label="harness legend"></div>
         <p class="hint">Working housemates work at office desks; idle housemates relax in the house; called housemates speak with Kuya in the Confession Room.</p>

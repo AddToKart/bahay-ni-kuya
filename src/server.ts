@@ -109,6 +109,9 @@ const collab = new CollabManager(store, housemates, supervisor);
 
 collab.onAnnounce = () => scheduleBroadcast();
 
+housemates.isSessionInCollab = (sid) => collab.isSessionInCollab(sid);
+housemates.getCollabState = (sid) => collab.getMemberCollabState(sid);
+
 housemates.onSessionIdle = async (sid) => {
   const handled = await collab.handleSessionIdle(sid, "");
   if (handled) scheduleBroadcast();

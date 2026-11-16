@@ -242,6 +242,11 @@ h1 {
   color: #fff;
 }
 
+.char-card-badge.state-standby {
+  background: #7c3aed;
+  color: #fff;
+}
+
 .char-card-badge.state-idle {
   background: var(--idle);
   color: #fff;

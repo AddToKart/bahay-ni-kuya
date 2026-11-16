@@ -75,6 +75,20 @@ export class CollabManager {
     return this.tasks.get(id);
   }
 
+  isSessionInCollab(sessionId: string): boolean {
+    const task = this.getActiveTask();
+    if (!task || task.status !== "running") return false;
+    return task.members.some((m) => m.sessionId === sessionId);
+  }
+
+  getMemberCollabState(sessionId: string): SessionState | null {
+    const task = this.getActiveTask();
+    if (!task || task.status !== "running") return null;
+    const member = task.members.find((m) => m.sessionId === sessionId);
+    if (!member) return null;
+    return member.state === "working" ? "working" : "standby";
+  }
+
   /** Starts a multi-agent collaboration task with up to 4 housemates */
   async startTask(input: {
     goal: string;
@@ -156,7 +170,9 @@ export class CollabManager {
     }
 
     const memberSummary = resolvedMembers.map((m) => `${m.name} [agent: ${m.agent}]`).join(", ");
-    this.announce(`Pakinggan ang inyong bagong Lingguhang Hamon: "${goal}". Team: ${memberSummary}`);
+    const startMsg = `Pakinggan ang inyong bagong Lingguhang Hamon: "${goal}". Team: ${memberSummary}`;
+    this.announce(startMsg);
+    task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HAMON STARTED: "${goal}"\nTeam: ${memberSummary}`, ts: Date.now() });
 
     audit("kuya", "collab_start", taskId, {
       goal,
@@ -256,7 +272,7 @@ export class CollabManager {
       ].join("\n");
     }
 
-    task.log.push({ agent: member.agent, name: member.name, text: message.slice(0, 300), ts: Date.now() });
+    task.log.push({ agent: "kuya", name: "Kuya", text: message, ts: Date.now() });
 
     void client
       .promptAsync(rec.sessionId, rec.directory, {
@@ -298,9 +314,9 @@ export class CollabManager {
       task.lastHandoffReport = reply;
       const verifier = task.members.find((m) => m.isVerifier) || task.members[task.members.length - 1];
 
-      this.announce(
-        `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`,
-      );
+      const handoffText = `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
+      this.announce(handoffText);
+      task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF: ${handoffText}`, ts: Date.now() });
 
       // Switch active member to verifier
       activeMember.state = "standby";
@@ -355,7 +371,9 @@ export class CollabManager {
         });
       }
 
-      this.announce(`Tagumpay ang inyong Lingguhang Hamon! Lahat ng tests ay pumasa. Mahusay, mga housemates! 🎉`);
+      const winMsg = `Tagumpay ang inyong Lingguhang Hamon! Lahat ng tests ay pumasa. Mahusay, mga housemates! 🎉`;
+      this.announce(winMsg);
+      task.log.push({ agent: "kuya", name: "Kuya", text: `🏆 VICTORY: ${winMsg}`, ts: Date.now() });
       audit("kuya", "collab_done", task.id, { goal: task.goal, attempts: task.attempt });
       return true;
     }
@@ -364,9 +382,9 @@ export class CollabManager {
     task.attempt++;
     if (task.attempt <= task.maxAttempts) {
       const builder = task.members.find((m) => !m.isVerifier) || task.members[0];
-      this.announce(
-        `May nakitang problema si ${activeMember.name} (${activeMember.agent}) sa pagsusuri (Attempt ${task.attempt}/${task.maxAttempts}). ${builder.name} (${builder.agent}), ayusin ang mga bugs!`,
-      );
+      const retryMsg = `May nakitang problema si ${activeMember.name} (${activeMember.agent}) sa pagsusuri (Attempt ${task.attempt}/${task.maxAttempts}). ${builder.name} (${builder.agent}), ayusin ang mga bugs!`;
+      this.announce(retryMsg);
+      task.log.push({ agent: "kuya", name: "Kuya", text: `⚠️ BUG FIX LOOP: ${retryMsg}`, ts: Date.now() });
 
       // Verifier goes back to standby, builder wakes up to fix bugs
       activeMember.state = "standby";
@@ -414,9 +432,9 @@ export class CollabManager {
       error: `Circuit breaker tripped: ${task.maxAttempts} failed verification attempts`,
     });
 
-    this.announce(
-      `Pansamantalang nahinto ang Lingguhang Hamon dahil lumagpas sa ${task.maxAttempts} retry attempts. ${builder.name}, pumunta ka sa Confession Room!`,
-    );
+    const cbMsg = `Pansamantalang nahinto ang Lingguhang Hamon dahil lumagpas sa ${task.maxAttempts} retry attempts. ${builder.name}, pumunta ka sa Confession Room!`;
+    this.announce(cbMsg);
+    task.log.push({ agent: "kuya", name: "Kuya", text: `🛑 CIRCUIT BREAKER TRIPPED: ${cbMsg}`, ts: Date.now() });
 
     // Call the builder to the Confession Room so Kuya can talk to them
     await this.housemates
@@ -454,7 +472,9 @@ export class CollabManager {
       });
     }
 
-    this.announce(`Itinigil ang Lingguhang Hamon "${task.goal.slice(0, 40)}".`);
+    const cancelMsg = `Itinigil ang Lingguhang Hamon "${task.goal.slice(0, 40)}".`;
+    this.announce(cancelMsg);
+    task.log.push({ agent: "kuya", name: "Kuya", text: `❌ CANCELED: ${cancelMsg}`, ts: Date.now() });
     return true;
   }
 }

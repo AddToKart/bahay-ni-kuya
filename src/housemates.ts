@@ -111,6 +111,8 @@ export class Housemates {
   private sessionToTaskId = new Map<string, string>();
   onTaskCompleted?: (taskId: string, exitCode: number) => void;
   onSessionIdle?: (sessionId: string) => Promise<boolean>;
+  isSessionInCollab?: (sessionId: string) => boolean;
+  getCollabState?: (sessionId: string) => SessionState | null;
 
   constructor(
     private store: Store,
@@ -469,7 +471,8 @@ export class Housemates {
     if (!rec) return;
     this.callActive.delete(key);
     this.activeTurns.delete(key);
-    rec.state = "idle";
+    const collabState = this.getCollabState?.(rec.sessionId);
+    rec.state = collabState ?? "idle";
     this.store.ingest({
       harness: HARNESS,
       type: "kuya_call_ended",
@@ -686,6 +689,11 @@ export class Housemates {
               title: key,
             });
           } else if (status.type === "idle") {
+            if (this.isSessionInCollab?.(sid)) {
+              this.activeTurns.delete(key);
+              this.drainQueue();
+              break;
+            }
             if (rec) rec.state = "idle";
             this.activeTurns.delete(key);
             this.callActive.delete(key);

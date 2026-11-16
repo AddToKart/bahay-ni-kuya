@@ -193,4 +193,78 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     await housemates.stop();
   });
+
+  it("protects collab member state from premature session.status idle and restores state on confession dismiss", async () => {
+    const store = new Store();
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      prompt: async () => {},
+      promptAsync: async () => {},
+      messages: async () => [],
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    housemates.isSessionInCollab = (sid) => collab.isSessionInCollab(sid);
+    housemates.getCollabState = (sid) => collab.getMemberCollabState(sid);
+
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "tester",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const task = await collab.startTask({
+      goal: "Test state stability",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }],
+      maxAttempts: 3,
+    });
+
+    expect(collab.isSessionInCollab(hm1.housemate.sessionId)).toBe(true);
+    expect(collab.isSessionInCollab(hm2.housemate.sessionId)).toBe(true);
+    expect(collab.getMemberCollabState(hm1.housemate.sessionId)).toBe("working");
+    expect(collab.getMemberCollabState(hm2.housemate.sessionId)).toBe("standby");
+
+    // Bea is on standby in office: simulate OpenCode sending session.status { type: "idle" }
+    (housemates as any).onEvent({
+      type: "session.status",
+      properties: {
+        sessionID: hm2.housemate.sessionId,
+        status: { type: "idle" },
+      },
+    });
+
+    // Bea MUST NOT become "idle" - she must stay "standby" at her desk!
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
+
+    // Hans is working: Kuya calls Hans to Confession Room for a quick check-in
+    await housemates.call(hm1.housemate.key, "Quick status check-in, Hans!", "interrupt");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("called");
+
+    // Kuya dismisses Hans from Confession Room: Hans MUST return to "working", NOT "idle"!
+    await housemates.dismissCall(hm1.housemate.key);
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+
+    await housemates.stop();
+  });
 });

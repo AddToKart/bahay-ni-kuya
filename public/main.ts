@@ -670,7 +670,9 @@ function updateCard(c: Char): void {
         ? "error"
         : c.working
           ? "working"
-          : "idle";
+          : c.state === "standby"
+            ? "standby"
+            : "idle";
 
   if (cardIconEl) cardIconEl.textContent = c.sub ? "↳ 🦫" : "🦫";
   if (cardHarnessEl) {
