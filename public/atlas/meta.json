@@ -769,6 +769,149 @@
         "default"
       ]
     },
+    "prop-bag": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "prop",
+        "bag",
+        "summon"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "prop-folder": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "prop",
+        "folder",
+        "guest",
+        "handoff"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "prop-lanyard-badge": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "prop",
+        "lanyard",
+        "guest",
+        "badge"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "prop-onair-sign": {
+      "width": 16,
+      "height": 16,
+      "layer": "wall",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "prop",
+        "onair",
+        "confession",
+        "wall"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
+    "prop-suitcase": {
+      "width": 16,
+      "height": 16,
+      "layer": "object",
+      "origin": [
+        0,
+        0
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "walkable": false,
+      "zbias": 0,
+      "fps": 0,
+      "tags": [
+        "prop",
+        "suitcase",
+        "evict"
+      ],
+      "emissive": false,
+      "spots": [],
+      "lights": [],
+      "variants": [],
+      "frames": [
+        "default"
+      ]
+    },
     "treadmill": {
       "width": 16,
       "height": 32,

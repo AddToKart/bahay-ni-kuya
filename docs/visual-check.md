@@ -50,3 +50,38 @@ views rendered from the pre-pass map (v1) for comparison.
 5. **Confession spotlight cone does not reach the wall fixture.** The fixture is now attached
    to the wall face row, but the projected cone starts two rows lower. Making the cone
    visually emanate from the fixture is a lighting change (lighting, out of scope).
+
+---
+
+# Phase 2 — PBB flow visuals (fake events)
+
+Evidence: `docs/screenshots/phase-2/` (webp captures from the real page at 1280×900, test port
+4777): `01-arrival`, `02-confession-queue`, `03-answer-promote`, `04-guest-office`,
+`05-evict-door`, `08-onair`.
+
+## Visible problems still present
+
+1. **ON AIR sign is barely legible.** The 16×16 draft renders as a white/red blob on the wall
+   band above the Confession Room door; the red field reads mostly white at 1× camera zoom.
+   Fix in the D2 art iteration (larger sign or stronger red field), then re-shoot.
+2. **Panel opens before the asker reaches the chair.** The diary panel and queue pill appear
+   immediately on `question_asked`, while the housemate is still walking (≈8 s from the front
+   door). The Confession Room looks empty for several seconds. Fix: delay panel/ON AIR until the
+   asker's `in_confession` char is within arrival distance, or shorten the walk.
+3. **Guest is hard to distinguish in the office.** The guest renders as a small subagent beside
+   the host with the lanyard badge, but at 1× the tether line is nearly invisible and the badge
+   is a few pixels. Fix: thicker/dashed tether and a larger lanyard badge in the D2 iteration.
+4. **Scan/watcher session pollutes the demo.** An opencode DB-watcher session (UUID) shows
+   "1 working" and fires Kuya task banners during the fake flow ("opencode, may kailangan…").
+   Environment artifact of a live opencode DB; P4 replaces the watcher with real control. Not a
+   Phase 2 code defect, listed for honesty.
+5. **Confession camera framing** includes a wide outdoor strip and the kitchen at the right
+   edge. Pre-existing approved camera framing (structure-locked); out of scope here.
+
+## Passed
+
+- Front door renders as a real opening in the south wall; arrival walks through it.
+- Suitcase is visible beside the evicted housemate at the door (`05-evict-door`).
+- Diary panel: question text, option buttons, free text, queue count, ON AIR header, close.
+- Answering through the panel promotes the queued asker (verified by state and screenshot).
+- ON AIR sign appears only while the chair is occupied/called.
