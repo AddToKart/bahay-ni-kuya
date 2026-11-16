@@ -164,4 +164,56 @@ describe("Phase 2 — PBB states and events", () => {
     expect(result.housemate.directory).toBe(process.cwd().replace(/\\/g, "/"));
     await housemates.stop();
   });
+
+  it("holds housemate in called state during confession call and releases on dismiss", async () => {
+    const store = new Store();
+    let promptCallCount = 0;
+    const fakeClient = {
+      createSession: async () => ({
+        id: "mock_session_call",
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      prompt: async () => {
+        promptCallCount++;
+        return { parts: [{ type: "text", text: "Mabuti naman po Kuya!" }] };
+      },
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const result = await housemates.summon({
+      name: "ChismisKing",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+    const key = result.housemate.key;
+
+    // Kuya calls housemate
+    await housemates.call(key, "Kumusta ka dyan?", "interrupt");
+    expect(housemates.get(key)?.state).toBe("called");
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("called");
+
+    // Wait for prompt resolution
+    await new Promise((r) => setTimeout(r, 20));
+    expect(promptCallCount).toBe(1);
+
+    // Housemate reply should be in chat
+    const snap = store.snapshot(Date.now());
+    expect(snap.chat.some((c) => c.role === "housemate" && c.text.includes("Mabuti naman po Kuya!"))).toBe(true);
+    expect(housemates.get(key)?.state).toBe("called");
+
+    // Kuya dismisses call
+    await housemates.dismissCall(key);
+    expect(housemates.get(key)?.state).toBe("idle");
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
+    await housemates.stop();
+  });
 });

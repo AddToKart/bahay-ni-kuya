@@ -626,6 +626,7 @@ export class KuyaConsole {
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) return alert(`Call failed: ${data.error ?? res.statusText}`);
+      (window as any).selectCamera?.("confession");
       await this.refreshHousemates();
     } catch (error) {
       alert(`Call error: ${error instanceof Error ? error.message : String(error)}`);

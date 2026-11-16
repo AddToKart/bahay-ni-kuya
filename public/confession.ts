@@ -24,10 +24,13 @@ export class DiaryRoom {
   private queueEl: HTMLElement | null = null;
   private chatEl: HTMLElement | null = null;
   private submitEl: HTMLButtonElement | null = null;
+  private doneEl: HTMLButtonElement | null = null;
   private closeEl: HTMLButtonElement | null = null;
   private closeAnswer: (() => void) | null = null;
   private chatMode = false;
   private visible = false;
+  private currentSessionId: string | null = null;
+  private currentHousemateKey: string | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   async init(): Promise<void> {
@@ -39,12 +42,23 @@ export class DiaryRoom {
     this.queueEl = document.getElementById("diary-queue");
     this.chatEl = document.getElementById("diary-chat");
     this.submitEl = document.getElementById("diary-submit") as HTMLButtonElement | null;
+    this.doneEl = document.getElementById("diary-done") as HTMLButtonElement | null;
     this.closeEl = document.getElementById("diary-close") as HTMLButtonElement | null;
     await this.fetchToken();
     this.submitEl?.addEventListener("click", () => void this.submit());
+    this.doneEl?.addEventListener("click", () => void this.dismiss());
     this.closeEl?.addEventListener("click", () => {
-      // Closing NEVER answers: it only hides the panel; the question stays queued.
-      this.hide();
+      if (this.chatMode) {
+        void this.dismiss();
+      } else {
+        this.hide();
+      }
+    });
+    this.textEl?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        void this.submit();
+      }
     });
     this.pollTimer = setInterval(() => void this.poll(), POLL_MS);
     await this.poll();
@@ -94,17 +108,18 @@ export class DiaryRoom {
 
     if (!question) {
       if (this.visible && this.chatMode) {
-        // Keep the chat panel open for a called housemate even with no question.
-        this.questionEl.textContent = "Nakikipag-usap si Kuya…";
+        this.questionEl.textContent = "Kausap si Kuya sa Confession Room…";
         this.optionsEl.innerHTML = "";
         this.queueEl.textContent = "";
-        this.renderChat(null);
+        if (this.doneEl) this.doneEl.style.display = "inline-block";
+        this.renderChat(this.currentSessionId);
         return;
       }
       if (this.visible) this.hide();
       return;
     }
 
+    if (this.doneEl) this.doneEl.style.display = "none";
     this.show();
     const meta = question.housemateKey ? `${question.kind} • ${question.housemateKey}` : question.kind;
     this.headerEl.textContent = `ON AIR — ${meta}`;
@@ -141,6 +156,7 @@ export class DiaryRoom {
       row.textContent = `${line.role === "kuya" ? "KUYA" : "HOUSEMATE"}: ${line.text}`;
       this.chatEl.appendChild(row);
     }
+    this.chatEl.scrollTop = this.chatEl.scrollHeight;
   }
 
   private async answer(answer: { option?: number; text?: string }): Promise<void> {
@@ -186,25 +202,70 @@ export class DiaryRoom {
   private async submit(): Promise<void> {
     const text = this.textEl?.value.trim() ?? "";
     if (!text) return;
+    if (this.chatMode && this.currentHousemateKey) {
+      if (!this.token) await this.fetchToken();
+      if (!this.token) return;
+      this.chat.push({ sessionId: this.currentSessionId || "", role: "kuya", text, ts: Date.now() });
+      this.renderChat(this.currentSessionId);
+      if (this.textEl) this.textEl.value = "";
+      try {
+        await fetch(`/api/housemates/${encodeURIComponent(this.currentHousemateKey)}/call`, {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
+          body: JSON.stringify({ message: text, when: "interrupt" }),
+        });
+        await this.poll();
+      } catch {}
+      return;
+    }
     await this.answer({ text });
   }
 
   /** Open the panel in chat mode for a Kuya call. */
-  openChat(sessionId: string): void {
+  openChat(sessionId: string, housemateKey?: string, title?: string): void {
     this.chatMode = true;
+    this.currentSessionId = sessionId;
+    if (housemateKey) this.currentHousemateKey = housemateKey;
     this.show();
-    if (this.headerEl) this.headerEl.textContent = "ON AIR — chat";
-    if (this.questionEl) this.questionEl.textContent = "Nakikipag-usap si Kuya…";
+    if (this.headerEl) this.headerEl.textContent = `ON AIR — ${title || housemateKey || "Confession Room"}`;
+    if (this.questionEl) this.questionEl.textContent = "Kausap si Kuya sa Confession Room…";
     if (this.optionsEl) this.optionsEl.innerHTML = "";
-    if (this.textEl) this.textEl.style.display = "block";
-    if (this.submitEl) this.submitEl.style.display = "inline-block";
+    if (this.textEl) {
+      this.textEl.style.display = "block";
+      this.textEl.placeholder = "Mensahe kay housemate (o magtanong muli)…";
+    }
+    if (this.submitEl) {
+      this.submitEl.style.display = "inline-block";
+      this.submitEl.textContent = "Ipadala";
+    }
+    if (this.doneEl) {
+      this.doneEl.style.display = "inline-block";
+      this.doneEl.textContent = "Done / Bumalik sa Bahay";
+    }
     if (this.queueEl) this.queueEl.textContent = "";
     this.renderChat(sessionId);
   }
 
-  closeChat(): void {
+  async dismiss(): Promise<void> {
+    if (this.currentHousemateKey) {
+      if (!this.token) await this.fetchToken();
+      try {
+        await fetch(`/api/housemates/${encodeURIComponent(this.currentHousemateKey)}/dismiss`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${this.token}` },
+        });
+      } catch {}
+    }
     this.chatMode = false;
+    this.currentHousemateKey = null;
+    this.currentSessionId = null;
+    if (this.doneEl) this.doneEl.style.display = "none";
     this.hide();
+    await this.poll();
+  }
+
+  closeChat(): void {
+    void this.dismiss();
   }
 
   private show(): void {

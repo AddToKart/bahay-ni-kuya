@@ -254,6 +254,10 @@ export class Store {
       const text = clip(event.text, 400);
       const role = event.role === "kuya" ? "kuya" : "housemate";
       if (text) {
+        const last = this.chat[this.chat.length - 1];
+        if (last && last.sessionId === sessionId && last.role === role && last.text === text && now - last.ts < 5000) {
+          return { ok: true };
+        }
         this.chat.push({ sessionId, role, text, ts: now });
         if (this.chat.length > CHAT_MAX) this.chat = this.chat.slice(-CHAT_MAX);
       }

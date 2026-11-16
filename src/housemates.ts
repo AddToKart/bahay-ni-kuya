@@ -321,10 +321,25 @@ export class Housemates {
     return { available: false };
   }
 
+  async dismissCall(key: string): Promise<void> {
+    const rec = this.recs.get(key);
+    if (!rec) return;
+    this.callActive.delete(key);
+    this.activeTurns.delete(key);
+    rec.state = "idle";
+    this.store.ingest({
+      harness: HARNESS,
+      type: "kuya_call_ended",
+      sessionId: rec.sessionId,
+      housemateKey: key,
+    });
+    audit("kuya", "dismiss", key, {});
+  }
+
   private async sendMessage(rec: HousemateRec, text: string): Promise<void> {
     const client = this.supervisor.client;
     if (!client) throw new Error("opencode server not ready");
-    this.callActive.set(rec.key, Date.now() + 120_000);
+    this.callActive.set(rec.key, Date.now() + 600_000);
     rec.state = "called";
     this.store.ingest({ harness: HARNESS, type: "kuya_call", sessionId: rec.sessionId, housemateKey: rec.key });
     this.store.ingest({
@@ -334,8 +349,6 @@ export class Housemates {
       role: "kuya",
       text,
     });
-    // The blocking prompt resolves when the turn completes; the event stream drives the house
-    // state, so the request itself is fire-and-forget.
     void client
       .prompt(rec.sessionId, rec.directory, {
         message: text,
@@ -345,6 +358,30 @@ export class Housemates {
           modelID: rec.model,
           ...(rec.variant ? { variant: rec.variant } : {}),
         },
+      })
+      .then((res: unknown) => {
+        if (res && typeof res === "object") {
+          const resObj = res as Record<string, any>;
+          let replyText = "";
+          if (Array.isArray(resObj.parts)) {
+            for (const pt of resObj.parts) {
+              if (pt?.type === "text" && typeof pt?.text === "string") {
+                replyText += pt.text;
+              }
+            }
+          } else if (typeof resObj.text === "string") {
+            replyText = resObj.text;
+          }
+          if (replyText.trim()) {
+            this.store.ingest({
+              harness: HARNESS,
+              type: "chat_message",
+              sessionId: rec.sessionId,
+              role: "housemate",
+              text: replyText.trim().slice(0, 400),
+            });
+          }
+        }
       })
       .catch((error: unknown) => {
         this.store.ingest({
@@ -443,31 +480,37 @@ export class Housemates {
         const status = p.status as { type?: string; message?: string } | undefined;
         if (!sid || !status) break;
         const key = this.sessionToKey.get(sid);
-        if (status.type === "busy") {
-          if (key) {
-            const rec = this.recs.get(key);
+        if (key) {
+          const rec = this.recs.get(key);
+          if (rec && (rec.state === "called" || this.callActive.has(key))) {
+            if (status.type === "busy") {
+              this.activeTurns.add(key);
+            } else if (status.type === "idle") {
+              this.activeTurns.delete(key);
+              this.drainQueue();
+            }
+            break;
+          }
+          if (status.type === "busy") {
             if (rec) rec.state = "working";
             this.activeTurns.add(key);
             this.store.ingest({ harness: HARNESS, type: "task_started", sessionId: sid, title: key });
-          }
-        } else if (status.type === "idle") {
-          if (key) {
-            const rec = this.recs.get(key);
+          } else if (status.type === "idle") {
             if (rec) rec.state = "idle";
             this.activeTurns.delete(key);
             this.callActive.delete(key);
             this.store.ingest({ harness: HARNESS, type: "task_completed", sessionId: sid });
             this.drainQueue();
-          } else if (this.guestHost.has(sid)) {
-            this.scheduleGuestLeft(sid);
+          } else if (status.type === "retry" && key) {
+            this.store.ingest({
+              harness: HARNESS,
+              type: "error",
+              sessionId: sid,
+              error: status.message ?? "retry",
+            });
           }
-        } else if (status.type === "retry" && key) {
-          this.store.ingest({
-            harness: HARNESS,
-            type: "error",
-            sessionId: sid,
-            error: status.message ?? "retry",
-          });
+        } else if (this.guestHost.has(sid) && status.type === "idle") {
+          this.scheduleGuestLeft(sid);
         }
         break;
       }
@@ -476,6 +519,12 @@ export class Housemates {
         if (!sid) break;
         const key = this.sessionToKey.get(sid);
         if (key) {
+          const rec = this.recs.get(key);
+          if (rec && (rec.state === "called" || this.callActive.has(key))) {
+            this.activeTurns.delete(key);
+            this.drainQueue();
+            break;
+          }
           this.activeTurns.delete(key);
           this.callActive.delete(key);
           this.store.ingest({ harness: HARNESS, type: "task_completed", sessionId: sid });

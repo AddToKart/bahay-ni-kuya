@@ -480,6 +480,17 @@ try {
             }
           }
 
+          const dismissMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/dismiss$/);
+          if (req.method === "POST" && dismissMatch) {
+            try {
+              await housemates.dismissCall(decodeURIComponent(dismissMatch[1]));
+              scheduleBroadcast();
+              return new Response(null, { status: 200 });
+            } catch (err) {
+              return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+            }
+          }
+
           const answerMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/answer$/);
           if (req.method === "POST" && answerMatch) {
             let body: Record<string, unknown>;

@@ -916,6 +916,8 @@ cardCallEl?.addEventListener("click", async (event) => {
   }
   pinnedKey = null;
   hideCard();
+  selectCamera("confession");
+  diary.openChat("", key);
 });
 
 cardEvictEl?.addEventListener("click", async (event) => {
@@ -945,18 +947,23 @@ const CAM_CONFIGS: Record<string, { x: number; y: number; zoom: number; label: s
   confession: { x: 72, y: 330, zoom: 2.4, label: "CAM 6 - CONFESSION ROOM" },
 };
 
+export function selectCamera(camKey: string): void {
+  document.querySelectorAll(".cam-btn").forEach((b) => b.classList.remove("active"));
+  const btn = document.querySelector<HTMLButtonElement>(`.cam-btn[data-cam="${camKey}"]`);
+  btn?.classList.add("active");
+  const cfg = CAM_CONFIGS[camKey] || CAM_CONFIGS.all;
+  if (renderer) {
+    renderer.camera.targetX = cfg.x;
+    renderer.camera.targetY = cfg.y;
+    renderer.camera.targetZoom = cfg.zoom;
+    renderer.camera.activeCamLabel = cfg.label;
+  }
+}
+(window as any).selectCamera = selectCamera;
+
 document.querySelectorAll<HTMLButtonElement>(".cam-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".cam-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const camKey = btn.dataset.cam || "all";
-    const cfg = CAM_CONFIGS[camKey] || CAM_CONFIGS.all;
-    if (renderer) {
-      renderer.camera.targetX = cfg.x;
-      renderer.camera.targetY = cfg.y;
-      renderer.camera.targetZoom = cfg.zoom;
-      renderer.camera.activeCamLabel = cfg.label;
-    }
+    selectCamera(btn.dataset.cam || "all");
   });
 });
 
@@ -1106,7 +1113,7 @@ function applySnapshot(snap: Snapshot): void {
   kuyaConsole.updateInstalled(snap.harnesses);
   diary.update(snap);
   const called = visibleSessions.find((s) => s.state === "called");
-  if (called) diary.openChat(called.sessionId);
+  if (called) diary.openChat(called.sessionId, called.housemateKey, called.title);
   for (const s of visibleSessions) {
     if (s.directory) kuyaConsole.recordDirectory(s.directory);
   }
