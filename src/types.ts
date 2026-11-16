@@ -92,6 +92,8 @@ export interface IngestEvent {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  currentAction?: string;
+  currentThought?: string;
   // v3 (houses)
   houseId?: string;
 }
@@ -137,6 +139,8 @@ export interface SessionView {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  currentAction?: string;
+  currentThought?: string;
   houseId?: string;
 }
 

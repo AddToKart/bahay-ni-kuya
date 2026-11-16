@@ -481,6 +481,14 @@ try {
             }
           }
 
+          const inspectMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/inspect$/);
+          if (req.method === "GET" && inspectMatch) {
+            const key = decodeURIComponent(inspectMatch[1]);
+            const data = await housemates.getAgentInspection(key);
+            if (!data) return jsonResponse({ error: `housemate not found: ${key}` }, 404);
+            return jsonResponse(data);
+          }
+
           const evictMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)$/);
           if (req.method === "DELETE" && evictMatch) {
             try {

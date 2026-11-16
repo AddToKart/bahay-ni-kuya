@@ -265,6 +265,46 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
     await housemates.dismissCall(hm1.housemate.key);
     expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
 
+    // Hans executes a tool and streams reasoning
+    (housemates as any).onEvent({
+      type: "message.part.updated",
+      properties: {
+        sessionID: hm1.housemate.sessionId,
+        part: {
+          type: "thought",
+          text: "I am designing the coffee shop landing page layout with navigation and hero section.",
+        },
+      },
+    });
+
+    (housemates as any).onEvent({
+      type: "message.part.updated",
+      properties: {
+        sessionID: hm1.housemate.sessionId,
+        part: {
+          type: "tool",
+          tool: "write_file",
+          input: { path: "src/components/CoffeeHero.tsx", content: "export function CoffeeHero() {}" },
+        },
+      },
+    });
+
+    // Verify snapshot does not decay to idle after >4 seconds
+    const futureSnap = store.snapshot(Date.now() + 10_000);
+    const hansSession = futureSnap.sessions.find((s) => s.housemateKey === hm1.housemate.key);
+    expect(hansSession?.state).toBe("working");
+    expect(hansSession?.currentAction).toContain("CoffeeHero.tsx");
+    expect(hansSession?.currentThought).toContain("designing the coffee shop");
+
+    // Verify getAgentInspection returns full live activity
+    const inspection = await housemates.getAgentInspection(hm1.housemate.key);
+    expect(inspection).toBeDefined();
+    expect(inspection?.name).toBe("Hans");
+    expect(inspection?.state).toBe("working");
+    expect(inspection?.filesEdited).toContain("src/components/CoffeeHero.tsx");
+    expect(inspection?.currentThought).toContain("coffee shop landing page");
+    expect(inspection?.recentActivities.length).toBeGreaterThan(0);
+
     await housemates.stop();
   });
 });

@@ -384,6 +384,12 @@ export class KuyaConsole {
   private isPollingHamon = false;
   private currentHamonActiveKey: string | null = null;
 
+  private agentInspectorModal: HTMLElement | null = null;
+  private activeInspectorKey: string | null = null;
+  private inspectorPollTimer: ReturnType<typeof setInterval> | null = null;
+  private isPollingInspector = false;
+  private activeInspectorTab: "thought" | "files" | "feed" = "thought";
+
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
     this.harnessSelect = document.getElementById("task-harness") as HTMLSelectElement | null;
@@ -439,6 +445,27 @@ export class KuyaConsole {
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && this.hamonDetailsModal && !this.hamonDetailsModal.hasAttribute("hidden")) {
         this.closeHamonDetails();
+      }
+    });
+
+    this.agentInspectorModal = document.getElementById("agent-inspector-modal");
+    document.getElementById("agent-inspector-close")?.addEventListener("click", () => this.closeAgentInspector());
+    document.getElementById("agent-inspector-close-btn")?.addEventListener("click", () => this.closeAgentInspector());
+    this.agentInspectorModal?.addEventListener("click", (event) => {
+      if (event.target === this.agentInspectorModal) this.closeAgentInspector();
+    });
+    document.getElementById("tab-inspector-thought")?.addEventListener("click", () => this.switchInspectorTab("thought"));
+    document.getElementById("tab-inspector-files")?.addEventListener("click", () => this.switchInspectorTab("files"));
+    document.getElementById("tab-inspector-feed")?.addEventListener("click", () => this.switchInspectorTab("feed"));
+    document.getElementById("inspector-call-btn")?.addEventListener("click", () => {
+      if (this.activeInspectorKey) {
+        this.closeAgentInspector();
+        void this.callHousemateByKey(this.activeInspectorKey);
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && this.agentInspectorModal && !this.agentInspectorModal.hasAttribute("hidden")) {
+        this.closeAgentInspector();
       }
     });
 
@@ -1291,7 +1318,17 @@ export class KuyaConsole {
           stateSpan.textContent = String(m.state).toUpperCase();
         }
 
-        pill.append(nameSpan, agentSpan, stateSpan);
+        pill.style.cursor = "pointer";
+        pill.title = `Click to inspect ${m.name}'s live OpenCode instance`;
+        pill.addEventListener("click", () => this.openAgentInspector(m.key));
+
+        const inspectBadge = document.createElement("span");
+        inspectBadge.style.fontSize = "9px";
+        inspectBadge.style.color = "#818cf8";
+        inspectBadge.style.marginLeft = "2px";
+        inspectBadge.textContent = "🔍";
+
+        pill.append(nameSpan, agentSpan, stateSpan, inspectBadge);
         rosterEl.appendChild(pill);
       }
     }
@@ -1359,6 +1396,248 @@ export class KuyaConsole {
 
       if (isAtBottom) {
         logEl.scrollTop = logEl.scrollHeight;
+      }
+    }
+  }
+
+  openAgentInspector(housemateKey: string): void {
+    this.activeInspectorKey = housemateKey;
+    if (this.agentInspectorModal) this.agentInspectorModal.removeAttribute("hidden");
+    this.switchInspectorTab("thought");
+    void this.pollAgentInspector();
+    if (this.inspectorPollTimer) clearInterval(this.inspectorPollTimer);
+    this.inspectorPollTimer = setInterval(() => void this.pollAgentInspector(), 1500);
+  }
+
+  closeAgentInspector(): void {
+    this.activeInspectorKey = null;
+    if (this.inspectorPollTimer) {
+      clearInterval(this.inspectorPollTimer);
+      this.inspectorPollTimer = null;
+    }
+    if (this.agentInspectorModal) this.agentInspectorModal.setAttribute("hidden", "true");
+  }
+
+  switchInspectorTab(tab: "thought" | "files" | "feed"): void {
+    this.activeInspectorTab = tab;
+    const btnThought = document.getElementById("tab-inspector-thought");
+    const btnFiles = document.getElementById("tab-inspector-files");
+    const btnFeed = document.getElementById("tab-inspector-feed");
+    const viewThought = document.getElementById("inspector-view-thought");
+    const viewFiles = document.getElementById("inspector-view-files");
+    const viewFeed = document.getElementById("inspector-view-feed");
+
+    btnThought?.classList.toggle("active", tab === "thought");
+    btnFiles?.classList.toggle("active", tab === "files");
+    btnFeed?.classList.toggle("active", tab === "feed");
+
+    if (viewThought) viewThought.style.display = tab === "thought" ? "flex" : "none";
+    if (viewFiles) viewFiles.style.display = tab === "files" ? "flex" : "none";
+    if (viewFeed) viewFeed.style.display = tab === "feed" ? "flex" : "none";
+  }
+
+  private async pollAgentInspector(): Promise<void> {
+    if (!this.activeInspectorKey || this.isPollingInspector || document.hidden) return;
+    this.isPollingInspector = true;
+    try {
+      const res = await fetch(`/api/housemates/${encodeURIComponent(this.activeInspectorKey)}/inspect`, {
+        headers: this.token ? { authorization: `Bearer ${this.token}` } : {},
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      this.renderAgentInspector(data);
+    } catch {
+      /* ignore */
+    } finally {
+      this.isPollingInspector = false;
+    }
+  }
+
+  private renderAgentInspector(data: any): void {
+    if (!this.agentInspectorModal || !data) return;
+
+    const titleEl = document.getElementById("inspector-title");
+    if (titleEl) titleEl.textContent = `${data.name} — Live OpenCode Instance`;
+
+    const subheadEl = document.getElementById("inspector-subhead");
+    if (subheadEl) subheadEl.textContent = `OpenCode Session ID: ${data.sessionId || "—"}`;
+
+    const nameBadge = document.getElementById("inspector-name-badge");
+    if (nameBadge) nameBadge.textContent = `🦫 ${data.name}`;
+
+    const roleBadge = document.getElementById("inspector-role-badge");
+    if (roleBadge) roleBadge.textContent = data.agent || "custom";
+
+    const stateBadge = document.getElementById("inspector-state-badge");
+    if (stateBadge) {
+      stateBadge.textContent = String(data.state).toUpperCase();
+      if (data.state === "working") stateBadge.style.background = "#059669";
+      else if (data.state === "standby") stateBadge.style.background = "#7c3aed";
+      else if (data.state === "called") stateBadge.style.background = "#f59e0b";
+      else if (data.state === "blocked") stateBadge.style.background = "#dc2626";
+      else stateBadge.style.background = "#475569";
+    }
+
+    const modelEl = document.getElementById("inspector-model");
+    if (modelEl) modelEl.textContent = data.model || "—";
+
+    const actionEl = document.getElementById("inspector-action");
+    if (actionEl) actionEl.textContent = data.currentAction || (data.state === "working" ? "Working on task" : data.state);
+
+    const dirEl = document.getElementById("inspector-dir");
+    if (dirEl) dirEl.textContent = data.directory || "—";
+
+    // 1. Thought Process View
+    const thoughtEl = document.getElementById("inspector-thought-content");
+    if (thoughtEl) {
+      let combinedThought = "";
+      if (data.currentThought) {
+        combinedThought = data.currentThought;
+      }
+      const thoughtActs = (data.recentActivities || []).filter((a: any) => a.type === "thought" && a.detail);
+      if (thoughtActs.length > 0) {
+        combinedThought = thoughtActs.map((a: any) => `[${new Date(a.ts).toLocaleTimeString()}] ${a.detail}`).join("\n\n---\n\n");
+      }
+      thoughtEl.textContent = combinedThought.trim() || "(No inner thoughts generated yet. When the agent plans or generates reasoning tokens, they stream here live.)";
+    }
+
+    // 2. Files & Tools View
+    const fileCountEl = document.getElementById("inspector-file-count");
+    if (fileCountEl) fileCountEl.textContent = String(data.filesEdited?.length || 0);
+
+    const filesListEl = document.getElementById("inspector-files-list");
+    if (filesListEl) {
+      filesListEl.innerHTML = "";
+      if (!data.filesEdited || data.filesEdited.length === 0) {
+        filesListEl.innerHTML = `<span style="color:#64748b; font-size:11px;">No files touched yet.</span>`;
+      } else {
+        for (const file of data.filesEdited) {
+          const badge = document.createElement("span");
+          badge.style.display = "inline-flex";
+          badge.style.alignItems = "center";
+          badge.style.gap = "4px";
+          badge.style.padding = "2px 8px";
+          badge.style.borderRadius = "3px";
+          badge.style.background = "rgba(56, 189, 248, 0.12)";
+          badge.style.border = "1px solid rgba(56, 189, 248, 0.3)";
+          badge.style.color = "#38bdf8";
+          badge.style.fontSize = "11px";
+          badge.style.fontWeight = "600";
+          badge.textContent = `📄 ${file}`;
+          filesListEl.appendChild(badge);
+        }
+      }
+    }
+
+    const toolsLogEl = document.getElementById("inspector-tools-log");
+    if (toolsLogEl) {
+      toolsLogEl.innerHTML = "";
+      const toolActs = (data.recentActivities || []).filter((a: any) => a.type === "tool" || a.type === "patch" || a.type === "command");
+      if (toolActs.length === 0) {
+        toolsLogEl.innerHTML = `<div style="color:#64748b; font-style:italic;">No tool executions recorded yet.</div>`;
+      } else {
+        for (const act of [...toolActs].reverse()) {
+          const row = document.createElement("div");
+          row.style.padding = "6px 8px";
+          row.style.background = "rgba(15, 23, 42, 0.7)";
+          row.style.borderRadius = "3px";
+          row.style.borderLeft = act.type === "patch" ? "3px solid #10b981" : act.type === "command" ? "3px solid #f59e0b" : "3px solid #6366f1";
+
+          const top = document.createElement("div");
+          top.style.display = "flex";
+          top.style.justifyContent = "space-between";
+          top.style.fontSize = "10px";
+          top.style.fontWeight = "600";
+          top.style.color = act.type === "patch" ? "#34d399" : act.type === "command" ? "#fbbf24" : "#a5b4fc";
+          top.textContent = act.title;
+
+          const timeSpan = document.createElement("span");
+          timeSpan.style.color = "#64748b";
+          timeSpan.style.fontWeight = "normal";
+          timeSpan.textContent = new Date(act.ts).toLocaleTimeString();
+          top.appendChild(timeSpan);
+
+          row.appendChild(top);
+
+          if (act.detail && act.detail !== "{}" && act.detail !== '""') {
+            const code = document.createElement("pre");
+            code.style.margin = "4px 0 0";
+            code.style.fontSize = "10px";
+            code.style.color = "#cbd5e1";
+            code.style.maxHeight = "120px";
+            code.style.overflow = "auto";
+            code.textContent = act.detail;
+            row.appendChild(code);
+          }
+
+          toolsLogEl.appendChild(row);
+        }
+      }
+    }
+
+    // 3. Full Stream View
+    const feedCountEl = document.getElementById("inspector-feed-count");
+    if (feedCountEl) feedCountEl.textContent = `${data.messages?.length || 0} messages`;
+
+    const feedLogEl = document.getElementById("inspector-feed-log");
+    if (feedLogEl) {
+      feedLogEl.innerHTML = "";
+      if (!data.messages || data.messages.length === 0) {
+        feedLogEl.innerHTML = `<div style="color:#64748b; font-style:italic;">No conversation messages found for this session.</div>`;
+      } else {
+        for (const msg of data.messages) {
+          const msgEl = document.createElement("div");
+          msgEl.style.padding = "8px 10px";
+          msgEl.style.borderRadius = "4px";
+
+          const isUser = msg.role === "user";
+          msgEl.style.background = isUser ? "rgba(59, 130, 246, 0.08)" : "rgba(30, 41, 59, 0.4)";
+          msgEl.style.borderLeft = isUser ? "3px solid #3b82f6" : "3px solid #10b981";
+
+          const head = document.createElement("div");
+          head.style.fontSize = "10px";
+          head.style.fontWeight = "700";
+          head.style.color = isUser ? "#60a5fa" : "#34d399";
+          head.style.marginBottom = "4px";
+          head.textContent = isUser ? "👤 USER / KUYA PROMPT" : `🦫 ${data.name} [${data.agent}]`;
+          msgEl.appendChild(head);
+
+          const parts = Array.isArray(msg.parts) ? msg.parts : [{ text: msg.content || "" }];
+          for (const p of parts) {
+            if (p.type === "thought" && p.text) {
+              const th = document.createElement("div");
+              th.style.fontSize = "10.5px";
+              th.style.fontStyle = "italic";
+              th.style.color = "#a78bfa";
+              th.style.background = "rgba(167, 139, 250, 0.08)";
+              th.style.padding = "4px 8px";
+              th.style.borderRadius = "3px";
+              th.style.margin = "4px 0";
+              th.textContent = `💭 ${p.text}`;
+              msgEl.appendChild(th);
+            } else if (p.type === "tool") {
+              const tl = document.createElement("div");
+              tl.style.fontSize = "10px";
+              tl.style.color = "#fbbf24";
+              tl.style.background = "rgba(245, 158, 11, 0.08)";
+              tl.style.padding = "4px 8px";
+              tl.style.borderRadius = "3px";
+              tl.style.margin = "4px 0";
+              tl.textContent = `⚡ Tool: ${p.tool || "call"} ${p.input?.path ? `(file: ${p.input.path})` : p.input?.command ? `(cmd: ${p.input.command})` : ""}`;
+              msgEl.appendChild(tl);
+            } else if (p.text) {
+              const txt = document.createElement("div");
+              txt.style.whiteSpace = "pre-wrap";
+              txt.style.wordBreak = "break-word";
+              txt.style.color = "#e2e8f0";
+              txt.textContent = p.text;
+              msgEl.appendChild(txt);
+            }
+          }
+
+          feedLogEl.appendChild(msgEl);
+        }
       }
     }
   }

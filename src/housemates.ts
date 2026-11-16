@@ -35,6 +35,32 @@ export interface SummonInput {
   autoApprove?: boolean;
 }
 
+export interface AgentActivityItem {
+  id: string;
+  type: "thought" | "tool" | "text" | "patch" | "command";
+  title: string;
+  detail?: string;
+  file?: string;
+  ts: number;
+}
+
+export interface AgentInspectionData {
+  key: string;
+  name: string;
+  agent: string;
+  model: string;
+  provider: string;
+  state: string;
+  directory: string;
+  sessionId: string;
+  currentAction: string;
+  currentThought: string;
+  currentTool: string;
+  filesEdited: string[];
+  recentActivities: AgentActivityItem[];
+  messages: any[];
+}
+
 export interface HousemateRec {
   key: string;
   name: string;
@@ -62,6 +88,11 @@ export interface HousemateRec {
   createdAt: number;
   autoApprove?: boolean;
   permissions?: Record<string, "ask" | "allow" | "deny">;
+  currentAction?: string;
+  currentThought?: string;
+  currentTool?: string;
+  filesEdited?: string[];
+  recentActivities?: AgentActivityItem[];
 }
 
 export interface SummonResult {
@@ -125,6 +156,37 @@ export class Housemates {
 
   get(key: string): HousemateRec | undefined {
     return this.recs.get(key);
+  }
+
+  async getAgentInspection(key: string): Promise<AgentInspectionData | null> {
+    const rec = this.recs.get(key);
+    if (!rec) return null;
+
+    let fullMessages: any[] = [];
+    try {
+      const client = this.supervisor.client;
+      if (client) {
+        fullMessages = await client.messages(rec.sessionId, rec.directory);
+      }
+    } catch {}
+
+    const state = this.getCollabState?.(rec.sessionId) || rec.state;
+    return {
+      key: rec.key,
+      name: rec.name,
+      agent: rec.agent,
+      model: `${rec.provider}/${rec.model}`,
+      provider: rec.provider,
+      state,
+      directory: rec.directory,
+      sessionId: rec.sessionId,
+      currentAction: rec.currentAction || (state === "working" ? "Working on task" : state),
+      currentThought: rec.currentThought || "",
+      currentTool: rec.currentTool || "",
+      filesEdited: rec.filesEdited || [],
+      recentActivities: rec.recentActivities || [],
+      messages: fullMessages,
+    };
   }
 
   getSessionIdForTask(taskId: string): string | undefined {
@@ -241,6 +303,8 @@ export class Housemates {
       createdAt: Date.now(),
       autoApprove,
       permissions,
+      filesEdited: [],
+      recentActivities: [],
     };
     this.recs.set(key, rec);
     this.sessionToKey.set(session.id, key);
@@ -692,6 +756,7 @@ export class Housemates {
             if (this.isSessionInCollab?.(sid)) {
               this.activeTurns.delete(key);
               this.drainQueue();
+              if (this.onSessionIdle) void this.onSessionIdle(sid);
               break;
             }
             if (rec) rec.state = "idle";
@@ -736,6 +801,11 @@ export class Housemates {
             }
           }
           if (rec && (rec.state === "called" || this.callActive.has(key))) {
+            this.activeTurns.delete(key);
+            this.drainQueue();
+            break;
+          }
+          if (this.isSessionInCollab?.(sid)) {
             this.activeTurns.delete(key);
             this.drainQueue();
             break;
@@ -791,24 +861,122 @@ export class Housemates {
         break;
       }
       case "message.part.updated": {
-        const part = p.part as
-          | { type?: string; tool?: string; text?: string; role?: string }
-          | undefined;
+        const part = p.part as any;
         const msg = p.message as { role?: string } | undefined;
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         if (!part || !sid) break;
-        const partRole = (part as any)?.role ?? msg?.role;
+        const key = this.sessionToKey.get(sid);
+        const rec = key ? this.recs.get(key) : undefined;
+        const partRole = part?.role ?? msg?.role;
         if (partRole === "user") break;
 
-        if (part.type === "tool" && part.tool) {
+        // 1. Thought / Reasoning
+        if (
+          part.type === "thought" ||
+          part.type === "reasoning" ||
+          (typeof part.thought === "string" && part.thought)
+        ) {
+          const thoughtText =
+            typeof part.text === "string"
+              ? part.text
+              : typeof part.thought === "string"
+                ? part.thought
+                : "";
+          if (thoughtText && rec) {
+            rec.currentThought = thoughtText;
+            rec.currentAction = "Thinking & analyzing...";
+            if (!rec.recentActivities) rec.recentActivities = [];
+            const lastAct = rec.recentActivities[rec.recentActivities.length - 1];
+            if (lastAct && lastAct.type === "thought" && Date.now() - lastAct.ts < 4000) {
+              lastAct.detail = thoughtText;
+              lastAct.ts = Date.now();
+            } else {
+              rec.recentActivities.push({
+                id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                type: "thought",
+                title: "Thought Process",
+                detail: thoughtText,
+                ts: Date.now(),
+              });
+              if (rec.recentActivities.length > 60) rec.recentActivities.shift();
+            }
+            this.store.ingest({
+              harness: HARNESS,
+              type: "state",
+              sessionId: sid,
+              currentAction: rec.currentAction,
+              currentThought: thoughtText.slice(0, 300),
+            });
+          }
+        }
+
+        // 2. Tool / File Edit / Command
+        else if (part.type === "tool" && part.tool) {
+          const toolName = String(part.tool);
+          let targetFile = "";
+          let command = "";
+          const input = part.input || part.args || part.parameters || {};
+          if (typeof input.path === "string") targetFile = input.path;
+          else if (typeof input.filePath === "string") targetFile = input.filePath;
+          else if (typeof input.file === "string") targetFile = input.file;
+          if (typeof input.command === "string") command = input.command;
+
+          if (rec) {
+            rec.currentTool = toolName;
+            if (targetFile) {
+              if (!rec.filesEdited) rec.filesEdited = [];
+              if (!rec.filesEdited.includes(targetFile)) rec.filesEdited.push(targetFile);
+              rec.currentAction = `${toolName.includes("edit") || toolName.includes("write") ? "Editing" : "Inspecting"} ${targetFile}`;
+            } else if (command) {
+              rec.currentAction = `Running command: ${command.slice(0, 50)}`;
+            } else {
+              rec.currentAction = `Using tool: ${toolName}`;
+            }
+
+            if (!rec.recentActivities) rec.recentActivities = [];
+            rec.recentActivities.push({
+              id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              type: targetFile ? "patch" : command ? "command" : "tool",
+              title: rec.currentAction,
+              detail: JSON.stringify(input, null, 2),
+              file: targetFile || undefined,
+              ts: Date.now(),
+            });
+            if (rec.recentActivities.length > 60) rec.recentActivities.shift();
+          }
+
           this.store.ingest({
             harness: HARNESS,
             type: "tool",
             sessionId: sid,
-            tool: part.tool,
+            tool: toolName,
+            currentAction: rec?.currentAction,
+            currentThought: rec?.currentThought?.slice(0, 300),
           });
-        } else if (part.type === "text" && part.text) {
-          const key = this.sessionToKey.get(sid);
+        }
+
+        // 3. Patch / File modification directly
+        else if (part.type === "patch" && (part.file || part.path)) {
+          const file = String(part.file || part.path);
+          if (rec) {
+            if (!rec.filesEdited) rec.filesEdited = [];
+            if (!rec.filesEdited.includes(file)) rec.filesEdited.push(file);
+            rec.currentAction = `Modifying ${file}`;
+            if (!rec.recentActivities) rec.recentActivities = [];
+            rec.recentActivities.push({
+              id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              type: "patch",
+              title: `Modified ${file}`,
+              detail: typeof part.patch === "string" ? part.patch : undefined,
+              file,
+              ts: Date.now(),
+            });
+            if (rec.recentActivities.length > 60) rec.recentActivities.shift();
+          }
+        }
+
+        // 4. Assistant Text (streaming response or confession chat)
+        else if (part.type === "text" && part.text) {
           const activeUntil = key ? (this.callActive.get(key) ?? 0) : 0;
           if (
             key &&

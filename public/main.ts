@@ -94,10 +94,21 @@ interface Char {
   poiId: string | null;
   guest: boolean;
   carry: "bag" | "suitcase" | "folder" | null;
+  currentAction?: string;
+  currentThought?: string;
 }
 
 const chars = new Map<string, Char>();
-const charMeta = new Map<string, { agent?: string; model?: string; housemateKey?: string }>();
+const charMeta = new Map<
+  string,
+  {
+    agent?: string;
+    model?: string;
+    housemateKey?: string;
+    currentAction?: string;
+    currentThought?: string;
+  }
+>();
 let houseMap: HouseMap | null = null;
 let navGrid: NavGrid | null = null;
 let renderer: MapRenderer | null = null;
@@ -189,7 +200,13 @@ function reconcile(snap: Snapshot, now: number): number {
 
   for (const s of visibleSessions) {
     const key = sessionKey(s.harness, s.sessionId);
-    charMeta.set(key, { agent: s.agent, model: s.model, housemateKey: s.housemateKey });
+    charMeta.set(key, {
+      agent: s.agent,
+      model: s.model,
+      housemateKey: s.housemateKey,
+      currentAction: s.currentAction,
+      currentThought: s.currentThought,
+    });
     const parent = s.parentId ? byKey.get(sessionKey(s.harness, s.parentId)) : undefined;
     const parentKey = parent ? sessionKey(parent.harness, parent.sessionId) : null;
     const sub = parentKey !== null;
@@ -258,6 +275,8 @@ function reconcile(snap: Snapshot, now: number): number {
       queued: isQueued,
       called: isCalled,
       guest: s.guest === true,
+      currentAction: s.currentAction,
+      currentThought: s.currentThought,
     });
   }
 
@@ -381,6 +400,8 @@ function reconcile(snap: Snapshot, now: number): number {
         poiId: poi ? poi.id : null,
         guest: d.guest,
         carry: d.evicting ? "suitcase" : d.arriving ? "bag" : d.guest ? "folder" : null,
+        currentAction: (d as any).currentAction,
+        currentThought: (d as any).currentThought,
       };
       chars.set(d.key, c);
 
@@ -413,6 +434,8 @@ function reconcile(snap: Snapshot, now: number): number {
       c.sub = d.sub;
       c.guest = d.guest;
       c.carry = d.evicting ? "suitcase" : d.arriving ? "bag" : d.guest ? "folder" : null;
+      c.currentAction = (d as any).currentAction;
+      c.currentThought = (d as any).currentThought;
 
       // 0. Phase 2: arrival, eviction, confession question, Kuya call
       if (d.arriving && prevState !== "arriving") {
@@ -648,7 +671,10 @@ const cardBadgeEl = document.getElementById("card-badge") as HTMLElement | null;
 const cardProjectEl = document.getElementById("card-project") as HTMLElement | null;
 const cardAgentEl = document.getElementById("card-agent") as HTMLElement | null;
 const cardModelEl = document.getElementById("card-model") as HTMLElement | null;
+const cardActionEl = document.getElementById("card-action") as HTMLElement | null;
+const cardThoughtEl = document.getElementById("card-thought") as HTMLElement | null;
 const cardActionsEl = document.getElementById("card-actions") as HTMLElement | null;
+const cardInspectEl = document.getElementById("card-inspect") as HTMLButtonElement | null;
 const cardCallEl = document.getElementById("card-call") as HTMLButtonElement | null;
 const cardEvictEl = document.getElementById("card-evict") as HTMLButtonElement | null;
 let cardHousemateKey: string | null = null;
@@ -690,6 +716,8 @@ function updateCard(c: Char): void {
   cardHousemateKey = meta?.housemateKey ?? null;
   if (cardActionsEl) cardActionsEl.hidden = !cardHousemateKey;
   if (cardToolEl) cardToolEl.textContent = c.tool || (c.working ? "thinking" : c.blocked ? "waiting approval" : "—");
+  if (cardActionEl) cardActionEl.textContent = c.currentAction || (c.working ? "Working on task" : stateStr);
+  if (cardThoughtEl) cardThoughtEl.textContent = c.currentThought || "—";
   if (cardSubagentsEl) cardSubagentsEl.textContent = String(c.subagentCount);
   if (cardPidEl) {
     const pidVal = c.pid ?? (c.key.includes("scan:") ? c.key.split("scan:")[1] : null);
@@ -847,6 +875,15 @@ async function cardApi(path: string, init: RequestInit = {}): Promise<Response |
     return null;
   }
 }
+
+cardInspectEl?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  const key = cardHousemateKey;
+  if (!key) return;
+  pinnedKey = null;
+  hideCard();
+  kuyaConsole.openAgentInspector(key);
+});
 
 cardCallEl?.addEventListener("click", async (event) => {
   event.stopPropagation();

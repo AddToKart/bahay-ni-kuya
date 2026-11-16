@@ -185,7 +185,7 @@ h1 {
 .char-card {
   position: absolute;
   z-index: 100;
-  width: 220px;
+  width: 250px;
   background: #fdfbf7;
   border: 2px solid var(--frame);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
@@ -883,6 +883,7 @@ canvas {
 
 .char-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }

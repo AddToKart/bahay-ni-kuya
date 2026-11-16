@@ -37,6 +37,8 @@ interface SessionRec {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  currentAction?: string;
+  currentThought?: string;
   houseId?: string;
 }
 
@@ -181,6 +183,8 @@ export class Store {
     if (typeof event.model === "string" && event.model) rec.model = event.model.slice(0, 120);
     if (typeof event.cost === "number" && Number.isFinite(event.cost)) rec.cost = event.cost;
     if (event.tokens && typeof event.tokens === "object") rec.tokens = event.tokens;
+    if (typeof event.currentAction === "string") rec.currentAction = clip(event.currentAction, 160);
+    if (typeof event.currentThought === "string") rec.currentThought = clip(event.currentThought, 500);
     const housemateKey = clip(event.housemateKey, 80);
     if (housemateKey) rec.housemateKey = housemateKey;
     if (type === "housemate_summoned" && !rec.housemateKey) rec.housemateKey = sessionId;
@@ -195,7 +199,7 @@ export class Store {
     } else if (type === "task_started") {
       if (rec.state !== "called" && rec.state !== "in_confession") {
         rec.state = "working";
-        rec.workingUntil = now + IDLE_MS;
+        rec.workingUntil = (event.hold || rec.housemateKey || rec.harness === "opencode" || rec.workingUntil === HOLD) ? HOLD : now + IDLE_MS;
       }
     } else if (type === "task_completed") {
       if (rec.state !== "called" && rec.state !== "in_confession") {
@@ -213,19 +217,21 @@ export class Store {
       if (rec.errorCount >= 3) rec.nominated = true;
       if (rec.state !== "called" && rec.state !== "in_confession") {
         rec.state = "error";
-        rec.workingUntil = now + IDLE_MS;
+        rec.workingUntil = (rec.workingUntil === HOLD || rec.housemateKey) ? HOLD : now + IDLE_MS;
       }
     } else if (type === "state") {
       if (rec.state !== "called" && rec.state !== "in_confession") {
         rec.state = event.state ?? "idle";
-        rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+        rec.workingUntil = rec.state === "working" ? ((rec.workingUntil === HOLD || rec.housemateKey) ? HOLD : now + IDLE_MS) : 0;
       }
     } else if (type === "tool") {
       const tool = clip(event.tool, 60);
       if (tool) rec.tool = tool;
       if (rec.state !== "called" && rec.state !== "in_confession") {
         rec.state = "working";
-        rec.workingUntil = now + IDLE_MS;
+        if (rec.workingUntil !== HOLD && !rec.housemateKey && rec.harness !== "opencode") {
+          rec.workingUntil = now + IDLE_MS;
+        }
       }
     } else if (type === "housemate_summoned") {
       rec.state = "arriving";
@@ -479,8 +485,14 @@ export class Store {
         state = now < rec.workingUntil ? "blocked" : "idle";
       } else if (rec.state === "error") {
         state = now < rec.workingUntil ? "error" : "idle";
+      } else if (rec.state === "working") {
+        if (rec.workingUntil === HOLD || rec.housemateKey || rec.harness === "opencode") {
+          state = "working";
+        } else {
+          state = now < rec.workingUntil ? "working" : "idle";
+        }
       } else {
-        state = now < rec.workingUntil ? "working" : "idle";
+        state = "idle";
       }
 
       sessions.push({
@@ -503,6 +515,8 @@ export class Store {
         model: rec.model,
         cost: rec.cost,
         tokens: rec.tokens,
+        currentAction: rec.currentAction,
+        currentThought: rec.currentThought,
         houseId: rec.houseId,
       });
     }
