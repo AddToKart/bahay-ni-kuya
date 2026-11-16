@@ -1,0 +1,25 @@
+# Manila folder handed by a guest to its host when the guest finishes.
+sprite prop-folder
+size 16 16
+layer object
+footprint 1 1
+origin 0 0
+tag prop folder guest handoff
+
+frame default
+................
+................
+..kkkkkkkkkkkk..
+..kOOOOOOOOOOk..
+..kO========Ok..
+..kO========Ok..
+..kO========Ok..
+..kO========Ok..
+..kO========Ok..
+..kO========Ok..
+..kOOOOOOOOOOk..
+..kO========Ok..
+..kOOOOOOOOOOk..
+..kkkkkkkkkkkk..
+................
+................

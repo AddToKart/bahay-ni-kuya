@@ -1,0 +1,25 @@
+# Suitcase carried out by an evicted housemate.
+sprite prop-suitcase
+size 16 16
+layer object
+footprint 1 1
+origin 0 0
+tag prop suitcase evict
+
+frame default
+................
+......kkkk......
+.....k1..1k.....
+..kkkkkkkkkkkk..
+..k1111111111k..
+..k1333333331k..
+..k1111111111k..
+..k1333333331k..
+..k1111111111k..
+..k1333333331k..
+..k1111111111k..
+..k1111111111k..
+..k1kkkkkkkk1k..
+..kkkkkkkkkkkk..
+................
+................

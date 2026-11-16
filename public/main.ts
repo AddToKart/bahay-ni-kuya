@@ -326,7 +326,7 @@ function reconcile(snap: Snapshot, now: number): number {
     }
     if (d.evicting) {
       targetX = 26 * 16 + 8;
-      targetY = 25 * 16 + 14;
+      targetY = 26 * 16 + 14;
     }
     const poiFacing: Facing = poi ? poi.facing : "down";
     const poiAction: Action = poi
@@ -344,10 +344,9 @@ function reconcile(snap: Snapshot, now: number): number {
       let spawnY = 11 * 16 + 14;
 
       if (d.arriving) {
-        // Phase 2: the real front door is pending the D1 diff approval; arrival starts at the
-        // interior tile just inside the planned south-wall door, then walks to house life.
+        // Front door (D1): the south exterior opening at (26,26), walking north.
         spawnX = 26 * 16 + 8;
-        spawnY = 25 * 16 + 14;
+        spawnY = 26 * 16 + 14;
       } else if (d.sleeping) {
         spawnX = targetX;
         spawnY = targetY;

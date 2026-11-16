@@ -199,7 +199,7 @@ function makeDoor(x: number, y: number, name: string): void {
     room: "hallway",
     x,
     y,
-    facing: y === 11 ? "up" : "down",
+    facing: y === 11 || y === 26 ? "up" : "down",
     action: "walk",
   });
 }
@@ -208,6 +208,11 @@ function makeDoor(x: number, y: number, name: string): void {
 makeDoor(6, 11, "bedroom");
 makeDoor(18, 11, "living");
 makeDoor(32, 11, "office");
+
+// Front door (D1, Phase 2): one opening in the south exterior wall, aligned so the walk-in
+// goes straight north through the game room to the hallway. This changes exactly one tile in
+// layers walls/doors; run `bun run structure-diff` before regenerating the baseline.
+makeDoor(26, 26, "entrance");
 
 // Bottom room doors connecting into hallway (at y = 15)
 makeDoor(5, 15, "confession");
