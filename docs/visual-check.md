@@ -105,12 +105,9 @@ Evidence: `docs/screenshots/phase-4/` (webp, 1440×1000 viewport, test port 4792
 2. **GUEST tag is small at 1×.** 8 px with a dark stroke; legible at the 2.2× office zoom, marginal
    in the all-house view. The dashed 3 px tether is the primary marker. Fix in the next art pass if
    desired.
-3. **`explore` subagent hangs.** Its configured model `omniroute-local/oc/deepseek-v4-flash-free`
-   points at `http://localhost:20128`, which is offline; the child retries and the host `task` tool
-   never completes. `general` (inherits the host model) works. Not a house rendering defect.
-4. **Header head-count still counts harness presences/scan**, so it can read `2 idle · 3 sleeping`
+3. **Header head-count still counts harness presences/scan**, so it can read `2 idle · 3 sleeping`
    with one real housemate. Pre-existing.
-5. **No guest caps/overrun UI.** `config/guests.json` limits are not enforced; unlimited observed
+4. **No guest caps/overrun UI.** `config/guests.json` limits are not enforced; unlimited observed
    guests and overruns are possible.
 
 ## Passed
@@ -118,7 +115,8 @@ Evidence: `docs/screenshots/phase-4/` (webp, 1440×1000 viewport, test port 4792
 - Summon dialog: name, 19 agents, all 281 models with filter, folder, note, inline errors;
   submitting created `hm_hana_3zrw` and closed the modal.
 - Console row no longer wraps: Summon, housemate select, Evict, Call on one line at 1024 px.
-- Guest from a real native child: `parentId` + `guest: true`, dashed tether, badge, folder; child
-  returned the `src/` list; host `task` completed; guest left after 3 s.
+- Guest from a real native child: `parentId` + `guest: true`, dashed tether, badge, folder; with
+  the explore model override removed, the child inherited the host model, ran `glob`, returned the
+  `src/` list; host `task` completed; guest left after 3 s.
 - Diary panel shows permission options; Allow once completed `echo hi`.
 - Evict removes the session and keeps the worktree/branch.
