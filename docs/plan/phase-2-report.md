@@ -46,26 +46,38 @@ implemented with the required structure-diff proof. D2 (sprite sheet) awaits KUY
 
 ## What is stubbed / not done
 
-- **D2 gate**: sprites are drafts only. After approval: compile the atlas, attach bag/suitcase
-  to the summon/evict walk, folder to the guest handoff, lanyard to the guest, ON AIR to the
-  confession door; then record the STOP demo.
+- **D2 iteration (open)**: the five sprites are compiled into the atlas and wired (bag on
+  arrival, suitcase on eviction, lanyard + folder on guests, ON AIR sign on the confession
+  wall). Visual review found: ON AIR sign barely legible at 1×, guest badge/tether too small.
+  Art iteration pending; nothing is blocked functionally.
 - **Guest desk**: the office is fully furnished, so guests reuse the existing subagent
   companion placement at the host desk instead of four new `guest_desk_*` POIs (no map churn,
   validator-clean). Recorded deviation from P2-T13; revisit if visual review wants separate
   desks.
+- **Panel timing**: the diary panel opens on `question_asked` before the asker reaches the
+  chair (≈8 s walk). Listed in `docs/visual-check.md`; fix by gating the panel on arrival.
 - **Hover-card Call/Evict buttons**: console buttons implemented; the hover-card duplicates were
   not added yet (same handlers, straightforward follow-up).
-- **Fake script not executed end-to-end** in this session; the HTTP smoke below covers the
-  event/queue path without the browser.
-- **No browser screenshots/recording yet** (Rule 6) — blocked on art wiring so the recording
-  shows the final sprites.
 - **Rate limit / audit** on the new endpoints: P4 scope; they use the standard Bearer +
   Host/Origin gate today.
 
-## HTTP smoke (to be appended)
+## HTTP smoke + visual proof (done)
 
-See `docs/plan/phase-2-http-smoke.txt` for the transcript of the test-port run: summon → ask →
-queued second asker → answer → promotion → chat.
+- `docs/plan/phase-2-http-smoke.txt`: test-port run — summon → question → queued second asker →
+  answer → promotion → chat, all correct; bearer token redacted.
+- Browser captures (real page, 1280×900): `docs/screenshots/phase-2/01-arrival.webp`,
+  `02-confession-queue.webp`, `03-answer-promote.webp`, `04-guest-office.webp`,
+  `05-evict-door.webp`, `08-onair.webp`. `docs/visual-check.md` lists the remaining visible
+  problems (ON AIR legibility, panel-before-arrival, guest/tether size, watcher-session banner
+  noise, pre-existing confession camera framing).
+
+## Fixes made during visual verification
+
+- Summoned/guest sessions are now protected from the process-gone sweep (they are owned by the
+  event stream, not a real process); test added.
+- ON AIR sign moved below the CCTV HUD and into the top scene layer so it is visible.
+- New Kuya lines receive `{name}` (banner previously showed the literal placeholder for
+  evict/call/confession).
 
 ## NEEDS HUMAN DECISION
 

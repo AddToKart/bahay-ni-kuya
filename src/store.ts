@@ -340,7 +340,9 @@ export class Store {
       state.cpuPrev = nextCpu;
 
       if (!state.running) {
-        this.dropHarnessSessions(harness);
+        // House-managed sessions (summoned housemates, guests) are owned by the event stream,
+        // not by a real harness process; a missing process must not erase them.
+        this.dropHarnessSessions(harness, true);
         continue;
       }
 
@@ -480,9 +482,11 @@ export class Store {
     if (promoted) this.applyQuestionState(promoted, "in_confession");
   }
 
-  private dropHarnessSessions(harness: Harness): void {
+  private dropHarnessSessions(harness: Harness, keepHouseManaged = false): void {
     for (const [key, rec] of this.sessions) {
-      if (rec.harness === harness) this.sessions.delete(key);
+      if (rec.harness !== harness) continue;
+      if (keepHouseManaged && (rec.housemateKey !== undefined || rec.guest === true)) continue;
+      this.sessions.delete(key);
     }
   }
 }

@@ -41,6 +41,8 @@ interface SessionView {
   source: "adapter" | "scan";
   errorCount?: number;
   nominated?: boolean;
+  housemateKey?: string;
+  guest?: boolean;
 }
 
 interface Snapshot {
@@ -86,6 +88,8 @@ interface Char {
   emoteUntil?: number;
   walking: boolean;
   poiId: string | null;
+  guest: boolean;
+  carry: "bag" | "suitcase" | "folder" | null;
 }
 
 const chars = new Map<string, Char>();
@@ -148,6 +152,7 @@ interface Desired {
   confession: boolean;
   queued: boolean;
   called: boolean;
+  guest: boolean;
 }
 
 function reconcile(snap: Snapshot, now: number): number {
@@ -227,6 +232,7 @@ function reconcile(snap: Snapshot, now: number): number {
       confession: isConfession,
       queued: isQueued,
       called: isCalled,
+      guest: s.guest === true,
     });
   }
 
@@ -389,6 +395,8 @@ function reconcile(snap: Snapshot, now: number): number {
         emoteUntil: d.working ? now + 2500 : undefined,
         walking: !d.sleeping,
         poiId: poi ? poi.id : null,
+        guest: d.guest,
+        carry: d.evicting ? "suitcase" : d.arriving ? "bag" : d.guest ? "folder" : null,
       };
       chars.set(d.key, c);
 
@@ -419,6 +427,8 @@ function reconcile(snap: Snapshot, now: number): number {
       c.instanceIndex = d.instanceIndex;
       c.parentKey = d.parentKey;
       c.sub = d.sub;
+      c.guest = d.guest;
+      c.carry = d.evicting ? "suitcase" : d.arriving ? "bag" : d.guest ? "folder" : null;
 
       // 0. Phase 2: arrival, eviction, confession question, Kuya call
       if (d.arriving && prevState !== "arriving") {
@@ -426,9 +436,9 @@ function reconcile(snap: Snapshot, now: number): number {
       } else if (d.evicting && prevState !== "evicting") {
         c.emote = "exclamation";
         c.emoteUntil = now + 3000;
-        kuya.announce(kuya.formatLine("evict_line", { harness: d.harness }));
+        kuya.announce(kuya.formatLine("evict_line", { harness: d.harness, name: d.label }));
       } else if (d.called && prevState !== "called") {
-        kuya.announce(kuya.formatLine("call_to_confession", { harness: d.harness }));
+        kuya.announce(kuya.formatLine("call_to_confession", { harness: d.harness, name: d.label }));
       } else if (
         d.confession &&
         prevState !== "in_confession" &&
@@ -437,7 +447,7 @@ function reconcile(snap: Snapshot, now: number): number {
       ) {
         c.emote = "exclamation";
         c.emoteUntil = now + 4000;
-        kuya.announce(kuya.formatLine("confession_call", { harness: d.harness }));
+        kuya.announce(kuya.formatLine("confession_call", { harness: d.harness, name: d.label }));
       }
       // 1. Task Started
       else if (!prevWorking && d.working) {

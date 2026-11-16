@@ -111,6 +111,13 @@ describe("Phase 2 — PBB states and events", () => {
     expect(snap.chat[1].text).toBe("Okay po.");
   });
 
+  it("keeps summoned housemates when the process scan sees no harness process", () => {
+    const store = seed("hm_bea", "Bea");
+    store.applyScan([], 5000);
+    const snap = store.snapshot(5000);
+    expect(snap.sessions.some((s) => s.sessionId === "hm_bea")).toBe(true);
+  });
+
   it("rejects malformed v2 payloads", () => {
     const store = new Store();
     expect(store.ingest({ harness: OPENCODE, type: "question_asked", housemateKey: "hm_x", kind: "permission" } as IngestEvent).ok).toBe(false);

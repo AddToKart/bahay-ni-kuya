@@ -41,6 +41,9 @@ export interface CharacterRenderState {
   action: Action;
   emote: Emote;
   emoteUntil?: number;
+  state?: string;
+  guest?: boolean;
+  carry?: "bag" | "suitcase" | "folder" | null;
 }
 
 export class MapRenderer {
@@ -83,7 +86,11 @@ export class MapRenderer {
     bubbleText: any;
     bubbleBg: any;
     tether: any;
+    carrySprite: any;
+    badgeSprite: any;
   }>();
+
+  onairSprite: any = null;
 
   // CCTV elements
   cctvGraphics: any = null;
@@ -633,6 +640,22 @@ export class MapRenderer {
         emote.visible = false;
         container.addChild(emote);
 
+        // Carried prop (bag on arrival, suitcase on eviction, folder for guests)
+        const carrySprite = new PIXI.Sprite();
+        carrySprite.anchor.set(0.5, 1.0);
+        carrySprite.position.set(-10, -2);
+        carrySprite.scale.set(0.85);
+        carrySprite.visible = false;
+        container.addChild(carrySprite);
+
+        // Guest lanyard badge on the chest
+        const badgeSprite = new PIXI.Sprite();
+        badgeSprite.anchor.set(0.5, 1.0);
+        badgeSprite.position.set(0, -15);
+        badgeSprite.scale.set(0.5);
+        badgeSprite.visible = false;
+        container.addChild(badgeSprite);
+
         // Speech / Tool Bubble
         const bubble = new PIXI.Container();
         bubble.visible = false;
@@ -658,9 +681,33 @@ export class MapRenderer {
         const tether = new PIXI.Graphics();
         this.ysortContainer.addChild(tether);
 
-        node = { container, body, shadow, emote, bubble, bubbleText, bubbleBg, tether };
+        node = { container, body, shadow, emote, bubble, bubbleText, bubbleBg, tether, carrySprite, badgeSprite };
         this.charNodes.set(c.key, node);
         this.ysortContainer.addChild(container);
+      }
+
+      // Carried prop + guest badge (Phase 2 art)
+      if (c.carry) {
+        const carryTex = this.getTexture(`prop-${c.carry}/default`);
+        if (carryTex) {
+          node.carrySprite.texture = carryTex;
+          node.carrySprite.visible = true;
+        } else {
+          node.carrySprite.visible = false;
+        }
+      } else {
+        node.carrySprite.visible = false;
+      }
+      if (c.guest) {
+        const badgeTex = this.getTexture("prop-lanyard-badge/default");
+        if (badgeTex) {
+          node.badgeSprite.texture = badgeTex;
+          node.badgeSprite.visible = true;
+        } else {
+          node.badgeSprite.visible = false;
+        }
+      } else {
+        node.badgeSprite.visible = false;
       }
 
       // Update position
@@ -754,6 +801,27 @@ export class MapRenderer {
         this.ysortContainer.removeChild(node.tether);
         this.charNodes.delete(key);
       }
+    }
+
+    // Confession Room ON AIR sign (visible while the chair is occupied or a call is active)
+    let chairOccupied = false;
+    for (const c of chars.values()) {
+      if (c.state === "in_confession" || c.state === "called") {
+        chairOccupied = true;
+        break;
+      }
+    }
+    if (!this.onairSprite) {
+      const onairTex = this.getTexture("prop-onair-sign/default");
+      if (onairTex) {
+        this.onairSprite = new PIXI.Sprite(onairTex);
+        this.onairSprite.position.set(4 * 16, 16 * 16);
+        this.stageContainer.addChild(this.onairSprite);
+      }
+    }
+    if (this.onairSprite) {
+      this.onairSprite.visible = chairOccupied;
+      this.onairSprite.alpha = 0.75 + Math.sin(now / 300) * 0.25;
     }
 
     // 3. Y-Sort all entities in ysortContainer
