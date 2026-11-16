@@ -1,0 +1,15 @@
+Phase 2 HTTP smoke — test port 4790 — 2026-11-16T03:22:02Z
+$ curl -s http://localhost:4790/healthz
+{"ok":true,"port":4790}$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/event -H 'content-type: application/json' -d '{"harness":"opencode","type":"housemate_summoned","housemateKey":"hm_bea","name":"Bea"}'
+204$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/event -H 'content-type: application/json' -d '{"harness":"opencode","type":"housemate_arrived","housemateKey":"hm_bea"}'
+204$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/event -H 'content-type: application/json' -d '{"harness":"opencode","type":"question_asked","housemateKey":"hm_bea","id":"q_bea_1","kind":"permission","text":"Pwede po mag-edit?"}'
+204$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/event -H 'content-type: application/json' -d '{"harness":"opencode","type":"question_asked","housemateKey":"hm_ben","id":"q_ben_1","kind":"choice","text":"Anong diskarte?","options":["Refactor","Patch"]}'
+204$ curl -s http://localhost:4790/state | jq -c '{sessions: [.sessions[] | {k: .sessionId, s: .state}], questions: [.questions[] | {id, status}]}'
+{"sessions":[{"k":"scan:6188","s":"idle"},{"k":"hm_bea","s":"in_confession"},{"k":"hm_ben","s":"queued_for_confession"}],"questions":[{"id":"q_bea_1","status":"in_confession"},{"id":"q_ben_1","status":"queued"}]}
+$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/api/confession/answer -H 'content-type: application/json' -H 'authorization: Bearer [REDACTED]' -d '{"questionId":"q_bea_1","option":0}'
+200$ curl -s http://localhost:4790/state | jq -c '{sessions: [.sessions[] | select(.sessionId=="hm_bea" or .sessionId=="hm_ben") | {k: .sessionId, s: .state}], questions: [.questions[] | {id, status}]}'
+{"sessions":[{"k":"hm_bea","s":"idle"},{"k":"hm_ben","s":"in_confession"}],"questions":[{"id":"q_ben_1","status":"in_confession"},{"id":"q_bea_1","status":"answered"}]}
+$ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:4790/event -H 'content-type: application/json' -d '{"harness":"opencode","type":"chat_message","housemateKey":"hm_bea","role":"kuya","text":"Kumusta?"}'
+204$ curl -s http://localhost:4790/state | jq -c '.chat'
+[{"sessionId":"hm_bea","role":"kuya","text":"Kumusta?","ts":1794799322871}]
+done

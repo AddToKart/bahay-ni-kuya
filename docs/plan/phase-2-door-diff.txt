@@ -1,0 +1,8 @@
+D1 front-door structure diff (before baseline regeneration)
+baseline: 990d961c8f3ea7f0
+structure-diff: 2 tile(s) differ from baseline 990d961c8f3ea7f0
+  walls (26,26): 11 -> 0
+  doors (26,26): 0 -> 21
+
+Approved: one opening in the south exterior wall at (26,26), aligned with the walk north through the game room to the hallway (28,15).
+Layer changes: walls (26,26) 11 -> 0; doors (26,26) 0 -> 21. No other tile changed.
