@@ -14,6 +14,33 @@ import {
 } from "./types";
 import { matchHarness, type ProcInfo } from "./scan";
 import { ConfessionQueue, MAX_QUESTION_TEXT } from "./questions";
+  type TokenUsage,
+  agent?: string;
+  model?: string;
+  cost?: number;
+  tokens?: TokenUsage;
+    if (typeof event.agent === "string" && event.agent) rec.agent = event.agent.slice(0, 80);
+    if (typeof event.model === "string" && event.model) rec.model = event.model.slice(0, 120);
+    if (typeof event.cost === "number" && Number.isFinite(event.cost)) rec.cost = event.cost;
+    if (event.tokens && typeof event.tokens === "object") rec.tokens = event.tokens;
+  /** Update live agent/model/cost/token metadata from the opencode event stream. */
+  updateSessionMeta(
+    harness: Harness,
+    sessionId: string,
+    meta: { agent?: string; model?: string; cost?: number; tokens?: TokenUsage },
+  ): void {
+    const rec = this.sessions.get(keyOf(harness, sessionId));
+    if (!rec) return;
+    if (meta.agent) rec.agent = meta.agent.slice(0, 80);
+    if (meta.model) rec.model = meta.model.slice(0, 120);
+    if (typeof meta.cost === "number" && Number.isFinite(meta.cost)) rec.cost = meta.cost;
+    if (meta.tokens) rec.tokens = meta.tokens;
+  }
+
+        agent: rec.agent,
+        model: rec.model,
+        cost: rec.cost,
+        tokens: rec.tokens,
 
 interface SessionRec {
   harness: Harness;

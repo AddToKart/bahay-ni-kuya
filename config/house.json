@@ -1,0 +1,7 @@
+{
+  "entrance": { "tileX": 26, "tileY": 26, "facing": "up", "hallwayApproachX": 26, "hallwayApproachY": 13 },
+  "housemateCap": 6,
+  "maxConcurrentTurns": 3,
+  "rateLimits": { "mutatingPerMinute": 10, "ingestPerSecond": 50 },
+  "audit": { "enabled": true }
+}

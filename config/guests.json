@@ -1,0 +1,9 @@
+{
+  "maxPerHost": 3,
+  "maxTotal": 8,
+  "maxDepth": 2,
+  "queueSpots": 4,
+  "minVisibleMs": 3000,
+  "timeLimitMs": 300000,
+  "denyHandling": "pending-D13"
+}

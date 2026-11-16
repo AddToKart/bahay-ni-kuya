@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { randomBytes } from "node:crypto";
+import runnersConfig from "../config/runners.json";
 
 let cachedToken: string | null = null;
 
@@ -65,14 +66,8 @@ export function isAuthenticated(req: Request): boolean {
 }
 
 export function getAllowlistedRoots(): string[] {
-  const roots = [process.cwd(), join(homedir(), "code"), homedir()];
-  // If parent folder of cwd exists, allow it (e.g. d:\code_ni_kurt)
-  try {
-    const parent = resolve(process.cwd(), "..");
-    if (existsSync(parent)) roots.push(parent);
-  } catch {
-    /* ignore */
-  }
+  const configured = (runnersConfig as { allowlistedRoots?: string[] }).allowlistedRoots ?? [];
+  const roots = configured.length > 0 ? configured : [process.cwd()];
   return roots.map((r) => r.replace(/\\/g, "/"));
 }
 

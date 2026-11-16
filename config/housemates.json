@@ -1,0 +1,16 @@
+[
+  {
+    "id": "example-frontend",
+    "name": "Bea",
+    "harness": "opencode",
+    "agent": "frontend-ui-engineer",
+    "model": "opencode/mimo-v2.6-flash-free",
+    "provider": "opencode",
+    "reasoning": null,
+    "persona": "Masipag na frontend engineer; laging may update sa dulo ng turn.",
+    "permissions": { "bash": "ask" },
+    "projectRoots": ["D:/code_ni_kurt"],
+    "sprite": "variant-1",
+    "maxConcurrentTasks": 1
+  }
+]

@@ -3,7 +3,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { Store } from "./store";
 import { checkInstalled, scanProcesses } from "./scan";
-import { startOpenCodeWatcher } from "./opencode-db";
 import { log, logTail } from "./log";
 import { INSTALLED_REFRESH_MS, SCAN_MS, HARNESSES, type IngestEvent } from "./types";
 import { mergeCodexHooks } from "../scripts/install-adapters";
@@ -16,6 +15,10 @@ import {
   getAllowlistedRoots,
 } from "./security";
 import { Dispatcher } from "./dispatcher";
+import { Housemates } from "./housemates";
+import { OpenCodeSupervisor } from "./opencode-supervisor";
+import { RateLimiter } from "./ratelimit";
+import { audit, auditTail } from "./audit";
 
 const PORT = Number(process.env.BAHAY_NI_KUYA_PORT ?? 4777);
 const HOST = process.env.BAHAY_NI_KUYA_HOST ?? "127.0.0.1";
@@ -98,6 +101,9 @@ function mapHermesPayload(value: unknown): IngestEvent[] {
 
 const store = new Store();
 const dispatcher = new Dispatcher(store);
+const supervisor = new OpenCodeSupervisor();
+const housemates = new Housemates(store, supervisor);
+const limiter = new RateLimiter();
 const clients = new Set<WsLike>();
 const transpiler = new Bun.Transpiler({ loader: "ts" });
 const jsCache = new Map<string, { mtime: number; js: string }>();
@@ -314,6 +320,166 @@ try {
           return jsonResponse({ roots: getAllowlistedRoots() });
         }
 
+        // Rate-limit every mutating control call (Rule 7).
+        if (req.method !== "GET") {
+          const gate = limiter.take(`${req.method} ${url.pathname}`);
+          if (!gate.ok) {
+            return new Response(JSON.stringify({ error: "rate limited" }), {
+              status: 429,
+              headers: {
+                "content-type": "application/json",
+                "retry-after": String(Math.max(1, Math.ceil(gate.retryAfterMs / 1000))),
+              },
+            });
+          }
+        }
+
+        // --- Phase 4: real opencode housemates ---
+        if (url.pathname === "/api/housemates" || url.pathname.startsWith("/api/housemates/")) {
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+          if (req.method === "GET" && url.pathname === "/api/housemates") {
+            return jsonResponse({ housemates: housemates.list(), cap: 6 });
+          }
+          if (req.method === "POST" && url.pathname === "/api/housemates") {
+            let body: Record<string, unknown>;
+            try {
+              body = (await req.json()) as Record<string, unknown>;
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const rawModel = body.model;
+            const model =
+              rawModel && typeof rawModel === "object"
+                ? {
+                    providerID: "providerID" in rawModel && typeof rawModel.providerID === "string" ? rawModel.providerID : "",
+                    modelID: "modelID" in rawModel && typeof rawModel.modelID === "string" ? rawModel.modelID : "",
+                    variant: "variant" in rawModel && typeof rawModel.variant === "string" ? rawModel.variant : undefined,
+                  }
+                : { providerID: "", modelID: "", variant: undefined };
+            const name = typeof body.name === "string" ? body.name : "";
+            const agent = typeof body.agent === "string" ? body.agent : "";
+            const projectRoot = typeof body.projectRoot === "string" ? body.projectRoot : process.cwd();
+            const permissions =
+              body.permissions && typeof body.permissions === "object"
+                ? Object.fromEntries(
+                    Object.entries(body.permissions).filter(
+                      (entry): entry is [string, "ask" | "allow" | "deny"] =>
+                        entry[1] === "ask" || entry[1] === "allow" || entry[1] === "deny",
+                    ),
+                  )
+                : undefined;
+            if (!name || !agent || !model.providerID || !model.modelID) {
+              return jsonResponse({ error: "name, agent and model {providerID,modelID} are required" }, 400);
+            }
+            try {
+              const result = await housemates.summon({
+                name,
+                agent,
+                model,
+                projectRoot,
+                permissions,
+                persona: typeof body.persona === "string" ? body.persona : undefined,
+              });
+              scheduleBroadcast();
+              return jsonResponse(result, 201);
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              return jsonResponse({ error: message }, /cap/i.test(message) ? 429 : 400);
+            }
+          }
+
+          const evictMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)$/);
+          if (req.method === "DELETE" && evictMatch) {
+            try {
+              const result = await housemates.evict(decodeURIComponent(evictMatch[1]));
+              scheduleBroadcast();
+              return jsonResponse({ ok: true, ...result });
+            } catch (err) {
+              return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+            }
+          }
+
+          const callMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/call$/);
+          if (req.method === "POST" && callMatch) {
+            let body: Record<string, unknown>;
+            try {
+              body = (await req.json()) as Record<string, unknown>;
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const message = typeof body.message === "string" ? body.message : "";
+            const when = body.when === "interrupt" ? "interrupt" : "after-turn";
+            if (!message) return jsonResponse({ error: "message required" }, 400);
+            try {
+              await housemates.call(decodeURIComponent(callMatch[1]), message, when);
+              scheduleBroadcast();
+              return new Response(null, { status: 202 });
+            } catch (err) {
+              return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+            }
+          }
+
+          const answerMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/answer$/);
+          if (req.method === "POST" && answerMatch) {
+            let body: Record<string, unknown>;
+            try {
+              body = (await req.json()) as Record<string, unknown>;
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const questionId = typeof body.questionId === "string" ? body.questionId : "";
+            if (!questionId) return jsonResponse({ error: "questionId required" }, 400);
+            const option = typeof body.option === "number" ? body.option : undefined;
+            const text = typeof body.text === "string" ? body.text : undefined;
+            const answered = await housemates.answer(questionId, { option, text });
+            if (answered) {
+              scheduleBroadcast();
+              return jsonResponse({ ok: true });
+            }
+            const fallback = store.answerQuestion(questionId, { option, text });
+            if (fallback.ok) {
+              scheduleBroadcast();
+              return jsonResponse({ ok: true });
+            }
+            return jsonResponse({ error: "unknown question" }, 400);
+          }
+
+          const usageMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/usage$/);
+          if (req.method === "GET" && usageMatch) {
+            return jsonResponse(housemates.getUsage(decodeURIComponent(usageMatch[1])));
+          }
+
+          return jsonResponse({ error: "not found" }, 404);
+        }
+
+        if (req.method === "GET" && url.pathname === "/api/opencode/agents") {
+          if (!isAuthenticated(req)) return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          try {
+            const client = await supervisor.ensure();
+            return jsonResponse({ agents: await client.agents() });
+          } catch (err) {
+            return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 502);
+          }
+        }
+
+        if (req.method === "GET" && url.pathname === "/api/opencode/models") {
+          if (!isAuthenticated(req)) return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          try {
+            const client = await supervisor.ensure();
+            return jsonResponse({ models: await client.models() });
+          } catch (err) {
+            return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 502);
+          }
+        }
+
+        if (req.method === "GET" && url.pathname === "/api/audit") {
+          if (!isAuthenticated(req)) return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          const limit = Number(url.searchParams.get("limit") ?? 100);
+          return jsonResponse({ lines: auditTail(Number.isFinite(limit) ? limit : 100) });
+        }
+
         // Dev layout editor save: furniture layers only, loopback + bearer token enforced.
         if (req.method === "POST" && url.pathname === "/api/layout/save") {
           if (!isAuthenticated(req)) return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
@@ -524,10 +690,10 @@ setInterval(() => {
 setInterval(() => void scanTick(), SCAN_MS);
 setInterval(() => void installedTick(), INSTALLED_REFRESH_MS);
 setInterval(() => broadcast(true), 10_000);
-startOpenCodeWatcher(store);
 
 process.on("SIGINT", () => {
   log("shutting down");
+  void housemates.stop();
   process.exit(0);
 });
 

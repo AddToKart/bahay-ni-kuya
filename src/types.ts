@@ -1,5 +1,22 @@
 export const HARNESSES = ["opencode", "codex", "pi", "omp", "hermes"] as const;
 export type Harness = (typeof HARNESSES)[number];
+export interface TokenUsage {
+  input: number;
+  output: number;
+  reasoning: number;
+  cache: { read: number; write: number };
+  total?: number;
+}
+
+  // real opencode metadata (Phase 4)
+  agent?: string;
+  model?: string;
+  cost?: number;
+  tokens?: TokenUsage;
+  agent?: string;
+  model?: string;
+  cost?: number;
+  tokens?: TokenUsage;
 
 export const IDLE_MS = 4_000;
 export const STALE_MS = 90_000;
