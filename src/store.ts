@@ -187,7 +187,7 @@ export class Store {
       rec.state = "working";
       rec.workingUntil = now + IDLE_MS;
     } else if (type === "task_completed") {
-      rec.state = "idle";
+      if (!this.questions.hasOpen(sessionId)) rec.state = "idle";
       rec.workingUntil = 0;
       rec.tool = undefined;
     } else if (type === "blocked") {

@@ -38,7 +38,7 @@ export class ConfessionQueue {
       housemateKey: input.housemateKey,
       kind: input.kind,
       text: input.text.slice(0, MAX_QUESTION_TEXT),
-      options: input.kind === "choice" ? (input.options ?? []).slice(0, MAX_OPTIONS) : undefined,
+      options: input.options && input.options.length > 0 ? input.options.slice(0, MAX_OPTIONS) : undefined,
       askedAt: input.now,
       status: "queued",
     };
@@ -49,6 +49,12 @@ export class ConfessionQueue {
       this.queue.push(question);
     }
     return question;
+  }
+
+  /** True when this session still has an unanswered question (active or queued). */
+  hasOpen(sessionId: string): boolean {
+    if (this.active && this.active.sessionId === sessionId && this.active.status !== "answered") return true;
+    return this.queue.some((q) => q.sessionId === sessionId);
   }
 
   /** Answer the active question (or a specific queued one). Returns the promoted question. */

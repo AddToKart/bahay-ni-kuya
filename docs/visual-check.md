@@ -85,3 +85,36 @@ Evidence: `docs/screenshots/phase-2/` (webp captures from the real page at 1280�
 - Diary panel: question text, option buttons, free text, queue count, ON AIR header, close.
 - Answering through the panel promotes the queued asker (verified by state and screenshot).
 - ON AIR sign appears only while the chair is occupied/called.
+
+---
+
+# Phase 4 — real opencode housemates
+
+Evidence: `docs/screenshots/phase-4/` (webp, 1440×1000 viewport, test port 4792):
+`after-summon`, `after-summon-2`, `after-permission`, `after-permission-allow`,
+`after-permission-answered`, `after-evict`.
+
+## Visible problems still present
+
+1. **Console control row is cramped at 1024 px.** Name, agent, model and Summon wrap onto one
+   line; folder, housemate select, Evict and Call wrap onto the next. The model select truncates
+   `opencode/mimo-v2.6-flash-free` to `opencode/mimo-v2.6-flash-free` (fits) but 281 options make
+   the native dropdown unusable. Fix: a styled summon dialog with searchable model list.
+2. **Summon/evict feedback uses browser alerts.** Functional, but it covers the scene; the diary
+   panel is the only styled interaction. Fix with the same overlay system.
+3. **No agent/model badge on the hover card.** The card still shows harness/state only; the data
+   is present in `/state`.
+4. **Housemate is hard to spot at 1× zoom in the living room.** The walk-in works, but the sprite
+   blends with the rug/sofa. Consider a temporary name tag during `arriving` and after summon.
+5. **Header head-count is confusing.** It reads `2 idle · 3 sleeping` with one real housemate
+   because it counts harness presences and the opencode scan; not a Phase 4 regression.
+6. **No real guest capture.** The guest visual is Phase 2 evidence only; Phase 4 did not create a
+   child session, so no new screenshot exists.
+
+## Passed
+
+- Summoned housemate appears in the house; `/state` reaches `idle` from a real session.
+- Diary panel shows `permission · hm_…`, the bash command, and **Allow once** / **Reject**.
+- Clicking **Allow once** completes the real bash tool (`output: "hi\n"`) and closes the panel.
+- Evict removes the session and keeps the worktree and branch.
+- ON AIR header, queue line and chat line render without overlap at 1440×1000.

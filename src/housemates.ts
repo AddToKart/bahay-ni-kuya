@@ -67,6 +67,7 @@ interface QuestionRoute {
   kind: "permission" | "question";
   requestId: string;
   sessionId: string;
+  directory: string;
   options?: string[];
 }
 
@@ -280,14 +281,14 @@ export class Housemates {
         : /no|hindi|reject|deny|huwag/.test(text)
           ? "reject"
           : "once";
-      ok = await client.replyPermission(route.requestId, reply);
+      ok = await client.replyPermission(route.requestId, reply, route.directory);
     } else {
       const labels = route.options ?? [];
       const value =
         typeof answer.option === "number" && labels[answer.option]
           ? labels[answer.option]
           : (answer.text ?? "");
-      ok = await client.replyQuestion(route.requestId, [[value]]);
+      ok = await client.replyQuestion(route.requestId, [[value]], route.directory);
     }
 
     if (ok) {
@@ -533,7 +534,12 @@ export class Housemates {
         if (!id || !key) break;
         const meta = p.metadata as { command?: string } | undefined;
         const text = meta?.command ? `Bash: ${meta.command}` : `Permission: ${String(p.permission ?? "request")}`;
-        this.questions.set(id, { kind: "permission", requestId: id, sessionId: sid });
+        this.questions.set(id, {
+          kind: "permission",
+          requestId: id,
+          sessionId: sid,
+          directory: this.recs.get(key)?.worktree ?? "",
+        });
         this.store.ingest({
           harness: HARNESS,
           type: "question_asked",
@@ -557,7 +563,13 @@ export class Housemates {
         const options = (first.options ?? [])
           .map((option) => option.label)
           .filter((label): label is string => typeof label === "string");
-        this.questions.set(id, { kind: "question", requestId: id, sessionId: sid, options });
+        this.questions.set(id, {
+          kind: "question",
+          requestId: id,
+          sessionId: sid,
+          directory: this.recs.get(key)?.worktree ?? "",
+          options,
+        });
         this.store.ingest({
           harness: HARNESS,
           type: "question_asked",

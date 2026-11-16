@@ -152,8 +152,8 @@ export class OpenCodeClient {
     return (await res.json()) === true;
   }
 
-  async replyPermission(requestId: string, reply: "once" | "always" | "reject"): Promise<boolean> {
-    const res = await fetch(this.url(`/permission/${requestId}/reply`), {
+  async replyPermission(requestId: string, reply: "once" | "always" | "reject", directory?: string): Promise<boolean> {
+    const res = await fetch(this.url(`/permission/${requestId}/reply`, directory), {
       method: "POST",
       headers: this.headers(true),
       body: JSON.stringify({ reply }),
@@ -161,8 +161,8 @@ export class OpenCodeClient {
     return res.ok;
   }
 
-  async replyQuestion(requestId: string, answers: string[][]): Promise<boolean> {
-    const res = await fetch(this.url(`/question/${requestId}/reply`), {
+  async replyQuestion(requestId: string, answers: string[][], directory?: string): Promise<boolean> {
+    const res = await fetch(this.url(`/question/${requestId}/reply`, directory), {
       method: "POST",
       headers: this.headers(true),
       body: JSON.stringify({ answers }),
