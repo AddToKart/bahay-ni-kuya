@@ -418,4 +418,108 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     await housemates.stop();
   });
+
+  it("orchestrates multi-builder relay when no verifier is present (Hans builds core -> Bea enhances UI/animations -> Completed for Kuya)", async () => {
+    const store = new Store();
+    let promptAsyncCalls: Array<{ sessionId: string; message: string }> = [];
+
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      promptAsync: async (sid: string, _dir: string, input: any) => {
+        promptAsyncCalls.push({ sessionId: sid, message: input.message });
+      },
+      messages: async () => [],
+    };
+
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+
+    const housemates = new Housemates(store, fakeSupervisor as any);
+
+    // Summon two creative builders: Hans (fullstack build) and Bea (frontend UI engineer)
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "frontend-ui-engineer",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    const task = await collab.startTask({
+      goal: "Build animated landing page and admin dashboard",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }],
+      maxAttempts: 3,
+    });
+
+    // 1. Verify NEITHER is forced to be a verifier
+    expect(task.members[0].isVerifier).toBe(false);
+    expect(task.members[1].isVerifier).toBe(false);
+    expect(task.status).toBe("running");
+    expect(task.currentStep).toBe("building");
+    expect(task.activeMemberKey).toBe(hm1.housemate.key);
+
+    // Hans starts working, Bea waits on standby for her relay turn
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
+
+    // Hans received the foundation prompt
+    expect(promptAsyncCalls.length).toBe(1);
+    expect(promptAsyncCalls[0].message).toContain("Hans");
+    expect(promptAsyncCalls[0].message).toContain("Bea [frontend-ui-engineer]) should build upon or style");
+
+    // 2. Hans completes the core structure
+    promptAsyncCalls = [];
+    const hansSummary = "Built index.html core layout, admin dashboard HTML skeleton, and basic CSS.";
+    const handledHans = await collab.handleSessionIdle(hm1.housemate.sessionId, hansSummary);
+    expect(handledHans).toBe(true);
+
+    // Hans transitions to standby, Bea transitions to working!
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("standby");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
+    expect(task.currentStep).toBe("building");
+    expect(task.activeMemberKey).toBe(hm2.housemate.key);
+
+    // Bea received the relay prompt passing Hans's work
+    expect(promptAsyncCalls.length).toBe(1);
+    expect(promptAsyncCalls[0].message).toContain("BUILDER RELAY - PREVIOUS WORK");
+    expect(promptAsyncCalls[0].message).toContain("Hans (build) completed their part");
+    expect(promptAsyncCalls[0].message).toContain(hansSummary);
+    expect(promptAsyncCalls[0].message).toContain("Instructions for Bea");
+
+    // 3. Bea completes the animations and UI styling
+    const beaSummary = "Added smooth CSS keyframe animations, responsive chart widgets, and glowing dashboard cards.";
+    const handledBea = await collab.handleSessionIdle(hm2.housemate.sessionId, beaSummary);
+    expect(handledBea).toBe(true);
+
+    // 4. Since NO tester was in the team, both builders finished! Task completes for Kuya's approval
+    expect(task.status).toBe("done");
+    expect(task.currentStep).toBe("done");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("idle");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("idle");
+    expect(collab.getActiveTask()).toBeNull();
+
+    const lastLog = task.log[task.log.length - 1];
+    expect(lastLog.text).toContain("ALL BUILDERS FINISHED");
+
+    await housemates.stop();
+  });
 });

@@ -121,11 +121,6 @@ export class CollabManager {
       });
     }
 
-    // Ensure at least one member acts as the verifier in the pipeline
-    if (!resolvedMembers.some((m) => m.isVerifier)) {
-      resolvedMembers[resolvedMembers.length - 1].isVerifier = true;
-    }
-
     // The primary builder is the first non-verifier (or the first member)
     const primaryBuilder = resolvedMembers.find((m) => !m.isVerifier) || resolvedMembers[0];
     const taskId = `collab_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
@@ -250,10 +245,27 @@ export class CollabManager {
       ].join("\n");
     } else {
       // Builder / Developer
-      const retryContext =
-        task.attempt > 1
-          ? `[BUG FIX ROUND ${task.attempt}/${task.maxAttempts}]\nThe verification agent found the following issues:\n${extraPrompt || task.lastHandoffReport}\n`
-          : "";
+      const builders = task.members.filter((m) => !m.isVerifier);
+      const isRelay = builders.length > 1 && builders[0].key !== member.key;
+      const priorBuilder = isRelay ? builders[builders.findIndex((m) => m.key === member.key) - 1] : null;
+
+      let builderContext = "";
+      if (task.attempt > 1) {
+        builderContext = `[BUG FIX ROUND ${task.attempt}/${task.maxAttempts}]\nThe verification agent found the following issues:\n${extraPrompt || task.lastHandoffReport}\n`;
+      } else if (isRelay && task.lastHandoffReport) {
+        builderContext = `[BUILDER RELAY - PREVIOUS WORK]\n${priorBuilder?.name || "Previous housemate"} (${priorBuilder?.agent || "builder"}) completed their part with this handoff summary:\n${task.lastHandoffReport}\n\nPlease build upon their work and contribute your specialized capabilities to complete the mission goal.\n`;
+      }
+
+      const nextBuilderIndex = builders.findIndex((m) => m.key === member.key) + 1;
+      const nextMember = nextBuilderIndex < builders.length
+        ? builders[nextBuilderIndex]
+        : task.members.find((m) => m.isVerifier);
+
+      const nextActionPrompt = nextMember
+        ? (nextMember.isVerifier
+            ? `- What the next housemate (${nextMember.name} [${nextMember.agent}]) should test or check.`
+            : `- What the next housemate (${nextMember.name} [${nextMember.agent}]) should build upon or style.`)
+        : `- Summary of completed work for Kuya's inspection.`;
 
       message = [
         `[KUYA'S LINGGUHANG HAMON - COLLABORATION TASK]`,
@@ -262,13 +274,13 @@ export class CollabManager {
         `Team Roster:`,
         teamList,
         ``,
-        retryContext,
+        builderContext,
         `Instructions for ${member.name}:`,
         `Use your '${member.agent}' agent capabilities in this repository to achieve the mission goal.`,
         `When complete, provide a concise handoff summary describing:`,
         `- What files you modified or created.`,
-        `- What features or fixes were implemented.`,
-        `- What the next housemate (${task.members.find((m) => m.isVerifier)?.name || "verifier"}) should test or check.`,
+        `- What features, styling, or fixes were implemented.`,
+        nextActionPrompt,
       ].join("\n");
     }
 
@@ -309,41 +321,110 @@ export class CollabManager {
     }
     task.log.push({ agent: activeMember.agent, name: activeMember.name, text: reply, ts: Date.now() });
 
-    // Step 1: Was active member a Builder? -> Handoff to Verifier
+    // Step 1: Was active member a Builder?
     if (!activeMember.isVerifier) {
       task.lastHandoffReport = reply;
-      const verifier = task.members.find((m) => m.isVerifier) || task.members[task.members.length - 1];
+      const builders = task.members.filter((m) => !m.isVerifier);
+      const currentIndex = builders.findIndex((m) => m.key === activeMember.key);
+      const nextBuilder = currentIndex >= 0 && currentIndex < builders.length - 1 ? builders[currentIndex + 1] : null;
+      const verifier = task.members.find((m) => m.isVerifier);
 
-      const handoffText = `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
-      this.announce(handoffText);
-      task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF: ${handoffText}`, ts: Date.now() });
+      // Case 1A: There is another builder in the relay chain!
+      if (nextBuilder) {
+        const handoffText = `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${nextBuilder.name} (${nextBuilder.agent}) para magpatuloy at mag-enhance!`;
+        this.announce(handoffText);
+        task.log.push({ agent: "kuya", name: "Kuya", text: `📢 BUILDER RELAY: ${handoffText}`, ts: Date.now() });
 
-      // Switch active member to verifier
-      activeMember.state = "standby";
-      if (rec) rec.state = "standby";
-      this.store.ingest({
-        harness: "opencode",
-        sessionId: activeMember.sessionId,
-        type: "collab_step",
-        state: "standby",
-        title: `[Hamon] ${activeMember.name} (${activeMember.agent}) Standby`,
+        activeMember.state = "standby";
+        if (rec) rec.state = "standby";
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: activeMember.sessionId,
+          type: "collab_step",
+          state: "standby",
+          title: `[Hamon] ${activeMember.name} (${activeMember.agent}) Standby`,
+        });
+
+        nextBuilder.state = "working";
+        const nextRec = this.housemates.get(nextBuilder.key);
+        if (nextRec) nextRec.state = "working";
+        task.activeMemberKey = nextBuilder.key;
+        task.currentStep = "building";
+
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: nextBuilder.sessionId,
+          type: "collab_step",
+          state: "working",
+          title: `[Hamon] ${nextBuilder.name} (${nextBuilder.agent}) Building`,
+        });
+
+        await this.promptActiveMember(task, nextBuilder);
+        return true;
+      }
+
+      // Case 1B: Last builder finished, and a VERIFIER exists in the team!
+      if (verifier) {
+        const handoffText = `Natapos na ng mga builder ang kanilang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
+        this.announce(handoffText);
+        task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF TO VERIFIER: ${handoffText}`, ts: Date.now() });
+
+        activeMember.state = "standby";
+        if (rec) rec.state = "standby";
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: activeMember.sessionId,
+          type: "collab_step",
+          state: "standby",
+          title: `[Hamon] ${activeMember.name} (${activeMember.agent}) Standby`,
+        });
+
+        verifier.state = "working";
+        const verifierRec = this.housemates.get(verifier.key);
+        if (verifierRec) verifierRec.state = "working";
+        task.activeMemberKey = verifier.key;
+        task.currentStep = "verifying";
+
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: verifier.sessionId,
+          type: "collab_step",
+          state: "working",
+          title: `[Hamon] ${verifier.name} (${verifier.agent}) Verification`,
+        });
+
+        await this.promptActiveMember(task, verifier);
+        return true;
+      }
+
+      // Case 1C: Last builder finished, and NO verifier was summoned!
+      // All builders have contributed. Complete task and await Kuya's inspection/approval.
+      task.status = "done";
+      task.completedAt = Date.now();
+      task.currentStep = "done";
+      this.activeTaskId = null;
+
+      for (const m of task.members) {
+        m.state = "done";
+        const mRec = this.housemates.get(m.key);
+        if (mRec) mRec.state = "idle";
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: m.sessionId,
+          type: "collab_completed",
+          state: "idle",
+        });
+      }
+
+      const finishMsg = `Natapos ng lahat ng builders ang kanilang bahagi sa Lingguhang Hamon "${task.goal.slice(0, 40)}"! Handa na para sa pagsusuri at final approval ni Kuya. 🎉`;
+      this.announce(finishMsg);
+      task.log.push({
+        agent: "kuya",
+        name: "Kuya",
+        text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Maaaring mag-follow up si Kuya para sa karagdagang utos, o i-click ang Approve & Mark Done upang tapusin.)`,
+        ts: Date.now(),
       });
-
-      verifier.state = "working";
-      const verifierRec = this.housemates.get(verifier.key);
-      if (verifierRec) verifierRec.state = "working";
-      task.activeMemberKey = verifier.key;
-      task.currentStep = "verifying";
-
-      this.store.ingest({
-        harness: "opencode",
-        sessionId: verifier.sessionId,
-        type: "collab_step",
-        state: "working",
-        title: `[Hamon] ${verifier.name} (${verifier.agent}) Verification`,
-      });
-
-      await this.promptActiveMember(task, verifier);
+      audit("kuya", "collab_builders_done", task.id, { goal: task.goal });
       return true;
     }
 
