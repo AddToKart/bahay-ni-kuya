@@ -24,6 +24,10 @@ export class KuyaConsole {
   private submitBtn: HTMLButtonElement | null = null;
   private tasksListEl: HTMLElement | null = null;
   private authStatusEl: HTMLElement | null = null;
+  private agentSelect: HTMLSelectElement | null = null;
+  private modelSelect: HTMLSelectElement | null = null;
+  private folderInput: HTMLInputElement | null = null;
+  private housemateSelect: HTMLSelectElement | null = null;
 
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
@@ -32,6 +36,10 @@ export class KuyaConsole {
     this.submitBtn = document.getElementById("btn-submit-task") as HTMLButtonElement | null;
     this.tasksListEl = document.getElementById("tasks-list");
     this.authStatusEl = document.getElementById("auth-status");
+    this.agentSelect = document.getElementById("summon-agent") as HTMLSelectElement | null;
+    this.modelSelect = document.getElementById("summon-model") as HTMLSelectElement | null;
+    this.folderInput = document.getElementById("summon-folder") as HTMLInputElement | null;
+    this.housemateSelect = document.getElementById("housemate-key") as HTMLSelectElement | null;
 
     // Fetch same-origin token (never in query params)
     await this.fetchToken();
@@ -46,62 +54,156 @@ export class KuyaConsole {
     const callBtn = document.getElementById("btn-call") as HTMLButtonElement | null;
     const summonName = document.getElementById("summon-name") as HTMLInputElement | null;
 
-    summonBtn?.addEventListener("click", () => {
-      const name = summonName?.value.trim();
-      if (!name) return alert("Enter a housemate key first (e.g. bea).");
-      void this.simulateSummon(name);
-    });
-    evictBtn?.addEventListener("click", () => {
-      const name = summonName?.value.trim();
-      if (!name) return alert("Enter the housemate key to evict.");
-      if (!confirm(`Evict ${name}? The worktree and branch are kept.`)) return;
-      void this.simulateEvict(name);
-    });
-    callBtn?.addEventListener("click", () => {
-      const name = summonName?.value.trim();
-      if (!name) return alert("Enter the housemate key to call.");
-      void this.simulateCall(name);
+    summonBtn?.addEventListener("click", () => void this.summonHousemate());
+    evictBtn?.addEventListener("click", () => void this.evictHousemate());
+    callBtn?.addEventListener("click", () => void this.callHousemate());
+    summonName?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") void this.summonHousemate();
     });
 
+    void this.loadOpenCodeOptions();
+    void this.refreshHousemates();
+    setInterval(() => void this.refreshHousemates(), 5000);
     this.refreshTasks();
     setInterval(() => this.refreshTasks(), 2500);
   }
 
-  /** Demo-only Phase 2 simulation (P4 replaces these with real control endpoints). */
-  private async simulate(payload: Record<string, unknown>): Promise<void> {
+  private async api(path: string, init: RequestInit = {}): Promise<Response> {
     if (!this.token) await this.fetchToken();
-    if (!this.token) return alert("Authentication token not available.");
+    if (!this.token) throw new Error("Authentication token not available.");
+    const headers = new Headers(init.headers);
+    headers.set("authorization", `Bearer ${this.token}`);
+    return fetch(path, { ...init, headers });
+  }
+
+  private async loadOpenCodeOptions(): Promise<void> {
+    if (!this.agentSelect || !this.modelSelect) return;
     try {
-      const res = await fetch("/api/simulate", {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        alert(`Simulate failed: ${err.error ?? res.statusText}`);
+      const [agentsRes, modelsRes] = await Promise.all([
+        this.api("/api/opencode/agents"),
+        this.api("/api/opencode/models"),
+      ]);
+      if (agentsRes.ok) {
+        const agents = (await agentsRes.json()) as { agents?: { name: string }[] };
+        this.agentSelect.innerHTML = "";
+        for (const agent of agents.agents ?? []) {
+          const opt = document.createElement("option");
+          opt.value = agent.name;
+          opt.textContent = agent.name;
+          this.agentSelect.appendChild(opt);
+        }
+        if (this.agentSelect.querySelector('option[value="build"]')) this.agentSelect.value = "build";
       }
-    } catch (error) {
-      alert(`Simulate error: ${error instanceof Error ? error.message : String(error)}`);
+      if (modelsRes.ok) {
+        const models = (await modelsRes.json()) as { models?: { providerID: string; modelID: string }[] };
+        this.modelSelect.innerHTML = "";
+        for (const model of models.models ?? []) {
+          const opt = document.createElement("option");
+          opt.value = `${model.providerID}/${model.modelID}`;
+          opt.textContent = `${model.providerID}/${model.modelID}`;
+          this.modelSelect.appendChild(opt);
+        }
+        const preferred = Array.from(this.modelSelect.options).find((o) => o.value.includes("flash-free"));
+        if (preferred) this.modelSelect.value = preferred.value;
+      }
+    } catch {
+      /* the summon action explains a missing agent/model list */
     }
   }
 
-  private async simulateSummon(name: string): Promise<void> {
-    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    await this.simulate({ type: "housemate_summoned", housemateKey, name, harness: "opencode" });
-    // Arrival is a walking animation; give it time, then mark the housemate arrived.
-    setTimeout(() => void this.simulate({ type: "housemate_arrived", housemateKey, harness: "opencode" }), 9000);
+  private async summonHousemate(): Promise<void> {
+    const name = (document.getElementById("summon-name") as HTMLInputElement | null)?.value.trim() ?? "";
+    if (!name) return alert("Enter a name for the housemate.");
+    const agent = this.agentSelect?.value ?? "";
+    if (!agent) return alert("No opencode agent available. Check the managed opencode server.");
+    const model = this.modelSelect?.value ?? "";
+    const [providerID, modelID] = model.split("/");
+    if (!providerID || !modelID) return alert("Pick a model.");
+    const projectRoot = this.folderInput?.value.trim() || "";
+    try {
+      const res = await this.api("/api/housemates", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name,
+          agent,
+          model: { providerID, modelID },
+          projectRoot,
+          permissions: { bash: "ask" },
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; housemate?: { key: string } };
+      if (!res.ok) return alert(`Summon failed: ${data.error ?? res.statusText}`);
+      alert(`Summoned ${name} (${data.housemate?.key ?? "?"}). They walk in shortly.`);
+      if (this.folderInput) this.folderInput.value = "";
+      await this.refreshHousemates();
+    } catch (error) {
+      alert(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
-  private async simulateEvict(name: string): Promise<void> {
-    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    await this.simulate({ type: "housemate_evict_started", housemateKey, harness: "opencode", reason: "kuya_evict" });
-    setTimeout(() => void this.simulate({ type: "housemate_evicted", housemateKey, harness: "opencode" }), 5000);
+  private async evictHousemate(): Promise<void> {
+    const key = this.housemateSelect?.value ?? "";
+    if (!key) return alert("Select a housemate first.");
+    if (!confirm(`Evict ${key}? The worktree and branch are kept.`)) return;
+    try {
+      const res = await this.api(`/api/housemates/${encodeURIComponent(key)}`, { method: "DELETE" });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        worktree?: string;
+        branch?: string;
+        diffStat?: string;
+      };
+      if (!res.ok) return alert(`Evict failed: ${data.error ?? res.statusText}`);
+      const detail = `Worktree kept at ${data.worktree ?? "?"} (branch ${data.branch ?? "?"}).`;
+      alert(data.diffStat ? `Evicted. ${detail}\n${data.diffStat}` : `Evicted. ${detail}`);
+      await this.refreshHousemates();
+    } catch (error) {
+      alert(`Evict error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
-  private async simulateCall(name: string): Promise<void> {
-    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    await this.simulate({ type: "kuya_call", housemateKey, harness: "opencode" });
+  private async callHousemate(): Promise<void> {
+    const key = this.housemateSelect?.value ?? "";
+    if (!key) return alert("Select a housemate first.");
+    const message = window.prompt("What should Kuya ask?", "Kumusta! Quick check-in.");
+    if (!message?.trim()) return;
+    try {
+      const res = await this.api(`/api/housemates/${encodeURIComponent(key)}/call`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: message.trim(), when: "interrupt" }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return alert(`Call failed: ${data.error ?? res.statusText}`);
+      await this.refreshHousemates();
+    } catch (error) {
+      alert(`Call error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async refreshHousemates(): Promise<void> {
+    if (!this.housemateSelect) return;
+    try {
+      const res = await this.api("/state");
+      if (!res.ok) return;
+      const state = (await res.json()) as {
+        sessions?: { sessionId: string; harness: string; state: string; housemateKey?: string }[];
+      };
+      const current = this.housemateSelect.value;
+      const rows = (state.sessions ?? []).filter((s) => s.harness === "opencode" && s.housemateKey);
+      this.housemateSelect.innerHTML = `<option value="">Select housemate...</option>`;
+      for (const row of rows) {
+        const opt = document.createElement("option");
+        opt.value = row.housemateKey!;
+        opt.textContent = `${row.housemateKey} (${row.state})`;
+        if (row.housemateKey === current) opt.selected = true;
+        this.housemateSelect.appendChild(opt);
+      }
+      if (this.agentSelect && this.agentSelect.options.length === 0) void this.loadOpenCodeOptions();
+    } catch {
+      /* state unavailable */
+    }
   }
 
   private async fetchToken(): Promise<void> {

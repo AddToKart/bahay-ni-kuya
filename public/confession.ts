@@ -111,7 +111,7 @@ export class DiaryRoom {
     this.questionEl.textContent = question.text;
     this.optionsEl.innerHTML = "";
 
-    if (question.kind === "choice" && question.options && question.options.length > 0) {
+    if (question.options && question.options.length > 0) {
       question.options.forEach((label, index) => {
         const button = document.createElement("button");
         button.className = "diary-option";
@@ -149,10 +149,24 @@ export class DiaryRoom {
     if (!this.token) await this.fetchToken();
     if (!this.token) return;
     try {
-      const res = await fetch("/api/confession/answer", {
+      const isReal = Boolean(question.housemateKey);
+      const url = isReal ? `/api/housemates/${encodeURIComponent(question.housemateKey!)}/answer` : "/api/confession/answer";
+      const payload = isReal
+        ? {
+            questionId: question.id,
+            text:
+              answer.text ??
+              (question.kind === "permission"
+                ? answer.option === 0
+                  ? "once"
+                  : "reject"
+                : (question.options?.[answer.option ?? -1] ?? "")),
+          }
+        : { questionId: question.id, ...answer };
+      const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
-        body: JSON.stringify({ questionId: question.id, ...answer }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };

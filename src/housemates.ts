@@ -134,7 +134,7 @@ export class Housemates {
     if (!agent) throw new Error("agent required");
     if (!input.model?.modelID || !input.model.providerID) throw new Error("model required");
 
-    const cwd = validateCwd(input.projectRoot);
+    const cwd = validateCwd(input.projectRoot?.trim() ? input.projectRoot : process.cwd());
     if (!cwd.ok || !cwd.path) throw new Error(cwd.error ?? "project root is not allowlisted");
 
     const client = await this.start();
@@ -542,6 +542,7 @@ export class Housemates {
           id,
           kind: "permission",
           text: text.slice(0, 400),
+          options: ["Allow once", "Reject"],
         });
         break;
       }

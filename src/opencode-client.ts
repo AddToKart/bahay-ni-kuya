@@ -225,7 +225,7 @@ export class OpenCodeClient {
     let backoff = 1000;
     while (!signal.aborted) {
       try {
-        const res = await fetch(this.url("/event"), { headers: this.headers(), signal });
+        const res = await fetch(`${this.baseUrl}/global/event`, { headers: this.headers(), signal });
         if (!res.ok || !res.body) throw new Error(`event stream HTTP ${res.status}`);
         backoff = 1000;
         const reader = res.body.getReader();
@@ -241,7 +241,12 @@ export class OpenCodeClient {
             const dataLine = chunk.split("\n").find((line) => line.startsWith("data: "));
             if (!dataLine) continue;
             try {
-              onEvent(JSON.parse(dataLine.slice(6)) as OpenCodeEvent);
+              const parsed = JSON.parse(dataLine.slice(6)) as {
+                payload?: OpenCodeEvent;
+                type?: string;
+              };
+              const event = parsed.payload && typeof parsed.payload.type === "string" ? parsed.payload : (parsed as OpenCodeEvent);
+              onEvent(event);
             } catch {
               /* malformed event: ignore */
             }
