@@ -173,8 +173,12 @@
             <input id="summon-worktree" type="checkbox" checked />
             <span>Isolate in git worktree (uncheck to run directly in folder)</span>
           </label>
+          <label class="summon-checkbox">
+            <input id="summon-auto-approve" type="checkbox" checked />
+            <span>Auto-approve tool permissions (bash, edits, tools)</span>
+          </label>
           <p class="summon-note" id="summon-note">
-            Runs in a git worktree; your main tree is untouched. Permissions: bash asks first.
+            Runs in a git worktree; your main tree is untouched. Auto-approval enabled.
           </p>
           <p class="summon-error" id="summon-error" hidden></p>
           <div class="summon-actions">

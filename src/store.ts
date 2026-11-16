@@ -183,31 +183,45 @@ export class Store {
     if (event.houseId) rec.houseId = clip(event.houseId, 80);
 
     if (type === "session_start" || type === "subagent_started") {
-      rec.state = event.state ?? (rec.parentId ? "working" : "idle");
-      rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = event.state ?? (rec.parentId ? "working" : "idle");
+        rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+      }
     } else if (type === "task_started") {
-      rec.state = "working";
-      rec.workingUntil = now + IDLE_MS;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = "working";
+        rec.workingUntil = now + IDLE_MS;
+      }
     } else if (type === "task_completed") {
-      if (!this.questions.hasOpen(sessionId)) rec.state = "idle";
-      rec.workingUntil = 0;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        if (!this.questions.hasOpen(sessionId)) rec.state = "idle";
+        rec.workingUntil = 0;
+      }
       rec.tool = undefined;
     } else if (type === "blocked") {
-      rec.state = "blocked";
-      rec.workingUntil = now + 60_000;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = "blocked";
+        rec.workingUntil = now + 60_000;
+      }
     } else if (type === "error") {
-      rec.state = "error";
       rec.errorCount = (rec.errorCount || 0) + 1;
       if (rec.errorCount >= 3) rec.nominated = true;
-      rec.workingUntil = now + IDLE_MS;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = "error";
+        rec.workingUntil = now + IDLE_MS;
+      }
     } else if (type === "state") {
-      rec.state = event.state ?? "idle";
-      rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = event.state ?? "idle";
+        rec.workingUntil = rec.state === "working" ? now + IDLE_MS : 0;
+      }
     } else if (type === "tool") {
       const tool = clip(event.tool, 60);
       if (tool) rec.tool = tool;
-      rec.state = "working";
-      rec.workingUntil = now + IDLE_MS;
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = "working";
+        rec.workingUntil = now + IDLE_MS;
+      }
     } else if (type === "housemate_summoned") {
       rec.state = "arriving";
       rec.workingUntil = HOLD;
@@ -248,14 +262,25 @@ export class Store {
         options: event.options,
         now,
       });
-      rec.state = question.status === "in_confession" ? "in_confession" : "queued_for_confession";
+      if (rec.state !== "called") {
+        rec.state = question.status === "in_confession" ? "in_confession" : "queued_for_confession";
+      }
       rec.workingUntil = HOLD;
     } else if (type === "chat_message") {
       const text = clip(event.text, 400);
       const role = event.role === "kuya" ? "kuya" : "housemate";
       if (text) {
         const last = this.chat[this.chat.length - 1];
-        if (last && last.sessionId === sessionId && last.role === role && last.text === text && now - last.ts < 5000) {
+        if (last && last.sessionId === sessionId && last.role === role) {
+          if (last.text === text) return { ok: true };
+          if (text.startsWith(last.text) && now - last.ts < 10000) {
+            last.text = text;
+            last.ts = now;
+            return { ok: true };
+          }
+        }
+        // Do not allow housemate to repeat the immediately preceding Kuya message
+        if (role === "housemate" && last && last.sessionId === sessionId && last.role === "kuya" && last.text.trim() === text.trim()) {
           return { ok: true };
         }
         this.chat.push({ sessionId, role, text, ts: now });
@@ -283,7 +308,13 @@ export class Store {
   ): { ok: boolean; reason?: string; promoted?: QuestionView } {
     const result = this.questions.answer(id, answer, Date.now());
     if (!result.ok) return { ok: false, reason: `unknown or already answered question: ${id}` };
-    this.applyQuestionState(result.question!, "idle");
+    const q = result.question!;
+    const sessRec = this.sessions.get(keyOf(q.harness as Harness, q.sessionId));
+    if (sessRec && sessRec.state === "called") {
+      sessRec.workingUntil = HOLD;
+    } else {
+      this.applyQuestionState(q, "idle");
+    }
     if (result.promoted) this.applyQuestionState(result.promoted, "in_confession");
     return { ok: true, promoted: result.promoted ?? undefined };
   }

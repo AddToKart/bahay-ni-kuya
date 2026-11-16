@@ -61,6 +61,15 @@ export class DiaryRoom {
         void this.submit();
       }
     });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.visible) {
+        if (this.chatMode) {
+          void this.dismiss();
+        } else {
+          this.hide();
+        }
+      }
+    });
     this.pollTimer = setInterval(() => void this.poll(), POLL_MS);
     await this.poll();
   }
@@ -193,9 +202,22 @@ export class DiaryRoom {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
-      if (this.textEl) this.textEl.value = "";
-      this.chatMode = false;
-      this.hide();
+      if (this.currentHousemateKey) {
+        this.chatMode = true;
+        if (this.questionEl) this.questionEl.textContent = "Kausap si Kuya sa Confession Room…";
+        if (this.optionsEl) this.optionsEl.innerHTML = "";
+        if (this.doneEl) this.doneEl.style.display = "inline-block";
+        if (this.textEl) {
+          this.textEl.style.display = "block";
+          this.textEl.value = "";
+        }
+        if (this.submitEl) this.submitEl.style.display = "inline-block";
+        this.renderChat(this.currentSessionId);
+      } else {
+        if (this.textEl) this.textEl.value = "";
+        this.chatMode = false;
+        this.hide();
+      }
       await this.poll();
     } catch (error) {
       if (this.queueEl) {
@@ -228,6 +250,9 @@ export class DiaryRoom {
 
   /** Open the panel in chat mode for a Kuya call. */
   openChat(sessionId: string, housemateKey?: string, title?: string): void {
+    if (this.visible && this.chatMode && this.currentSessionId === sessionId) {
+      return;
+    }
     this.chatMode = true;
     this.currentSessionId = sessionId;
     if (housemateKey) this.currentHousemateKey = housemateKey;

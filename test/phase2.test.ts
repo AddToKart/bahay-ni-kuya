@@ -216,4 +216,80 @@ describe("Phase 2 — PBB states and events", () => {
     expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
     await housemates.stop();
   });
+
+  it("keeps housemate in called state during tools and task updates, and does not echo user question", async () => {
+    const store = new Store();
+    let repliedPermission: string | null = null;
+    const fakeClient = {
+      createSession: async () => ({
+        id: "mock_session_tool_call",
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      prompt: async (_sid: string, _dir: string, input: any) => {
+        // Opencode real behavior: returns the user message object
+        return {
+          id: "msg_user_1",
+          role: "user",
+          parts: [{ type: "text", text: input.message }],
+        };
+      },
+      replyPermission: async (_id: string, reply: string) => {
+        repliedPermission = reply;
+        return true;
+      },
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const result = await housemates.summon({
+      name: "StaySeated",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+      autoApprove: true,
+    });
+    const key = result.housemate.key;
+
+    // Kuya calls housemate
+    await housemates.call(key, "what model are you?", "interrupt");
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("called");
+
+    // Wait for prompt resolution
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Ensure the housemate did NOT repeat Kuya's question
+    const snap = store.snapshot(Date.now());
+    const housemateEchoes = snap.chat.filter((c) => c.role === "housemate" && c.text === "what model are you?");
+    expect(housemateEchoes.length).toBe(0);
+
+    // Agent executes a tool
+    store.ingest({ harness: "opencode", sessionId: "mock_session_tool_call", type: "tool", tool: "bash" });
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("called");
+
+    // Agent receives permission.asked with autoApprove=true
+    (housemates as any).onEvent({
+      type: "permission.asked",
+      properties: {
+        id: "perm_123",
+        sessionID: "mock_session_tool_call",
+        permission: "bash",
+        metadata: { command: "dir" },
+      },
+    });
+    expect(repliedPermission).toBe("always");
+    expect(store.snapshot(Date.now()).questions.length).toBe(0);
+
+    // Housemate remains called until explicit dismiss
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("called");
+    await housemates.dismissCall(key);
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
+    await housemates.stop();
+  });
 });

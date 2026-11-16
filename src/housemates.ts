@@ -32,6 +32,7 @@ export interface SummonInput {
   permissions?: Record<string, "ask" | "allow" | "deny">;
   houseId?: string;
   useWorktree?: boolean;
+  autoApprove?: boolean;
 }
 
 export interface HousemateRec {
@@ -52,6 +53,8 @@ export interface HousemateRec {
   cost: number;
   tokens?: TokenUsage;
   createdAt: number;
+  autoApprove?: boolean;
+  permissions?: Record<string, "ask" | "allow" | "deny">;
 }
 
 export interface SummonResult {
@@ -85,6 +88,8 @@ const modelString = (session: OpenCodeSession): string | undefined => {
   if (!m) return undefined;
   return `${m.providerID}/${m.id}${m.variant ? `@${m.variant}` : ""}`;
 };
+
+const HOLD = Number.MAX_SAFE_INTEGER;
 
 export class Housemates {
   private recs = new Map<string, HousemateRec>();
@@ -149,6 +154,15 @@ export class Housemates {
     }
     const directory = created.worktree ?? cwd.path;
 
+    const autoApprove =
+      input.autoApprove ??
+      (input.permissions?.bash === "allow" || input.permissions?.["*"] === "allow" || true);
+    const permissions: Record<string, "ask" | "allow" | "deny"> =
+      input.permissions ??
+      (autoApprove
+        ? { "*": "allow", bash: "allow", edit: "allow", read: "allow", glob: "allow" }
+        : { bash: "ask", edit: "ask" });
+
     const session = await client.createSession({
       directory,
       title: name,
@@ -158,15 +172,11 @@ export class Housemates {
         providerID: input.model.providerID,
         ...(input.model.variant ? { variant: input.model.variant } : {}),
       },
-      ...(input.permissions
-        ? {
-            permission: Object.entries(input.permissions).map(([permission, action]) => ({
-              permission,
-              pattern: "*",
-              action,
-            })),
-          }
-        : {}),
+      permission: Object.entries(permissions).map(([permission, action]) => ({
+        permission,
+        pattern: "*",
+        action,
+      })),
     });
 
     const rec: HousemateRec = {
@@ -187,6 +197,8 @@ export class Housemates {
       cost: session.cost ?? 0,
       tokens: session.tokens,
       createdAt: Date.now(),
+      autoApprove,
+      permissions,
     };
     this.recs.set(key, rec);
     this.sessionToKey.set(session.id, key);
@@ -204,8 +216,10 @@ export class Housemates {
     });
 
     const timer = setTimeout(() => {
-      rec.state = "idle";
-      this.store.ingest({ harness: HARNESS, type: "housemate_arrived", sessionId: session.id, housemateKey: key });
+      if (rec.state !== "called" && !this.callActive.has(key)) {
+        rec.state = "idle";
+        this.store.ingest({ harness: HARNESS, type: "housemate_arrived", sessionId: session.id, housemateKey: key });
+      }
       this.arrivedTimers.delete(key);
     }, 8000);
     this.arrivedTimers.set(key, timer);
@@ -339,7 +353,7 @@ export class Housemates {
   private async sendMessage(rec: HousemateRec, text: string): Promise<void> {
     const client = this.supervisor.client;
     if (!client) throw new Error("opencode server not ready");
-    this.callActive.set(rec.key, Date.now() + 600_000);
+    this.callActive.set(rec.key, HOLD);
     rec.state = "called";
     this.store.ingest({ harness: HARNESS, type: "kuya_call", sessionId: rec.sessionId, housemateKey: rec.key });
     this.store.ingest({
@@ -371,6 +385,10 @@ export class Housemates {
             }
           } else if (typeof resObj.text === "string") {
             replyText = resObj.text;
+          }
+          // Do not ingest if it's the echoed user prompt (opencode returns the created user message)
+          if (resObj.role === "user" || replyText.trim() === text.trim()) {
+            return;
           }
           if (replyText.trim()) {
             this.store.ingest({
@@ -563,15 +581,19 @@ export class Housemates {
         break;
       }
       case "message.part.updated": {
-        const part = p.part as { type?: string; tool?: string; text?: string } | undefined;
+        const part = p.part as { type?: string; tool?: string; text?: string; role?: string } | undefined;
+        const msg = p.message as { role?: string } | undefined;
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         if (!part || !sid) break;
+        const partRole = (part as any)?.role ?? msg?.role;
+        if (partRole === "user") break;
+
         if (part.type === "tool" && part.tool) {
           this.store.ingest({ harness: HARNESS, type: "tool", sessionId: sid, tool: part.tool });
         } else if (part.type === "text" && part.text) {
           const key = this.sessionToKey.get(sid);
           const activeUntil = key ? (this.callActive.get(key) ?? 0) : 0;
-          if (key && Date.now() < activeUntil) {
+          if (key && (Date.now() < activeUntil || this.recs.get(key)?.state === "called")) {
             this.store.ingest({
               harness: HARNESS,
               type: "chat_message",
@@ -588,13 +610,21 @@ export class Housemates {
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         const key = this.sessionToKey.get(sid);
         if (!id || !key) break;
+        const rec = this.recs.get(key);
+        if (rec && (rec.autoApprove || rec.permissions?.bash === "allow" || rec.permissions?.["*"] === "allow")) {
+          const client = this.supervisor.client;
+          if (client) {
+            void client.replyPermission(id, "always", rec.directory).catch(() => {});
+            break;
+          }
+        }
         const meta = p.metadata as { command?: string } | undefined;
         const text = meta?.command ? `Bash: ${meta.command}` : `Permission: ${String(p.permission ?? "request")}`;
         this.questions.set(id, {
           kind: "permission",
           requestId: id,
           sessionId: sid,
-          directory: this.recs.get(key)?.directory ?? "",
+          directory: rec?.directory ?? "",
         });
         this.store.ingest({
           harness: HARNESS,

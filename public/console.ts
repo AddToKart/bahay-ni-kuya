@@ -476,12 +476,17 @@ export class KuyaConsole {
       void this.loadOpenCodeOptions();
     }
     const worktreeToggle = document.getElementById("summon-worktree") as HTMLInputElement | null;
+    const autoApproveToggle = document.getElementById("summon-auto-approve") as HTMLInputElement | null;
     const noteEl = document.getElementById("summon-note");
     const updateNote = () => {
       if (noteEl) {
-        noteEl.textContent = worktreeToggle?.checked
-          ? "Runs in a git worktree; your main tree is untouched. Permissions: bash asks first."
-          : "Runs directly in the selected project folder (no worktree isolation). Permissions: bash asks first.";
+        const wtPart = worktreeToggle?.checked
+          ? "Runs in a git worktree; your main tree is untouched."
+          : "Runs directly in the selected project folder (no worktree isolation).";
+        const aaPart = autoApproveToggle?.checked
+          ? "Permissions: auto-approved (no popups)."
+          : "Permissions: bash & edits ask first.";
+        noteEl.textContent = `${wtPart} ${aaPart}`;
       }
     };
     if (worktreeToggle) {
@@ -489,12 +494,22 @@ export class KuyaConsole {
       if (saved !== null) {
         worktreeToggle.checked = saved === "true";
       }
-      updateNote();
       worktreeToggle.onchange = () => {
         localStorage.setItem("kuya_use_worktree", String(worktreeToggle.checked));
         updateNote();
       };
     }
+    if (autoApproveToggle) {
+      const saved = localStorage.getItem("kuya_auto_approve");
+      if (saved !== null) {
+        autoApproveToggle.checked = saved === "true";
+      }
+      autoApproveToggle.onchange = () => {
+        localStorage.setItem("kuya_auto_approve", String(autoApproveToggle.checked));
+        updateNote();
+      };
+    }
+    updateNote();
     if (this.summonModal) {
       this.summonModal.removeAttribute("hidden");
       this.summonModal.hidden = false;
@@ -559,7 +574,9 @@ export class KuyaConsole {
     const activeHouse = this.houseManager?.getActiveHouse();
     const projectRoot = this.folderInput?.value.trim() || activeHouse?.root || "";
     const worktreeToggle = document.getElementById("summon-worktree") as HTMLInputElement | null;
+    const autoApproveToggle = document.getElementById("summon-auto-approve") as HTMLInputElement | null;
     const useWorktree = worktreeToggle ? worktreeToggle.checked : true;
+    const autoApprove = autoApproveToggle ? autoApproveToggle.checked : true;
     const submit = document.getElementById("summon-submit") as HTMLButtonElement | null;
     if (submit) submit.disabled = true;
     try {
@@ -571,7 +588,10 @@ export class KuyaConsole {
           agent,
           model: { providerID, modelID },
           projectRoot,
-          permissions: { bash: "ask" },
+          permissions: autoApprove
+            ? { "*": "allow", bash: "allow", edit: "allow", read: "allow", glob: "allow" }
+            : { bash: "ask", edit: "ask" },
+          autoApprove,
           houseId: activeHouseId,
           useWorktree,
         }),
