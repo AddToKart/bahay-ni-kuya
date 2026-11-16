@@ -31,6 +31,7 @@ export interface SummonInput {
   persona?: string;
   permissions?: Record<string, "ask" | "allow" | "deny">;
   houseId?: string;
+  useWorktree?: boolean;
 }
 
 export interface HousemateRec {
@@ -141,7 +142,11 @@ export class Housemates {
 
     const client = await this.start();
     const key = `hm_${slug(name)}_${Date.now().toString(36).slice(-4)}`;
-    const created = this.createWorktree(cwd.path, key, name);
+    const useWorktree = input.useWorktree !== false;
+    let created: { worktree?: string; branch?: string; warnings: string[] } = { warnings: [] };
+    if (useWorktree) {
+      created = this.createWorktree(cwd.path, key, name);
+    }
     const directory = created.worktree ?? cwd.path;
 
     const session = await client.createSession({
@@ -540,7 +545,7 @@ export class Housemates {
           kind: "permission",
           requestId: id,
           sessionId: sid,
-          directory: this.recs.get(key)?.worktree ?? "",
+          directory: this.recs.get(key)?.directory ?? "",
         });
         this.store.ingest({
           harness: HARNESS,
@@ -569,7 +574,7 @@ export class Housemates {
           kind: "question",
           requestId: id,
           sessionId: sid,
-          directory: this.recs.get(key)?.worktree ?? "",
+          directory: this.recs.get(key)?.directory ?? "",
           options,
         });
         this.store.ingest({

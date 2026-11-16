@@ -168,7 +168,11 @@
             <input id="summon-model-filter" type="text" placeholder="Filter models..." aria-label="Filter models" />
           </label>
           <select id="summon-model" size="8" class="summon-models" aria-label="opencode model"></select>
-          <p class="summon-note">
+          <label class="summon-checkbox">
+            <input id="summon-worktree" type="checkbox" checked />
+            <span>Isolate in git worktree (uncheck to run directly in folder)</span>
+          </label>
+          <p class="summon-note" id="summon-note">
             Runs in a git worktree; your main tree is untouched. Permissions: bash asks first.
           </p>
           <p class="summon-error" id="summon-error" hidden></p>

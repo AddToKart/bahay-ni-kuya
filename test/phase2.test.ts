@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Store } from "../src/store";
+import { Housemates } from "../src/housemates";
 import type { IngestEvent } from "../src/types";
 
 const OPENCODE = "opencode";
@@ -133,5 +134,34 @@ describe("Phase 2 — PBB states and events", () => {
       } as IngestEvent).ok,
     ).toBe(false);
     expect(store.ingest({ harness: "nope", type: "housemate_arrived", housemateKey: "hm_x" } as IngestEvent).ok).toBe(false);
+  });
+
+  it("allows summoning without git worktree isolation when useWorktree is false", async () => {
+    const store = new Store();
+    const fakeClient = {
+      createSession: async () => ({
+        id: "mock_session_1",
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const result = await housemates.summon({
+      name: "NonGitWorker",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+    expect(result.housemate.worktree).toBeUndefined();
+    expect(result.housemate.branch).toBeUndefined();
+    expect(result.housemate.directory).toBe(process.cwd().replace(/\\/g, "/"));
+    await housemates.stop();
   });
 });

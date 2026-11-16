@@ -417,6 +417,7 @@ try {
             const agent = typeof body.agent === "string" ? body.agent : "";
             const projectRoot = typeof body.projectRoot === "string" ? body.projectRoot : process.cwd();
             const houseId = typeof body.houseId === "string" ? body.houseId : undefined;
+            const useWorktree = typeof body.useWorktree === "boolean" ? body.useWorktree : undefined;
             const permissions =
               body.permissions && typeof body.permissions === "object"
                 ? Object.fromEntries(
@@ -438,6 +439,7 @@ try {
                 permissions,
                 persona: typeof body.persona === "string" ? body.persona : undefined,
                 houseId,
+                useWorktree,
               });
               scheduleBroadcast();
               return jsonResponse(result, 201);

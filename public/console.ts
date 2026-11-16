@@ -289,10 +289,6 @@ export class KuyaConsole {
   private modelFilter: HTMLInputElement | null = null;
   private allModels: { providerID: string; modelID: string }[] = [];
 
-  setHouseManager(hm: HouseManager): void {
-    this.houseManager = hm;
-  }
-
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
     this.harnessSelect = document.getElementById("task-harness") as HTMLSelectElement | null;
@@ -397,6 +393,26 @@ export class KuyaConsole {
     if (this.allModels.length === 0) {
       void this.loadOpenCodeOptions();
     }
+    const worktreeToggle = document.getElementById("summon-worktree") as HTMLInputElement | null;
+    const noteEl = document.getElementById("summon-note");
+    const updateNote = () => {
+      if (noteEl) {
+        noteEl.textContent = worktreeToggle?.checked
+          ? "Runs in a git worktree; your main tree is untouched. Permissions: bash asks first."
+          : "Runs directly in the selected project folder (no worktree isolation). Permissions: bash asks first.";
+      }
+    };
+    if (worktreeToggle) {
+      const saved = localStorage.getItem("kuya_use_worktree");
+      if (saved !== null) {
+        worktreeToggle.checked = saved === "true";
+      }
+      updateNote();
+      worktreeToggle.onchange = () => {
+        localStorage.setItem("kuya_use_worktree", String(worktreeToggle.checked));
+        updateNote();
+      };
+    }
     if (this.summonModal) {
       this.summonModal.removeAttribute("hidden");
       this.summonModal.hidden = false;
@@ -460,6 +476,8 @@ export class KuyaConsole {
     if (!providerID || !modelID) return this.showSummonError("Pick a model.");
     const activeHouse = this.houseManager?.getActiveHouse();
     const projectRoot = this.folderInput?.value.trim() || activeHouse?.root || "";
+    const worktreeToggle = document.getElementById("summon-worktree") as HTMLInputElement | null;
+    const useWorktree = worktreeToggle ? worktreeToggle.checked : true;
     const submit = document.getElementById("summon-submit") as HTMLButtonElement | null;
     if (submit) submit.disabled = true;
     try {
@@ -473,10 +491,17 @@ export class KuyaConsole {
           projectRoot,
           permissions: { bash: "ask" },
           houseId: activeHouseId,
+          useWorktree,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; housemate?: { key: string } };
-      if (!res.ok) return this.showSummonError(`Summon failed: ${data.error ?? res.statusText}`);
+      if (!res.ok) {
+        let errMsg = data.error ?? res.statusText;
+        if (/not a git repository/i.test(errMsg) && useWorktree) {
+          errMsg += " — Uncheck 'Isolate in git worktree' to run directly in this folder.";
+        }
+        return this.showSummonError(`Summon failed: ${errMsg}`);
+      }
       if (this.folderInput) this.folderInput.value = activeHouse?.root ?? "";
       this.closeSummon();
       await this.refreshHousemates();
