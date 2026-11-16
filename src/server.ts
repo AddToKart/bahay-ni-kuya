@@ -817,9 +817,9 @@ try {
             } catch {
               return jsonResponse({ error: "Invalid JSON body" }, 400);
             }
-            const { goal, cwd, members, maxAttempts } = body;
+            const { goal, cwd, members, maxAttempts, rushMode, kuyaConfig } = body;
             try {
-              const task = await collab.startTask({ goal, cwd, members, maxAttempts });
+              const task = await collab.startTask({ goal, cwd, members, maxAttempts, rushMode, kuyaConfig });
               scheduleBroadcast();
               return jsonResponse(task, 201);
             } catch (err: any) {

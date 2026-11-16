@@ -522,4 +522,231 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     await housemates.stop();
   });
+
+  it("orchestrates ⚡ RUSH MODE: Kuya parallel dispatch of multiple builders simultaneously with file boundary isolation", async () => {
+    const store = new Store();
+    let promptAsyncCalls: Array<{ sessionId: string; message: string }> = [];
+
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      promptAsync: async (sid: string, _dir: string, input: any) => {
+        promptAsyncCalls.push({ sessionId: sid, message: input.message });
+      },
+      prompt: async (_sid: string, _dir: string, _input: any) => {
+        return {
+          parts: [
+            {
+              type: "text",
+              text: JSON.stringify([
+                {
+                  builderIndex: 0,
+                  title: "Backend API and Data Layer",
+                  instructions: "Build REST endpoints in src/api.ts and db.ts",
+                  assignedFiles: ["src/api.ts", "src/db.ts"],
+                },
+                {
+                  builderIndex: 1,
+                  title: "Frontend Dashboard and Charts",
+                  instructions: "Build dashboard UI and charts in public/dashboard.html",
+                  assignedFiles: ["public/dashboard.html", "public/charts.js"],
+                },
+              ]),
+            },
+          ],
+        };
+      },
+      messages: async () => [],
+    };
+
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+
+    const housemates = new Housemates(store, fakeSupervisor as any);
+
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "frontend-ui-engineer",
+      model: { providerID: "anthropic", modelID: "claude-3-5-sonnet" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    // 1. Launch Hamon with ⚡ RUSH MODE ON and Kuya configuration
+    const task = await collab.startTask({
+      goal: "Build customer analytics portal and REST API",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }],
+      maxAttempts: 3,
+      rushMode: true,
+      kuyaConfig: {
+        agent: "build",
+        model: { providerID: "openai", modelID: "o3-mini" },
+      },
+    });
+
+    expect(task.rushMode).toBe(true);
+    expect(task.subtasks?.length).toBe(2);
+    expect(task.subtasks![0].title).toBe("Backend API and Data Layer");
+    expect(task.subtasks![1].title).toBe("Frontend Dashboard and Charts");
+
+    // Both builders are working simultaneously at their desks!
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
+
+    const snap1 = store.snapshot(Date.now());
+    expect(snap1.sessions.find((s) => s.housemateKey === hm1.housemate.key)?.state).toBe("working");
+    expect(snap1.sessions.find((s) => s.housemateKey === hm2.housemate.key)?.state).toBe("working");
+
+    // Both received parallel prompts with file boundary directives
+    expect(promptAsyncCalls.length).toBe(2);
+    expect(promptAsyncCalls[0].message).toContain("RUSH MODE PARALLEL ASSIGNMENT");
+    expect(promptAsyncCalls[0].message).toContain("src/api.ts, src/db.ts");
+    expect(promptAsyncCalls[1].message).toContain("RUSH MODE PARALLEL ASSIGNMENT");
+    expect(promptAsyncCalls[1].message).toContain("public/dashboard.html, public/charts.js");
+
+    // 2. Hans completes his subtask first!
+    const hansReport = "Implemented /api/analytics endpoints in src/api.ts.";
+    const handledHans = await collab.handleSessionIdle(hm1.housemate.sessionId, hansReport);
+    expect(handledHans).toBe(true);
+
+    // Hans transitions to standby, but Bea is STILL WORKING in parallel!
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("standby");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
+    expect(task.subtasks![0].completed).toBe(true);
+    expect(task.subtasks![1].completed).toBe(false);
+    expect(task.status).toBe("running");
+
+    // 3. Bea finishes her subtask!
+    const beaReport = "Completed interactive SVG charts in public/dashboard.html.";
+    const handledBea = await collab.handleSessionIdle(hm2.housemate.sessionId, beaReport);
+    expect(handledBea).toBe(true);
+
+    // All parallel subtasks completed! Task concludes ready for Kuya's inspection/approval
+    expect(task.subtasks![1].completed).toBe(true);
+    expect(task.status).toBe("done");
+    expect(task.currentStep).toBe("done");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("idle");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("idle");
+
+    const lastLog = task.log[task.log.length - 1];
+    expect(lastLog.text).toContain("ALL BUILDERS FINISHED");
+
+    await housemates.stop();
+  });
+
+  it("orchestrates ⚡ RUSH MODE with 2 builders + 1 verifier: parallel build followed by tester verification", async () => {
+    const store = new Store();
+    let promptAsyncCalls: Array<{ sessionId: string; message: string }> = [];
+
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      promptAsync: async (sid: string, _dir: string, input: any) => {
+        promptAsyncCalls.push({ sessionId: sid, message: input.message });
+      },
+      messages: async () => [],
+    };
+
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+
+    const housemates = new Housemates(store, fakeSupervisor as any);
+
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "frontend-ui-engineer",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const hm3 = await housemates.summon({
+      name: "Kurt",
+      agent: "tester",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    const task = await collab.startTask({
+      goal: "Build payment gateway and checkout UI with end-to-end tests",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }, { key: hm3.housemate.key }],
+      maxAttempts: 3,
+      rushMode: true,
+    });
+
+    expect(task.rushMode).toBe(true);
+    // Hans and Bea are working in parallel; Kurt (verifier) is on standby
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm3.housemate.key)?.state).toBe("standby");
+
+    // Hans and Bea receive parallel prompts
+    expect(promptAsyncCalls.length).toBe(2);
+
+    // Bea finishes first
+    await collab.handleSessionIdle(hm2.housemate.sessionId, "Checkout UI complete");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm3.housemate.key)?.state).toBe("standby");
+
+    // Hans finishes second
+    promptAsyncCalls = [];
+    await collab.handleSessionIdle(hm1.housemate.sessionId, "Payment gateway API complete");
+
+    // Both builders finished -> Handoff to Kurt (verifier)!
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("standby");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
+    expect(housemates.get(hm3.housemate.key)?.state).toBe("working");
+    expect(task.currentStep).toBe("verifying");
+
+    // Kurt received verification prompt
+    expect(promptAsyncCalls.length).toBe(1);
+    expect(promptAsyncCalls[0].message).toContain("VERIFICATION STEP");
+
+    // Kurt verifies pass
+    await collab.handleSessionIdle(hm3.housemate.sessionId, "VERIFICATION_PASSED: All 8 payment tests passed.");
+    expect(task.status).toBe("done");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("idle");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("idle");
+    expect(housemates.get(hm3.housemate.key)?.state).toBe("idle");
+
+    await housemates.stop();
+  });
 });

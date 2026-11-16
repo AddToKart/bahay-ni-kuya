@@ -377,6 +377,14 @@ export class KuyaConsole {
   private collabMembersList: HTMLElement | null = null;
   private collabMaxAttempts: HTMLInputElement | null = null;
   private collabError: HTMLElement | null = null;
+  private collabRushMode: HTMLInputElement | null = null;
+  private collabRushBadge: HTMLElement | null = null;
+  private collabRushDesc: HTMLElement | null = null;
+  private collabKuyaConfig: HTMLElement | null = null;
+  private collabKuyaAgent: HTMLSelectElement | null = null;
+  private collabKuyaModelFilter: HTMLInputElement | null = null;
+  private collabKuyaModel: HTMLSelectElement | null = null;
+  private cachedAgents: { name: string }[] = [];
 
   private hamonDetailsModal: HTMLElement | null = null;
   private activeHamonDetailsId: string | null = null;
@@ -411,6 +419,27 @@ export class KuyaConsole {
     this.collabMembersList = document.getElementById("collab-members-list");
     this.collabMaxAttempts = document.getElementById("collab-max-attempts") as HTMLInputElement | null;
     this.collabError = document.getElementById("collab-error");
+    this.collabRushMode = document.getElementById("collab-rush-mode") as HTMLInputElement | null;
+    this.collabRushBadge = document.getElementById("collab-rush-badge");
+    this.collabRushDesc = document.getElementById("collab-rush-desc");
+    this.collabKuyaConfig = document.getElementById("collab-kuya-config");
+    this.collabKuyaAgent = document.getElementById("collab-kuya-agent") as HTMLSelectElement | null;
+    this.collabKuyaModelFilter = document.getElementById("collab-kuya-model-filter") as HTMLInputElement | null;
+    this.collabKuyaModel = document.getElementById("collab-kuya-model") as HTMLSelectElement | null;
+
+    if (this.collabRushMode) {
+      const savedRush = localStorage.getItem("kuya_collab_rush_mode");
+      if (savedRush !== null) {
+        this.collabRushMode.checked = savedRush === "true";
+      }
+      this.updateCollabRushState();
+      this.collabRushMode.addEventListener("change", () => {
+        localStorage.setItem("kuya_collab_rush_mode", String(this.collabRushMode?.checked));
+        this.updateCollabRushState();
+      });
+    }
+
+    this.collabKuyaModelFilter?.addEventListener("input", () => this.applyCollabKuyaModelFilter());
 
     const collabBtn = document.getElementById("btn-collab") as HTMLButtonElement | null;
     collabBtn?.addEventListener("click", () => void this.openCollab());
@@ -553,6 +582,45 @@ export class KuyaConsole {
     return fetch(path, { ...init, headers });
   }
 
+  private updateCollabRushState(): void {
+    const isRush = Boolean(this.collabRushMode?.checked);
+    if (this.collabRushBadge) {
+      this.collabRushBadge.textContent = isRush ? "⚡ ON" : "OFF";
+      this.collabRushBadge.style.background = isRush ? "#7c3aed" : "#475569";
+    }
+    if (this.collabRushDesc) {
+      this.collabRushDesc.textContent = isRush
+        ? "Kuya AI acts as Meta-Orchestrator: analyzes your prompt, generates parallel subtasks with strict file boundaries, and has builders work simultaneously at their desks."
+        : "Turn-based Relay pipeline: Builder 1 builds foundation ➔ Builder 2 enhances ➔ Tester verifies.";
+    }
+    if (this.collabKuyaConfig) {
+      this.collabKuyaConfig.style.display = isRush ? "flex" : "none";
+    }
+  }
+
+  private applyCollabKuyaModelFilter(): void {
+    if (!this.collabKuyaModel) return;
+    const q = (this.collabKuyaModelFilter?.value ?? "").trim().toLowerCase();
+    const prev = this.collabKuyaModel.value;
+    this.collabKuyaModel.innerHTML = "";
+    const filtered = q
+      ? this.allModels.filter((m) => `${m.providerID}/${m.modelID}`.toLowerCase().includes(q))
+      : this.allModels;
+
+    for (const m of filtered) {
+      const opt = document.createElement("option");
+      const full = `${m.providerID}/${m.modelID}`;
+      opt.value = full;
+      opt.textContent = full;
+      this.collabKuyaModel.appendChild(opt);
+    }
+    if (prev && this.collabKuyaModel.querySelector(`option[value="${prev}"]`)) {
+      this.collabKuyaModel.value = prev;
+    } else if (this.collabKuyaModel.options.length > 0) {
+      this.collabKuyaModel.selectedIndex = 0;
+    }
+  }
+
   private async loadOpenCodeOptions(): Promise<void> {
     if (!this.agentSelect || !this.modelSelect) return;
     try {
@@ -562,14 +630,26 @@ export class KuyaConsole {
       ]);
       if (agentsRes.ok) {
         const agents = (await agentsRes.json()) as { agents?: { name: string }[] };
+        this.cachedAgents = agents.agents ?? [];
         this.agentSelect.innerHTML = "";
-        for (const agent of agents.agents ?? []) {
+        for (const agent of this.cachedAgents) {
           const opt = document.createElement("option");
           opt.value = agent.name;
           opt.textContent = agent.name;
           this.agentSelect.appendChild(opt);
         }
         if (this.agentSelect.querySelector('option[value="build"]')) this.agentSelect.value = "build";
+
+        if (this.collabKuyaAgent) {
+          this.collabKuyaAgent.innerHTML = "";
+          for (const agent of this.cachedAgents) {
+            const opt = document.createElement("option");
+            opt.value = agent.name;
+            opt.textContent = agent.name;
+            this.collabKuyaAgent.appendChild(opt);
+          }
+          if (this.collabKuyaAgent.querySelector('option[value="build"]')) this.collabKuyaAgent.value = "build";
+        }
       }
       if (modelsRes.ok) {
         const models = (await modelsRes.json()) as {
@@ -577,6 +657,7 @@ export class KuyaConsole {
         };
         this.allModels = models.models ?? [];
         this.applyModelFilter();
+        this.applyCollabKuyaModelFilter();
       }
     } catch {
       /* the summon action explains a missing agent/model list */
@@ -1009,6 +1090,13 @@ export class KuyaConsole {
       this.collabMembersList!.appendChild(row);
     });
 
+    if (this.allModels.length === 0) {
+      void this.loadOpenCodeOptions();
+    } else {
+      this.applyCollabKuyaModelFilter();
+    }
+    this.updateCollabRushState();
+
     this.collabModal.hidden = false;
   }
 
@@ -1054,12 +1142,23 @@ export class KuyaConsole {
 
     const cwd = this.collabFolder?.value || "";
     const maxAttempts = parseInt(this.collabMaxAttempts?.value || "3", 10) || 3;
+    const isRushMode = Boolean(this.collabRushMode?.checked);
+    let kuyaConfig: any = undefined;
+    if (isRushMode && this.collabKuyaModel?.value) {
+      const parts = this.collabKuyaModel.value.split("/");
+      const providerID = parts[0] || "";
+      const modelID = parts.slice(1).join("/") || "";
+      kuyaConfig = {
+        agent: this.collabKuyaAgent?.value || "build",
+        model: { providerID, modelID },
+      };
+    }
 
     try {
       const res = await this.api("/api/collab/tasks", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ goal, cwd, members, maxAttempts }),
+        body: JSON.stringify({ goal, cwd, members, maxAttempts, rushMode: isRushMode, kuyaConfig }),
       });
 
       if (!res.ok) {
@@ -1346,6 +1445,55 @@ export class KuyaConsole {
     const goalEl = document.getElementById("hamon-modal-goal");
     if (goalEl) {
       goalEl.textContent = `🎯 Mission Goal: ${task.goal}`;
+    }
+
+    const rushBadge = document.getElementById("hamon-modal-rush-badge");
+    if (rushBadge) {
+      rushBadge.style.display = task.rushMode ? "inline-block" : "none";
+    }
+
+    const subtasksContainer = document.getElementById("hamon-modal-subtasks");
+    if (subtasksContainer) {
+      if (task.rushMode && Array.isArray(task.subtasks) && task.subtasks.length > 0) {
+        subtasksContainer.style.display = "flex";
+        subtasksContainer.innerHTML = `<div style="font-size:10px; font-weight:700; color:#c4b5fd; text-transform:uppercase; margin-bottom:4px;">⚡ Kuya's Parallel Subtask Assignments:</div>`;
+        for (const st of task.subtasks) {
+          const row = document.createElement("div");
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.alignItems = "center";
+          row.style.fontSize = "11px";
+          row.style.background = "rgba(255,255,255,0.03)";
+          row.style.padding = "3px 6px";
+          row.style.borderRadius = "3px";
+
+          const titleCol = document.createElement("div");
+          titleCol.style.color = "#f1f5f9";
+          titleCol.innerHTML = `<strong>🦫 ${st.memberName}</strong> [<code>${st.agent}</code>]: <span>${st.title}</span>`;
+
+          const statusBadge = document.createElement("span");
+          statusBadge.style.fontSize = "9px";
+          statusBadge.style.padding = "1px 6px";
+          statusBadge.style.borderRadius = "2px";
+          statusBadge.style.fontWeight = "700";
+          statusBadge.style.textTransform = "uppercase";
+
+          if (st.completed) {
+            statusBadge.style.background = "#059669";
+            statusBadge.style.color = "#ffffff";
+            statusBadge.textContent = "✅ DONE";
+          } else {
+            statusBadge.style.background = "#7c3aed";
+            statusBadge.style.color = "#ffffff";
+            statusBadge.textContent = "⚡ WORKING";
+          }
+
+          row.append(titleCol, statusBadge);
+          subtasksContainer.appendChild(row);
+        }
+      } else {
+        subtasksContainer.style.display = "none";
+      }
     }
 
     const rosterEl = document.getElementById("hamon-modal-roster");

@@ -6,6 +6,7 @@
 import { audit } from "./audit";
 import { log } from "./log";
 import type { Store } from "./store";
+import type { SessionState } from "./types";
 import type { Housemates } from "./housemates";
 import type { OpenCodeSupervisor } from "./opencode-supervisor";
 
@@ -35,6 +36,26 @@ export interface CollabMember {
   sessionId: string;
 }
 
+export interface CollabSubtask {
+  memberKey: string;
+  memberName: string;
+  agent: string;
+  title: string;
+  instructions: string;
+  assignedFiles: string[];
+  completed: boolean;
+  report?: string;
+}
+
+export interface KuyaConfig {
+  agent?: string;
+  model?: {
+    providerID: string;
+    modelID: string;
+    variant?: string;
+  };
+}
+
 export interface CollabTask {
   id: string;
   goal: string;
@@ -49,6 +70,9 @@ export interface CollabTask {
   completedAt?: number;
   status: "running" | "done" | "failed" | "blocked" | "canceled";
   log: Array<{ agent: string; name: string; text: string; ts: number }>;
+  rushMode?: boolean;
+  kuyaConfig?: KuyaConfig;
+  subtasks?: CollabSubtask[];
 }
 
 export class CollabManager {
@@ -95,6 +119,8 @@ export class CollabManager {
     cwd?: string;
     members: CollabMemberInput[];
     maxAttempts?: number;
+    rushMode?: boolean;
+    kuyaConfig?: KuyaConfig;
   }): Promise<CollabTask> {
     const goal = input.goal?.trim();
     if (!goal) throw new Error("Task goal required");
@@ -121,10 +147,11 @@ export class CollabManager {
       });
     }
 
-    // The primary builder is the first non-verifier (or the first member)
-    const primaryBuilder = resolvedMembers.find((m) => !m.isVerifier) || resolvedMembers[0];
+    const builders = resolvedMembers.filter((m) => !m.isVerifier);
+    const primaryBuilder = builders[0] || resolvedMembers[0];
     const taskId = `collab_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
     const cwd = input.cwd || this.housemates.get(primaryBuilder.key)?.directory || process.cwd();
+    const isRushMode = Boolean(input.rushMode && builders.length >= 2);
 
     const task: CollabTask = {
       id: taskId,
@@ -139,30 +166,12 @@ export class CollabManager {
       createdAt: Date.now(),
       status: "running",
       log: [],
+      rushMode: isRushMode,
+      kuyaConfig: input.kuyaConfig,
     };
 
     this.tasks.set(taskId, task);
     this.activeTaskId = taskId;
-
-    // Set desk standby for all members; primary builder becomes working
-    for (const m of resolvedMembers) {
-      const isWorking = m.key === primaryBuilder.key;
-      m.state = isWorking ? "working" : "standby";
-      const rec = this.housemates.get(m.key);
-      if (rec) {
-        rec.state = isWorking ? "working" : "standby";
-      }
-      this.store.ingest({
-        harness: "opencode",
-        sessionId: m.sessionId,
-        type: "collab_step",
-        state: isWorking ? "working" : "standby",
-        title: isWorking
-          ? `[Lingguhang Hamon] ${m.name} [agent: ${m.agent}]: ${goal.slice(0, 40)}`
-          : `[Lingguhang Hamon] ${m.name} Standby [agent: ${m.agent}]`,
-        directory: cwd,
-      });
-    }
 
     const memberSummary = resolvedMembers.map((m) => `${m.name} [agent: ${m.agent}]`).join(", ");
     const startMsg = `Pakinggan ang inyong bagong Lingguhang Hamon: "${goal}". Team: ${memberSummary}`;
@@ -172,12 +181,251 @@ export class CollabManager {
     audit("kuya", "collab_start", taskId, {
       goal,
       members: memberSummary,
+      rushMode: isRushMode,
     });
 
-    // Prompt the primary builder to start
-    await this.promptActiveMember(task, primaryBuilder);
+    if (isRushMode) {
+      // ⚡ RUSH MODE: Kuya AI decomposes the task and dispatches all builders in parallel!
+      const subtasks = await this.decomposeWithKuya(goal, cwd, builders, input.kuyaConfig);
+      task.subtasks = subtasks;
+
+      const rushAnnounce = `⚡ RUSH MODE PINAG-USAPAN: Pinamumunuan ni Kuya ang parallel dispatch ng ${builders.length} builders nang sabay-sabay!`;
+      this.announce(rushAnnounce);
+      task.log.push({
+        agent: "kuya",
+        name: "Kuya",
+        text: `⚡ KUYA RUSH MODE ORCHESTRATION:\n${subtasks.map((s) => `• 🦫 ${s.memberName} [${s.agent}]: ${s.title}\n  Assigned Files: ${s.assignedFiles.join(", ") || "(Domain scoped)"}\n  Instructions: ${s.instructions}`).join("\n\n")}`,
+        ts: Date.now(),
+      });
+
+      // All builders work simultaneously at their desks
+      for (const m of resolvedMembers) {
+        const isBuilder = !m.isVerifier;
+        m.state = isBuilder ? "working" : "standby";
+        const rec = this.housemates.get(m.key);
+        if (rec) rec.state = isBuilder ? "working" : "standby";
+
+        const subtask = subtasks.find((s) => s.memberKey === m.key);
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: m.sessionId,
+          type: "collab_step",
+          state: isBuilder ? "working" : "standby",
+          title: isBuilder
+            ? `[Rush Mode] ${m.name} [agent: ${m.agent}]: ${subtask?.title || goal.slice(0, 30)}`
+            : `[Lingguhang Hamon] ${m.name} Standby [agent: ${m.agent}]`,
+          directory: cwd,
+        });
+      }
+
+      // Prompt each builder simultaneously
+      for (const b of builders) {
+        const subtask = subtasks.find((s) => s.memberKey === b.key);
+        await this.promptRushBuilder(task, b, subtask);
+      }
+    } else {
+      // Turn-based Relay mode: primary builder starts, others standby
+      for (const m of resolvedMembers) {
+        const isWorking = m.key === primaryBuilder.key;
+        m.state = isWorking ? "working" : "standby";
+        const rec = this.housemates.get(m.key);
+        if (rec) {
+          rec.state = isWorking ? "working" : "standby";
+        }
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: m.sessionId,
+          type: "collab_step",
+          state: isWorking ? "working" : "standby",
+          title: isWorking
+            ? `[Lingguhang Hamon] ${m.name} [agent: ${m.agent}]: ${goal.slice(0, 40)}`
+            : `[Lingguhang Hamon] ${m.name} Standby [agent: ${m.agent}]`,
+          directory: cwd,
+        });
+      }
+
+      // Prompt the primary builder to start
+      await this.promptActiveMember(task, primaryBuilder);
+    }
 
     return task;
+  }
+
+  private async decomposeWithKuya(
+    goal: string,
+    cwd: string,
+    builders: CollabMember[],
+    kuyaConfig?: KuyaConfig,
+  ): Promise<CollabSubtask[]> {
+    const client = this.supervisor.client;
+    if (client && kuyaConfig?.model) {
+      try {
+        const session = await client.createSession({
+          directory: cwd,
+          title: "Kuya Orchestrator [Hamon]",
+          agent: kuyaConfig.agent || "build",
+          model: {
+            id: kuyaConfig.model.modelID,
+            providerID: kuyaConfig.model.providerID,
+            ...(kuyaConfig.model.variant ? { variant: kuyaConfig.model.variant } : {}),
+          },
+        });
+
+        const promptText = [
+          `You are Kuya, the Meta-Orchestrator of Bahay Ni Kuya.`,
+          `Analyze this mission goal for a team of ${builders.length} builder agents:`,
+          `Goal: "${goal}"`,
+          ``,
+          `Builders:`,
+          ...builders.map((b, i) => `${i + 1}. ${b.name} (OpenCode Agent: ${b.agent})`),
+          ``,
+          `Decompose this task into exactly ${builders.length} independent subtasks that can be worked on IN PARALLEL without file collisions.`,
+          `Assign disjoint file domains to each builder so they do NOT overwrite each other's files.`,
+          `Return ONLY a raw JSON array matching this format (no markdown fences, or json block):`,
+          `[`,
+          `  {`,
+          `    "builderIndex": 0,`,
+          `    "title": "Short subtask title",`,
+          `    "instructions": "Specific instructions for this builder",`,
+          `    "assignedFiles": ["file1.ext", "file2.ext"]`,
+          `  }`,
+          `]`,
+        ].join("\n");
+
+        const promptPromise = client.prompt(session.id, cwd, {
+          message: promptText,
+          agent: kuyaConfig.agent,
+          model: kuyaConfig.model,
+        });
+
+        const res: any = await Promise.race([
+          promptPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Kuya decomposition timeout")), 15000)),
+        ]);
+
+        let rawContent = "";
+        if (res && Array.isArray(res.parts)) {
+          rawContent = res.parts
+            .filter((p: any) => p.type === "text" && typeof p.text === "string")
+            .map((p: any) => p.text)
+            .join("\n");
+        } else if (res && typeof res.text === "string") {
+          rawContent = res.text;
+        } else {
+          rawContent = await this.getLastAssistantMessage(session.id, cwd);
+        }
+
+        const jsonMatch = rawContent.match(/\[\s*\{[\s\S]*\}\s*\]/) || rawContent.match(/\{[\s\S]*"subtasks"[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const list = Array.isArray(parsed) ? parsed : parsed.subtasks;
+          if (Array.isArray(list) && list.length >= builders.length) {
+            return builders.map((b, idx) => {
+              const item = list[idx] || list.find((it: any) => it.builderIndex === idx) || list[0];
+              return {
+                memberKey: b.key,
+                memberName: b.name,
+                agent: b.agent,
+                title: item.title || `Subtask ${idx + 1} for ${b.name}`,
+                instructions: item.instructions || goal,
+                assignedFiles: Array.isArray(item.assignedFiles) ? item.assignedFiles : [],
+                completed: false,
+              };
+            });
+          }
+        }
+      } catch (err) {
+        log(`collab: Kuya OpenCode decomposition error/fallback: ${String(err)}`);
+      }
+    }
+
+    return this.heuristicDecomposition(goal, builders);
+  }
+
+  private heuristicDecomposition(goal: string, builders: CollabMember[]): CollabSubtask[] {
+    if (builders.length === 2) {
+      const b1 = builders[0];
+      const b2 = builders[1];
+      const isB2UI = /ui|front|style|css|design|anim/i.test(b2.agent);
+      return [
+        {
+          memberKey: b1.key,
+          memberName: b1.name,
+          agent: b1.agent,
+          title: "Core Logic & Structure",
+          instructions: `Implement the foundational architecture, logic, endpoints, and data handling for: "${goal}". Focus on core functionality and contracts. Keep file changes isolated to your assigned domain.`,
+          assignedFiles: ["src/", "app.js", "server.js", "data.json", "index.html"],
+          completed: false,
+        },
+        {
+          memberKey: b2.key,
+          memberName: b2.name,
+          agent: b2.agent,
+          title: isB2UI ? "UI, Styling & Animations" : "Extended Features & Enhancements",
+          instructions: `Enhance the project with ${isB2UI ? "responsive UI styling, smooth animations, visual polish, and component layouts" : "secondary features, integrations, and extensions"} for: "${goal}". Avoid conflicting with core logic files.`,
+          assignedFiles: ["styles.css", "dashboard.html", "components/", "theme.css"],
+          completed: false,
+        },
+      ];
+    }
+
+    return builders.map((b, idx) => ({
+      memberKey: b.key,
+      memberName: b.name,
+      agent: b.agent,
+      title: `Domain Module ${idx + 1}`,
+      instructions: `Work on module/domain slice #${idx + 1} for: "${goal}". Focus on your assigned files and agent capabilities (${b.agent}).`,
+      assignedFiles: [`module_${idx + 1}/`, `part_${idx + 1}.js`],
+      completed: false,
+    }));
+  }
+
+  private async promptRushBuilder(task: CollabTask, member: CollabMember, subtask?: CollabSubtask): Promise<void> {
+    const client = this.supervisor.client;
+    if (!client) throw new Error("opencode supervisor not ready");
+    const rec = this.housemates.get(member.key);
+    if (!rec) return;
+
+    const teamList = task.members.map((m) => `- ${m.name} (OpenCode Agent: ${m.agent})`).join("\n");
+    const assignedFilesStr = subtask?.assignedFiles?.length ? subtask.assignedFiles.join(", ") : "your specific domain files";
+
+    const message = [
+      `[KUYA'S LINGGUHANG HAMON - ⚡ RUSH MODE PARALLEL ASSIGNMENT]`,
+      `Overall Mission Goal: ${task.goal}`,
+      `Your Assigned Subtask: ${subtask?.title || "Implementation"}`,
+      `Your OpenCode Agent: ${member.agent}`,
+      `Team Roster:`,
+      teamList,
+      ``,
+      `⚡ RUSH MODE PARALLEL DIRECTIVE:`,
+      `You are working SIMULTANEOUSLY alongside other housemates. To prevent file collision / merge conflicts:`,
+      `- STRICTLY limit your modifications and additions to your assigned files/domain: ${assignedFilesStr}.`,
+      `- Do NOT overwrite or touch files belonging to other housemates.`,
+      ``,
+      `Detailed Instructions for ${member.name}:`,
+      subtask?.instructions || task.goal,
+      ``,
+      `When complete, provide a concise handoff summary describing:`,
+      `- What files you modified or created.`,
+      `- What features or changes were implemented.`,
+      `- Confirmation of completion of your assigned subtask.`,
+    ].join("\n");
+
+    task.log.push({ agent: "kuya", name: "Kuya", text: message, ts: Date.now() });
+
+    void client
+      .promptAsync(rec.sessionId, rec.directory, {
+        message,
+        agent: rec.agent,
+        model: {
+          providerID: rec.provider,
+          modelID: rec.model,
+          ...(rec.variant ? { variant: rec.variant } : {}),
+        },
+      })
+      .catch((err: unknown) => {
+        log(`collab: promptAsync failed for ${member.name}: ${String(err)}`);
+      });
   }
 
   private announce(text: string): void {
@@ -309,6 +557,112 @@ export class CollabManager {
     const task = this.getActiveTask();
     if (!task || task.status !== "running") return false;
 
+    // ⚡ 1. Rush Mode: parallel builders running simultaneously
+    if (task.rushMode && task.subtasks && task.subtasks.length > 0 && task.currentStep === "building") {
+      const member = task.members.find((m) => m.sessionId === sessionId);
+      if (!member) return false;
+
+      const rec = this.housemates.get(member.key);
+      let reply = replyText.trim();
+      if (!reply && rec) {
+        reply = await this.getLastAssistantMessage(sessionId, rec.directory);
+      }
+      task.log.push({ agent: member.agent, name: member.name, text: reply, ts: Date.now() });
+
+      const subtask = task.subtasks.find((s) => s.memberKey === member.key);
+      if (subtask && member.state === "working") {
+        subtask.completed = true;
+        subtask.report = reply;
+        member.state = "standby";
+        if (rec) rec.state = "standby";
+
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: member.sessionId,
+          type: "collab_step",
+          state: "standby",
+          title: `[Hamon] ${member.name} (${member.agent}) Subtask Completed [Standby]`,
+        });
+
+        const subtaskDoneMsg = `Natapos na ni ${member.name} (${member.agent}) ang subtask na "${subtask.title}". Naka-standby na habang hinihintay ang iba pang builders.`;
+        this.announce(subtaskDoneMsg);
+        task.log.push({ agent: "kuya", name: "Kuya", text: `✅ SUBTASK COMPLETED: ${subtaskDoneMsg}`, ts: Date.now() });
+
+        const allDone = task.subtasks.every((s) => s.completed);
+        if (!allDone) {
+          return true; // Still waiting for remaining parallel builders
+        }
+
+        // All parallel builders are finished!
+        const allDoneMsg = `⚡ RUSH MODE SUBTASKS COMPLETE: Natapos na ng lahat ng builders ang kanilang parallel assignments!`;
+        this.announce(allDoneMsg);
+        task.log.push({
+          agent: "kuya",
+          name: "Kuya",
+          text: `⚡ ALL SUBTASKS FINISHED:\n${task.subtasks.map((s) => `• 🦫 ${s.memberName} [${s.title}]:\n${s.report || "Done"}`).join("\n\n")}`,
+          ts: Date.now(),
+        });
+
+        task.lastHandoffReport = task.subtasks
+          .map((s) => `[${s.memberName} (${s.agent}) - ${s.title}]\n${s.report || "Done"}`)
+          .join("\n\n");
+
+        const verifier = task.members.find((m) => m.isVerifier);
+        if (verifier) {
+          const handoffText = `Natapos na ng lahat ng builders ang kanilang bahagi sa Rush Mode. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
+          this.announce(handoffText);
+          task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF TO VERIFIER: ${handoffText}`, ts: Date.now() });
+
+          verifier.state = "working";
+          const verifierRec = this.housemates.get(verifier.key);
+          if (verifierRec) verifierRec.state = "working";
+          task.activeMemberKey = verifier.key;
+          task.currentStep = "verifying";
+
+          this.store.ingest({
+            harness: "opencode",
+            sessionId: verifier.sessionId,
+            type: "collab_step",
+            state: "working",
+            title: `[Hamon] ${verifier.name} (${verifier.agent}) Verification`,
+          });
+
+          await this.promptActiveMember(task, verifier);
+          return true;
+        }
+
+        // No verifier present: Hamon completed ready for Kuya's inspection/approval
+        task.status = "done";
+        task.completedAt = Date.now();
+        task.currentStep = "done";
+        this.activeTaskId = null;
+
+        for (const m of task.members) {
+          m.state = "done";
+          const mRec = this.housemates.get(m.key);
+          if (mRec) mRec.state = "idle";
+          this.store.ingest({
+            harness: "opencode",
+            sessionId: m.sessionId,
+            type: "collab_completed",
+            state: "idle",
+          });
+        }
+
+        const finishMsg = `Natapos ng lahat ng builders ang kanilang bahagi sa Lingguhang Hamon "${task.goal.slice(0, 40)}"! Handa na para sa pagsusuri at final approval ni Kuya. 🎉`;
+        this.announce(finishMsg);
+        task.log.push({
+          agent: "kuya",
+          name: "Kuya",
+          text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Maaaring mag-follow up si Kuya para sa karagdagang utos, o i-click ang Approve & Mark Done upang tapusin.)`,
+          ts: Date.now(),
+        });
+        audit("kuya", "collab_builders_done", task.id, { goal: task.goal });
+        return true;
+      }
+    }
+
+    // 2. Turn-based Relay or Verification step
     const activeMember = task.members.find((m) => m.key === task.activeMemberKey);
     if (!activeMember || activeMember.sessionId !== sessionId) {
       return false;
