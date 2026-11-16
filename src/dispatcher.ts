@@ -54,6 +54,30 @@ export class Dispatcher {
     return this.tasks.get(id);
   }
 
+  recordExternalTask(id: string, harness: Harness, prompt: string, cwd: string): TaskRecord {
+    const record: TaskRecord = {
+      id,
+      harness,
+      prompt,
+      cwd,
+      status: "running",
+      exitCode: null,
+      tail: [],
+      createdAt: Date.now(),
+      startedAt: Date.now(),
+    };
+    this.tasks.set(id, record);
+    return record;
+  }
+
+  completeExternalTask(id: string, exitCode = 0): void {
+    const record = this.tasks.get(id);
+    if (!record) return;
+    record.status = exitCode === 0 ? "done" : "failed";
+    record.exitCode = exitCode;
+    record.completedAt = Date.now();
+  }
+
   submitTask(
     harness: Harness,
     prompt: string,

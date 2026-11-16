@@ -171,9 +171,9 @@ export class HouseLifeManager {
       }
     }
 
-    // Reserve chosen POI and schedule duration
+    // Reserve chosen POI and schedule duration (minimum 25s so housemates don't pace constantly)
     this.reservePOI(charKey, chosen.id);
-    const durationSec = chosen.minSec + Math.random() * (chosen.maxSec - chosen.minSec);
+    const durationSec = Math.max(25, chosen.minSec * 1.5 + Math.random() * (chosen.maxSec - chosen.minSec) * 1.5);
     state.activityUntil = now + durationSec * 1000;
 
     return chosen;

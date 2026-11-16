@@ -674,6 +674,17 @@ export class KuyaConsole {
         if (row.housemateKey === current) opt.selected = true;
         this.housemateSelect.appendChild(opt);
       }
+      if (this.harnessSelect) {
+        const taskCurrent = this.harnessSelect.value;
+        this.harnessSelect.innerHTML = `<option value="">Select Housemate to assign...</option>`;
+        for (const row of rows) {
+          const opt = document.createElement("option");
+          opt.value = row.housemateKey!;
+          opt.textContent = `${row.housemateKey} (${row.state})`;
+          if (row.housemateKey === taskCurrent) opt.selected = true;
+          this.harnessSelect.appendChild(opt);
+        }
+      }
       if (this.agentSelect && this.agentSelect.options.length === 0) void this.loadOpenCodeOptions();
     } catch {
       /* state unavailable */
@@ -715,14 +726,11 @@ export class KuyaConsole {
   }
 
   updateInstalled(harnesses: { name: string; installed: boolean }[]): void {
-    let changed = false;
     for (const h of harnesses) {
-      if (h.installed && !this.installedHarnesses.has(h.name)) {
-        this.installedHarnesses.add(h.name);
-        changed = true;
+      if (h.name === "opencode" && h.installed) {
+        this.installedHarnesses.add("opencode");
       }
     }
-    if (changed) this.updateHarnessOptions();
   }
 
   recordDirectory(dir?: string): void {
@@ -734,14 +742,8 @@ export class KuyaConsole {
 
   private updateHarnessOptions(): void {
     if (!this.harnessSelect) return;
-    const current = this.harnessSelect.value;
-    this.harnessSelect.innerHTML = `<option value="">Select Housemate...</option>`;
-    for (const name of Array.from(this.installedHarnesses).sort()) {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      if (name === current) opt.selected = true;
-      this.harnessSelect.appendChild(opt);
+    if (this.harnessSelect.options.length <= 1) {
+      this.harnessSelect.innerHTML = `<option value="">Select Housemate to assign...</option>`;
     }
   }
 
@@ -762,15 +764,15 @@ export class KuyaConsole {
   private async submitTask(): Promise<void> {
     if (!this.promptEl || !this.harnessSelect || !this.cwdSelect) return;
     const prompt = this.promptEl.value.trim();
-    const harness = this.harnessSelect.value;
+    const housemateKey = this.harnessSelect.value;
     const cwd = this.cwdSelect.value || this.roots[0] || "";
 
     if (!prompt) {
       alert("Please enter a task prompt for the housemate.");
       return;
     }
-    if (!harness) {
-      alert("Please select an installed housemate harness.");
+    if (!housemateKey) {
+      alert("Please select a housemate to assign this task to. (Summon a housemate first if none exists)");
       return;
     }
     if (!this.token) {
@@ -779,13 +781,12 @@ export class KuyaConsole {
     }
 
     try {
-      const res = await fetch("/api/tasks", {
+      const res = await this.api(`/api/housemates/${encodeURIComponent(housemateKey)}/task`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({ harness, prompt, cwd }),
+        body: JSON.stringify({ prompt, cwd }),
       });
 
       if (!res.ok) {
@@ -795,7 +796,9 @@ export class KuyaConsole {
       }
 
       this.promptEl.value = "";
+      (window as any).selectCamera?.("office");
       await this.refreshTasks();
+      await this.refreshHousemates();
     } catch (err: any) {
       alert(`Dispatch error: ${err.message}`);
     }

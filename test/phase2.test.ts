@@ -292,4 +292,58 @@ describe("Phase 2 — PBB states and events", () => {
     expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
     await housemates.stop();
   });
+
+  it("assigns task to housemate, transitioning them to working in office and back to idle when completed", async () => {
+    const store = new Store();
+    let promptAsyncCalledWith = "";
+    const fakeClient = {
+      createSession: async () => ({
+        id: "mock_session_task",
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      promptAsync: async (_sid: string, _dir: string, input: any) => {
+        promptAsyncCalledWith = input.message;
+      },
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const result = await housemates.summon({
+      name: "TaskWorker",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+    const key = result.housemate.key;
+
+    // Initially arriving then idle
+    expect(housemates.get(key)?.state).toBe("arriving");
+
+    // Assign work task to housemate
+    const taskRes = await housemates.assignTask(key, "Fix login authentication error");
+    expect(taskRes.sessionId).toBe("mock_session_task");
+    expect(promptAsyncCalledWith).toBe("Fix login authentication error");
+    expect(housemates.get(key)?.state).toBe("working");
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("working");
+
+    // OpenCode turn completes (session.status idle)
+    (housemates as any).onEvent({
+      type: "session.status",
+      properties: {
+        sessionID: "mock_session_task",
+        status: { type: "idle" },
+      },
+    });
+
+    expect(housemates.get(key)?.state).toBe("idle");
+    expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
+    await housemates.stop();
+  });
 });

@@ -267,6 +267,56 @@ export class Housemates {
     return { worktree: rec.worktree, branch: rec.branch, diffStat };
   }
 
+  /** Assign a work task to a housemate: walks them to an office desk to execute via opencode. */
+  async assignTask(key: string, prompt: string, cwd?: string): Promise<{ taskId: string; sessionId: string }> {
+    const rec = this.recs.get(key);
+    if (!rec) throw new Error(`unknown housemate: ${key}`);
+    const client = this.supervisor.client;
+    if (!client) throw new Error("opencode server not ready");
+
+    const text = prompt.trim();
+    if (!text) throw new Error("task prompt required");
+
+    // Clear any active confession call since they are now dispatched to work in the office
+    this.callActive.delete(key);
+    rec.state = "working";
+    this.activeTurns.add(key);
+
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const executionDir = cwd || rec.directory;
+
+    this.store.ingest({
+      harness: HARNESS,
+      sessionId: rec.sessionId,
+      type: "task_started",
+      state: "working",
+      title: text.slice(0, 80),
+      directory: executionDir,
+    });
+
+    void client
+      .promptAsync(rec.sessionId, executionDir, {
+        message: text,
+        agent: rec.agent,
+        model: {
+          providerID: rec.provider,
+          modelID: rec.model,
+          ...(rec.variant ? { variant: rec.variant } : {}),
+        },
+      })
+      .catch((error: unknown) => {
+        this.store.ingest({
+          harness: HARNESS,
+          type: "error",
+          sessionId: rec.sessionId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+
+    audit("kuya", "task", key, { prompt: text, directory: executionDir });
+    return { taskId, sessionId: rec.sessionId };
+  }
+
   async call(key: string, message: string, when: "after-turn" | "interrupt"): Promise<void> {
     const rec = this.recs.get(key);
     if (!rec) throw new Error(`unknown housemate: ${key}`);

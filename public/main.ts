@@ -258,50 +258,7 @@ function reconcile(snap: Snapshot, now: number): number {
     });
   }
 
-  let sleepingCount = 0;
-  if (activeHouseId === "global") {
-    for (const h of snap.harnesses) {
-      const count = perHarness.get(h.name) ?? 0;
-      if (h.installed && !h.running && count === 0) {
-        sleepingCount += 1;
-        desired.set(`harness:${h.name}`, {
-          key: `harness:${h.name}`,
-          harness: h.name,
-          parentKey: null,
-          sub: false,
-          sleeping: true,
-          state: "idle",
-          room: "bedroom",
-          label: h.name,
-          working: false,
-          blocked: false,
-          errorState: false,
-          errorCount: 0,
-          nominated: false,
-          tool: null,
-          instanceIndex: 0,
-        });
-      } else if (h.running && count === 0) {
-        desired.set(`ambient:${h.name}`, {
-          key: `ambient:${h.name}`,
-          harness: h.name,
-          parentKey: null,
-          sub: false,
-          sleeping: false,
-          state: "idle",
-          room: "living",
-          label: `${h.name} (ambient)`,
-          working: false,
-          blocked: false,
-          errorState: false,
-          errorCount: 0,
-          nominated: false,
-          tool: null,
-          instanceIndex: 0,
-        });
-      }
-    }
-  }
+  let sleepingCount = [...desired.values()].filter((d) => d.sleeping).length;
 
   // Drop characters that no longer exist (preserve manual test walker)
   for (const key of [...chars.keys()]) {
@@ -712,21 +669,9 @@ function updateCard(c: Char): void {
           ? "working"
           : "idle";
 
-  if (cardIconEl)
-    cardIconEl.textContent =
-      c.harness === "opencode"
-        ? "🦫"
-        : c.harness === "codex"
-          ? "🐙"
-          : c.harness === "pi"
-            ? "🐹"
-            : c.harness === "omp"
-              ? "🦝"
-              : c.harness === "hermes"
-                ? "🦉"
-                : "🐾";
+  if (cardIconEl) cardIconEl.textContent = c.sub ? "↳ 🦫" : "🦫";
   if (cardHarnessEl) {
-    const base = c.instanceIndex > 0 ? `${c.harness} #${c.instanceIndex + 1}` : c.harness;
+    const base = c.sub ? "OpenCode Subagent" : "OpenCode Housemate";
     cardHarnessEl.textContent = c.nominated ? `${base} [NOMINATED]` : base;
   }
   if (cardBadgeEl) {
@@ -1051,14 +996,19 @@ function fitCanvas(): void {
 
 function buildLegend(): void {
   legendEl.textContent = "";
-  for (const name of HARNESS_ORDER) {
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    const dot = document.createElement("i");
-    dot.style.background = accentFor(name);
-    chip.append(dot, document.createTextNode(name));
-    legendEl.append(chip);
-  }
+  const chip1 = document.createElement("span");
+  chip1.className = "chip";
+  const dot1 = document.createElement("i");
+  dot1.style.background = accentFor("opencode");
+  chip1.append(dot1, document.createTextNode("OpenCode Housemate"));
+  legendEl.append(chip1);
+
+  const chip2 = document.createElement("span");
+  chip2.className = "chip";
+  const dot2 = document.createElement("i");
+  dot2.style.background = "#58a6ff";
+  chip2.append(dot2, document.createTextNode("↳ Subagent"));
+  legendEl.append(chip2);
 }
 
 function setConnected(connected: boolean): void {
@@ -1209,7 +1159,12 @@ function frame(now: number): void {
   // House life autonomous POI progression for idle housemates
   for (const c of chars.values()) {
     if (c.key === "test:walker") continue;
-    if (!c.working && !c.blocked && !c.sleeping && !c.walking) {
+    const inConfession =
+      c.state === "called" ||
+      c.state === "in_confession" ||
+      c.state === "queued_for_confession" ||
+      c.room === "confession";
+    if (!c.working && !c.blocked && !c.sleeping && !c.walking && !inConfession) {
       const state = lifeManager.states.get(c.key);
       if (state && now >= state.activityUntil) {
         const nextPoi = lifeManager.pickIdlePOI(c.key, now);

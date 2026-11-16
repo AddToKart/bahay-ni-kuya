@@ -462,6 +462,28 @@ try {
             }
           }
 
+          const taskMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/task$/);
+          if (req.method === "POST" && taskMatch) {
+            let body: Record<string, unknown>;
+            try {
+              body = (await req.json()) as Record<string, unknown>;
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+            const cwd = typeof body.cwd === "string" ? body.cwd.trim() : undefined;
+            if (!prompt) return jsonResponse({ error: "prompt is required" }, 400);
+            try {
+              const key = decodeURIComponent(taskMatch[1]);
+              const result = await housemates.assignTask(key, prompt, cwd);
+              dispatcher.recordExternalTask(result.taskId, "opencode", prompt, cwd || housemates.get(key)?.directory || "");
+              scheduleBroadcast();
+              return jsonResponse(result, 200);
+            } catch (err) {
+              return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+            }
+          }
+
           const callMatch = url.pathname.match(/^\/api\/housemates\/([^/]+)\/call$/);
           if (req.method === "POST" && callMatch) {
             let body: Record<string, unknown>;
@@ -683,6 +705,21 @@ try {
             const cwdValidation = validateCwd(cwd);
             if (!cwdValidation.ok) {
               return jsonResponse({ error: cwdValidation.error }, 400);
+            }
+
+            if (body.housemateKey) {
+              const hmKey = String(body.housemateKey);
+              const hm = housemates.get(hmKey);
+              if (hm) {
+                try {
+                  const res = await housemates.assignTask(hmKey, prompt, cwdValidation.path!);
+                  const record = dispatcher.recordExternalTask(res.taskId, "opencode", prompt, cwdValidation.path!);
+                  scheduleBroadcast();
+                  return jsonResponse(record, 201);
+                } catch (err: any) {
+                  return jsonResponse({ error: err.message || "Failed to submit task to housemate" }, 400);
+                }
+              }
             }
 
             try {
