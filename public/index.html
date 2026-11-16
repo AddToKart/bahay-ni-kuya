@@ -23,6 +23,22 @@
         <span class="kuya-msg" id="kuya-msg">Pumunta po kayo sa office. May task po kayo.</span>
       </div>
 
+      <aside class="diary-panel" id="diary-panel" hidden aria-live="assertive" aria-label="Confession Room diary panel">
+        <div class="diary-head">
+          <span class="diary-onair">● ON AIR</span>
+          <span class="diary-header" id="diary-header">—</span>
+          <button class="diary-close" id="diary-close" aria-label="Close diary panel">×</button>
+        </div>
+        <p class="diary-question" id="diary-question"></p>
+        <div class="diary-options" id="diary-options"></div>
+        <textarea id="diary-text" rows="2" placeholder="Sagot para kay Kuya…"></textarea>
+        <div class="diary-actions">
+          <button class="diary-submit" id="diary-submit">Ipadala</button>
+          <span class="diary-queue" id="diary-queue"></span>
+        </div>
+        <div class="diary-chat" id="diary-chat"></div>
+      </aside>
+
       <div class="stage">
         <canvas
           id="scene"
@@ -94,6 +110,12 @@
               <option value="">Select Project Folder...</option>
             </select>
             <button id="btn-submit-task" class="dispatch-btn">🚀 Assign Task</button>
+          </div>
+          <div class="console-row p2-actions">
+            <input id="summon-name" type="text" placeholder="Housemate key (e.g. bea)" aria-label="Housemate key" />
+            <button id="btn-summon" class="dispatch-btn">🚪 Summon</button>
+            <button id="btn-evict" class="dispatch-btn">🧳 Evict</button>
+            <button id="btn-call" class="dispatch-btn">📞 Call to Confession Room</button>
           </div>
         </div>
         <div class="tasks-container">

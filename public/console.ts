@@ -41,8 +41,67 @@ export class KuyaConsole {
       this.submitBtn.addEventListener("click", () => this.submitTask());
     }
 
+    const summonBtn = document.getElementById("btn-summon") as HTMLButtonElement | null;
+    const evictBtn = document.getElementById("btn-evict") as HTMLButtonElement | null;
+    const callBtn = document.getElementById("btn-call") as HTMLButtonElement | null;
+    const summonName = document.getElementById("summon-name") as HTMLInputElement | null;
+
+    summonBtn?.addEventListener("click", () => {
+      const name = summonName?.value.trim();
+      if (!name) return alert("Enter a housemate key first (e.g. bea).");
+      void this.simulateSummon(name);
+    });
+    evictBtn?.addEventListener("click", () => {
+      const name = summonName?.value.trim();
+      if (!name) return alert("Enter the housemate key to evict.");
+      if (!confirm(`Evict ${name}? The worktree and branch are kept.`)) return;
+      void this.simulateEvict(name);
+    });
+    callBtn?.addEventListener("click", () => {
+      const name = summonName?.value.trim();
+      if (!name) return alert("Enter the housemate key to call.");
+      void this.simulateCall(name);
+    });
+
     this.refreshTasks();
     setInterval(() => this.refreshTasks(), 2500);
+  }
+
+  /** Demo-only Phase 2 simulation (P4 replaces these with real control endpoints). */
+  private async simulate(payload: Record<string, unknown>): Promise<void> {
+    if (!this.token) await this.fetchToken();
+    if (!this.token) return alert("Authentication token not available.");
+    try {
+      const res = await fetch("/api/simulate", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        alert(`Simulate failed: ${err.error ?? res.statusText}`);
+      }
+    } catch (error) {
+      alert(`Simulate error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async simulateSummon(name: string): Promise<void> {
+    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    await this.simulate({ type: "housemate_summoned", housemateKey, name, harness: "opencode" });
+    // Arrival is a walking animation; give it time, then mark the housemate arrived.
+    setTimeout(() => void this.simulate({ type: "housemate_arrived", housemateKey, harness: "opencode" }), 9000);
+  }
+
+  private async simulateEvict(name: string): Promise<void> {
+    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    await this.simulate({ type: "housemate_evict_started", housemateKey, harness: "opencode", reason: "kuya_evict" });
+    setTimeout(() => void this.simulate({ type: "housemate_evicted", housemateKey, harness: "opencode" }), 5000);
+  }
+
+  private async simulateCall(name: string): Promise<void> {
+    const housemateKey = `hm_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    await this.simulate({ type: "kuya_call", housemateKey, harness: "opencode" });
   }
 
   private async fetchToken(): Promise<void> {

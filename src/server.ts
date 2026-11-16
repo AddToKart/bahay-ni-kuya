@@ -27,11 +27,13 @@ interface WsLike {
 function isIngestEvent(value: unknown): value is IngestEvent {
   if (typeof value !== "object" || value === null) return false;
   const record = value as Record<string, unknown>;
-  return (
-    typeof record.harness === "string" &&
-    typeof record.sessionId === "string" &&
-    typeof record.type === "string"
-  );
+  if (typeof record.type !== "string") return false;
+  const base = typeof record.harness === "string" && typeof record.sessionId === "string";
+  const keyed =
+    typeof record.housemateKey === "string" ||
+    typeof record.guestKey === "string" ||
+    typeof record.id === "string";
+  return base || keyed;
 }
 
 function asString(value: unknown): string | undefined {
@@ -331,6 +333,92 @@ try {
           } catch (error) {
             return jsonResponse({ error: error instanceof Error ? error.message : String(error) }, 400);
           }
+        }
+
+        // --- Phase 2: confession answers + demo-only simulation (Bearer + Host/Origin) ---
+        if (url.pathname.startsWith("/api/confession/")) {
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+          if (req.method === "POST" && url.pathname === "/api/confession/answer") {
+            let body: any;
+            try {
+              body = await req.json();
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const questionId = typeof body?.questionId === "string" ? body.questionId : undefined;
+            if (!questionId) return jsonResponse({ error: "questionId required" }, 400);
+            const hasOption = typeof body.option === "number";
+            const hasText = typeof body.text === "string" && body.text.trim().length > 0;
+            if (!hasOption && !hasText) return jsonResponse({ error: "option or text required" }, 400);
+            const result = store.answerQuestion(questionId, {
+              option: hasOption ? body.option : undefined,
+              text: hasText ? body.text : undefined,
+            });
+            if (!result.ok) return jsonResponse({ error: result.reason ?? "answer failed" }, 400);
+            scheduleBroadcast();
+            return jsonResponse({ ok: true, promoted: result.promoted?.id ?? null });
+          }
+          if (req.method === "POST" && url.pathname === "/api/confession/skip") {
+            let body: any;
+            try {
+              body = await req.json();
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const questionId = typeof body?.questionId === "string" ? body.questionId : undefined;
+            if (!questionId) return jsonResponse({ error: "questionId required" }, 400);
+            const result = store.skipQuestion(questionId);
+            scheduleBroadcast();
+            return jsonResponse({ ok: result.ok, promoted: result.promoted?.id ?? null });
+          }
+          return jsonResponse({ error: "not found" }, 404);
+        }
+
+        // Demo-only simulation endpoint: lets the console buttons drive the fake Phase 2 flow.
+        // P4 replaces this with real control endpoints; it accepts only v2 event names.
+        if (req.method === "POST" && url.pathname === "/api/simulate") {
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+          const SIMULATABLE: Record<string, true> = {
+            housemate_summoned: true,
+            housemate_arrived: true,
+            housemate_evict_started: true,
+            housemate_evicted: true,
+            question_asked: true,
+            question_answered: true,
+            kuya_call: true,
+            kuya_call_ended: true,
+            chat_message: true,
+            guest_arrived: true,
+            guest_left: true,
+          };
+          let body: Record<string, unknown>;
+          try {
+            body = (await req.json()) as Record<string, unknown>;
+          } catch {
+            return jsonResponse({ error: "Bad json" }, 400);
+          }
+          if (!body || typeof body.type !== "string" || SIMULATABLE[body.type] !== true) {
+            return jsonResponse({ error: "unsupported simulate type" }, 400);
+          }
+          const result = store.ingest({
+            ...body,
+            harness: typeof body.harness === "string" ? body.harness : "opencode",
+            sessionId:
+              typeof body.sessionId === "string"
+                ? body.sessionId
+                : typeof body.housemateKey === "string"
+                  ? body.housemateKey
+                  : typeof body.guestKey === "string"
+                    ? body.guestKey
+                    : "sim",
+          });
+          if (!result.ok) return jsonResponse({ error: result.reason ?? "simulate failed" }, 400);
+          scheduleBroadcast();
+          return new Response(null, { status: 202 });
         }
 
         // Dispatcher endpoints require valid Bearer token

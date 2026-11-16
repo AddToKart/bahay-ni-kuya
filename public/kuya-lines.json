@@ -34,5 +34,33 @@
     "KUYA: Napakasipag naman maglinis at mag-ayos sa bahay.",
     "KUYA: Mukhang masarap ang niluluto ninyo sa kusina ah.",
     "KUYA: Enjoy po sa inyong laro sa game room, mga housemates."
+  ],
+  "summon_welcome": [
+    "KUYA: Welcome sa Bahay ni Kuya, {name}! Housemate ka na po ngayon.",
+    "KUYA: {name}, pasok po kayo. Bagong housemate natin ngayong araw."
+  ],
+  "evict_line": [
+    "KUYA: {name}, oras na po para umuwi. Salamat sa lahat ng sakripisyo.",
+    "KUYA: Paalam, {name}. Bitbitin mo ang iyong maleta at alaala."
+  ],
+  "confession_call": [
+    "KUYA: {name}, may kailangan tayong pag-usapan sa Confession Room.",
+    "KUYA: {name}, tara sa Confession Room. May tanong po ako sa iyo."
+  ],
+  "call_to_confession": [
+    "KUYA: {name}, tawag ka sa Confession Room. Usap muna tayo.",
+    "KUYA: {name}, pumunta po sa Confession Room para makipag-usap kay Kuya."
+  ],
+  "guest_arrival": [
+    "KUYA: May bisita! {name}, narito ang iyong guest.",
+    "KUYA: {name}, may house guest kang dumating para tumulong."
+  ],
+  "guest_departure": [
+    "KUYA: Salamat sa pagbisita. Ingat po sa pag-uwi.",
+    "KUYA: Tapos na ang bisita ni {name}. Paalam po!"
+  ],
+  "question_waiting": [
+    "KUYA: May naka-pila sa Confession Room ({position}). Sandali lang po.",
+    "KUYA: {position} ang naghihintay sa pila. Isa-isa lang po tayo."
   ]
 }

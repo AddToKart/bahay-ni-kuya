@@ -8,8 +8,9 @@ import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./a
 import { HouseLifeManager, type POI } from "./life.js";
 import { KuyaLayer } from "./kuya.js";
 import { KuyaConsole } from "./console.js";
+import { DiaryRoom } from "./confession.js";
 import { installLayoutEditor } from "./layout-editor.js";
-import type { SessionState } from "../src/types.js";
+import type { ChatLine, QuestionView, SessionState } from "../src/types.js";
 
 // Scene dimensions matching the 42x27 16px tilemap
 const SCENE_W = 672;
@@ -47,6 +48,8 @@ interface Snapshot {
   ts: number;
   harnesses: HarnessView[];
   sessions: SessionView[];
+  questions?: QuestionView[];
+  chat?: ChatLine[];
 }
 
 // ---------------------------------------------------------------- characters
@@ -92,6 +95,7 @@ let renderer: MapRenderer | null = null;
 const lifeManager = new HouseLifeManager();
 const kuya = new KuyaLayer();
 const kuyaConsole = new KuyaConsole();
+const diary = new DiaryRoom();
 
 function sessionKey(harness: string, sessionId: string): string {
   return `${harness}\u0000${sessionId}`;
@@ -139,6 +143,11 @@ interface Desired {
   directory?: string;
   pid?: number;
   instanceIndex: number;
+  arriving: boolean;
+  evicting: boolean;
+  confession: boolean;
+  queued: boolean;
+  called: boolean;
 }
 
 function reconcile(snap: Snapshot, now: number): number {
@@ -179,10 +188,18 @@ function reconcile(snap: Snapshot, now: number): number {
     const isWorking = s.state === "working";
     const isBlocked = s.state === "blocked";
     const isError = s.state === "error";
+    const isArriving = s.state === "arriving";
+    const isEvicting = s.state === "evicting";
+    const isQueued = s.state === "queued_for_confession";
+    const isInConfession = s.state === "in_confession";
+    const isCalled = s.state === "called";
+    const isConfession = isQueued || isInConfession || isCalled;
 
     let room: RoomId = "living";
-    if (isBlocked) {
+    if (isBlocked || isConfession) {
       room = "confession";
+    } else if (isArriving || isEvicting) {
+      room = "hallway";
     } else if (isWorking) {
       room = s.harness === "hermes" ? "living" : "office";
     }
@@ -205,6 +222,11 @@ function reconcile(snap: Snapshot, now: number): number {
       directory: s.directory,
       pid: s.pid,
       instanceIndex,
+      arriving: isArriving,
+      evicting: isEvicting,
+      confession: isConfession,
+      queued: isQueued,
+      called: isCalled,
     });
   }
 
@@ -265,6 +287,14 @@ function reconcile(snap: Snapshot, now: number): number {
 
     if (d.sleeping) {
       poi = lifeManager.pickBedPOI(d.key);
+    } else if (d.confession) {
+      // Confession Room: the chair occupant uses the chair; queued askers stand at the east wall.
+      poi = lifeManager.getPOI("confession_chair") || null;
+      if (poi && !d.queued) lifeManager.reservePOI(d.key, poi.id);
+    } else if (d.arriving) {
+      poi = lifeManager.pickIdlePOI(d.key, now);
+    } else if (d.evicting) {
+      poi = null;
     } else if (d.blocked) {
       // Confession room for blocked / permission required
       poi = lifeManager.getPOI("confession_chair") || null;
@@ -288,8 +318,16 @@ function reconcile(snap: Snapshot, now: number): number {
       }
     }
 
-    const targetX = poi ? poi.x * 16 + 8 : 18 * 16 + 8;
-    const targetY = poi ? poi.y * 16 + 14 : 6 * 16 + 14;
+    let targetX = poi ? poi.x * 16 + 8 : 18 * 16 + 8;
+    let targetY = poi ? poi.y * 16 + 14 : 6 * 16 + 14;
+    if (d.queued) {
+      targetX = 7 * 16 + 8;
+      targetY = 19 * 16 + 14;
+    }
+    if (d.evicting) {
+      targetX = 26 * 16 + 8;
+      targetY = 25 * 16 + 14;
+    }
     const poiFacing: Facing = poi ? poi.facing : "down";
     const poiAction: Action = poi
       ? poi.action
@@ -305,7 +343,12 @@ function reconcile(snap: Snapshot, now: number): number {
       let spawnX = 6 * 16 + 8;
       let spawnY = 11 * 16 + 14;
 
-      if (d.sleeping) {
+      if (d.arriving) {
+        // Phase 2: the real front door is pending the D1 diff approval; arrival starts at the
+        // interior tile just inside the planned south-wall door, then walks to house life.
+        spawnX = 26 * 16 + 8;
+        spawnY = 25 * 16 + 14;
+      } else if (d.sleeping) {
         spawnX = targetX;
         spawnY = targetY;
       } else if (d.sub && d.parentKey && chars.has(d.parentKey)) {
@@ -378,8 +421,27 @@ function reconcile(snap: Snapshot, now: number): number {
       c.parentKey = d.parentKey;
       c.sub = d.sub;
 
+      // 0. Phase 2: arrival, eviction, confession question, Kuya call
+      if (d.arriving && prevState !== "arriving") {
+        kuya.announce(kuya.formatLine("summon_welcome", { harness: d.harness, name: d.label }));
+      } else if (d.evicting && prevState !== "evicting") {
+        c.emote = "exclamation";
+        c.emoteUntil = now + 3000;
+        kuya.announce(kuya.formatLine("evict_line", { harness: d.harness }));
+      } else if (d.called && prevState !== "called") {
+        kuya.announce(kuya.formatLine("call_to_confession", { harness: d.harness }));
+      } else if (
+        d.confession &&
+        prevState !== "in_confession" &&
+        prevState !== "queued_for_confession" &&
+        prevState !== "called"
+      ) {
+        c.emote = "exclamation";
+        c.emoteUntil = now + 4000;
+        kuya.announce(kuya.formatLine("confession_call", { harness: d.harness }));
+      }
       // 1. Task Started
-      if (!prevWorking && d.working) {
+      else if (!prevWorking && d.working) {
         c.emote = "exclamation";
         c.emoteUntil = now + 3000;
         if (d.harness === "hermes") {
@@ -930,6 +992,9 @@ function applySnapshot(snap: Snapshot): void {
   const sleeping = reconcile(snap, performance.now());
   updateHeader(snap, sleeping);
   kuyaConsole.updateInstalled(snap.harnesses);
+  diary.update(snap);
+  const called = snap.sessions.find((s) => s.state === "called");
+  if (called) diary.openChat(called.sessionId);
   for (const s of snap.sessions) {
     if (s.directory) kuyaConsole.recordDirectory(s.directory);
   }
@@ -1068,6 +1133,7 @@ window.addEventListener("resize", fitCanvas);
 kuya.initDOM();
 kuya.loadLines();
 kuyaConsole.init();
+void diary.init();
 
 // Load house map & POIs, then initialize renderer, navGrid, and house life
 Promise.all([

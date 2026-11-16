@@ -33,6 +33,10 @@ Three slices depend on this file: server (`src/`), frontend (`public/`), adapter
   "parentSessionId": null,      // child session id → subagent; null/omitted for root
   "type": "session_start",      // session_start | session_end | state | tool | error |
                                 // task_started | task_completed | blocked | subagent_started | subagent_ended
+                                // v2 (Phase 2): housemate_summoned | housemate_arrived |
+                                // housemate_evict_started | housemate_evicted | question_asked |
+                                // question_answered | kuya_call | kuya_call_ended | chat_message |
+                                // guest_arrived | guest_left
   "state": "working",           // working | idle | blocked | error (honoured on session_start/state/task_*)
   "title": "fix lint errors",   // optional, clipped 80 chars
   "tool": "edit",               // optional, clipped 60 chars (type=tool keeps working)
@@ -58,6 +62,29 @@ Semantics:
 Adapters are fire-and-forget: 1500 ms timeout, every failure swallowed, `BAHAY_NI_KUYA_URL`
 env override (default `http://127.0.0.1:4777/event`). No adapter may throw into its harness.
 
+## v2 events (Phase 2, additive)
+
+All v1 fields keep their meaning. v2 events may omit `sessionId` when they carry
+`housemateKey`, `guestKey` or a question `id`; the server resolves the session key from them.
+v1 consumers ignore unknown types and render unknown states as idle.
+
+| type | Payload | Meaning |
+| --- | --- | --- |
+| `housemate_summoned` | `housemateKey`, `name?`, `harness` | arrival walk-in begins (state `arriving`) |
+| `housemate_arrived` | `housemateKey` | walk-in complete (state `idle`) |
+| `housemate_evict_started` | `housemateKey`, `reason?` | suitcase walk-out begins (state `evicting`) |
+| `housemate_evicted` | `housemateKey` | session deleted |
+| `question_asked` | `id`, `kind: permission\|question\|choice\|text`, `text`, `options?` | Confession Room ask; queued or in the chair |
+| `question_answered` | `id`, `option?` or `text?` | resolves the ask; promotes the next asker |
+| `kuya_call` | `housemateKey` | call to Confession Room chat (state `called`) |
+| `kuya_call_ended` | `housemateKey` | walk back (state `idle`) |
+| `chat_message` | `role: housemate\|kuya`, `text` (≤400) | diary-panel chat line |
+| `guest_arrived` | `guestKey`, `hostKey` | guest child session observed (state `working`, `parentId=hostKey`) |
+| `guest_left` | `guestKey` | guest session deleted |
+
+New states (additive): `arriving`, `evicting`, `queued_for_confession`, `in_confession`,
+`called`. Held states persist until their paired end event (no 4 s decay).
+
 ## Snapshot (server → browser)
 
 ```jsonc
@@ -68,12 +95,22 @@ env override (default `http://127.0.0.1:4777/event`). No adapter may throw into 
   "sessions": [ {
     "harness": "opencode", "sessionId": "ses_abc", "parentId": null,
     "state": "working",                 // idle | working | blocked | error (never "sleeping")
+                                        // v2: arriving | evicting | queued_for_confession |
+                                        //     in_confession | called
     "title": "…", "tool": "edit", "directory": "D:/repo", "pid": 1234,
     "since": 1731739100000, "lastEventTs": 1731739199000,
     "source": "adapter",                // adapter | scan
     "errorCount": 0,                    // incremented on error
-    "nominated": false                  // true when errorCount >= 3
-  } ]
+    "nominated": false,                 // true when errorCount >= 3
+    "housemateKey": "hm_bea",           // v2, optional
+    "guest": false                      // v2, true for observed child sessions rendered as guests
+  } ],
+  "questions": [ {
+    "id": "q_1794...01", "harness": "opencode", "sessionId": "ses_abc",
+    "housemateKey": "hm_bea", "kind": "permission", "text": "Pwede po?",
+    "askedAt": 1731739200000, "status": "in_confession" // queued | in_confession | answered
+  } ],
+  "chat": [ { "sessionId": "ses_abc", "role": "housemate", "text": "Okay po.", "ts": 1731739200000 } ]
 }
 ```
 

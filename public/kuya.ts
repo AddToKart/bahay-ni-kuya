@@ -9,6 +9,13 @@ export interface KuyaLines {
   task_completed: string[];
   wake_up: string[];
   chores: string[];
+  summon_welcome: string[];
+  evict_line: string[];
+  confession_call: string[];
+  call_to_confession: string[];
+  guest_arrival: string[];
+  guest_departure: string[];
+  question_waiting: string[];
 }
 
 export const DEFAULT_LINES: KuyaLines = {
@@ -20,6 +27,13 @@ export const DEFAULT_LINES: KuyaLines = {
   task_completed: ["KUYA: Salamat, {harness}. Tapos na ang task. Magpahinga po muna kayo."],
   wake_up: ["KUYA: Magandang umaga, mga housemates! Gising na po para sa araw na ito."],
   chores: ["KUYA: Napakasipag naman ng mga housemates."],
+  summon_welcome: ["KUYA: Welcome sa Bahay ni Kuya, {name}!"],
+  evict_line: ["KUYA: {name}, oras na po para umuwi."],
+  confession_call: ["KUYA: {name}, may kailangan tayong pag-usapan sa Confession Room."],
+  call_to_confession: ["KUYA: {name}, tawag ka sa Confession Room."],
+  guest_arrival: ["KUYA: May bisita! {name}, narito ang iyong guest."],
+  guest_departure: ["KUYA: Salamat sa pagbisita. Ingat po sa pag-uwi."],
+  question_waiting: ["KUYA: May naka-pila sa Confession Room ({position})."],
 };
 
 export class KuyaLayer {

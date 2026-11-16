@@ -3,14 +3,17 @@ import {
   HARD_TTL_MS,
   IDLE_MS,
   STALE_MS,
+  type ChatLine,
   type Harness,
   type HarnessView,
   type IngestEvent,
+  type QuestionView,
   type SessionState,
   type SessionView,
   type Snapshot,
 } from "./types";
 import { matchHarness, type ProcInfo } from "./scan";
+import { ConfessionQueue, MAX_QUESTION_TEXT } from "./questions";
 
 interface SessionRec {
   harness: Harness;
@@ -27,6 +30,8 @@ interface SessionRec {
   source: "adapter" | "scan";
   errorCount: number;
   nominated?: boolean;
+  housemateKey?: string;
+  guest?: boolean;
 }
 
 interface HarnessState {
@@ -42,9 +47,22 @@ const clip = (value: unknown, max: number): string | undefined =>
 
 const keyOf = (harness: Harness, sessionId: string) => `${harness}\u0000${sessionId}`;
 
+/** Held states persist until their paired end event (no idle decay). */
+const HOLD = Number.MAX_SAFE_INTEGER;
+const CHAT_MAX = 200;
+const HELD_STATES: Record<string, true> = {
+  arriving: true,
+  evicting: true,
+  queued_for_confession: true,
+  in_confession: true,
+  called: true,
+};
+
 export class Store {
   private sessions = new Map<string, SessionRec>();
   private harnesses = new Map<Harness, HarnessState>();
+  private questions = new ConfessionQueue();
+  private chat: ChatLine[] = [];
 
   constructor() {
     for (const harness of HARNESSES) {
@@ -66,10 +84,6 @@ export class Store {
 
   ingest(event: IngestEvent, now = Date.now()): { ok: boolean; reason?: string } {
     if (!event || typeof event !== "object") return { ok: false, reason: "body must be an object" };
-    const harness = event.harness as Harness;
-    if (!HARNESSES.includes(harness)) return { ok: false, reason: `unknown harness: ${String(event.harness)}` };
-    const sessionId = clip(event.sessionId, 160);
-    if (!sessionId) return { ok: false, reason: "sessionId required" };
     const type = event.type;
     const validTypes = [
       "session_start",
@@ -82,11 +96,51 @@ export class Store {
       "blocked",
       "subagent_started",
       "subagent_ended",
+      "housemate_summoned",
+      "housemate_arrived",
+      "housemate_evict_started",
+      "housemate_evicted",
+      "question_asked",
+      "question_answered",
+      "kuya_call",
+      "kuya_call_ended",
+      "chat_message",
+      "guest_arrived",
+      "guest_left",
     ];
     if (!validTypes.includes(type)) {
       return { ok: false, reason: `bad type: ${String(type)}` };
     }
-    if (type === "session_end" || type === "subagent_ended") {
+
+    // question_answered is the only event that may omit harness/sessionId: resolve from the queue.
+    if (type === "question_answered") {
+      const id = clip(event.id, 80);
+      if (!id) return { ok: false, reason: "question_answered requires id" };
+      if (!this.questions.get(id)) return { ok: false, reason: `unknown question: ${id}` };
+      const result = this.answerQuestion(id, { option: event.option, text: event.text });
+      return result.ok ? { ok: true } : { ok: false, reason: result.reason };
+    }
+
+    let harness = event.harness as Harness;
+    if (!HARNESSES.includes(harness)) return { ok: false, reason: `unknown harness: ${String(event.harness)}` };
+
+    let sessionId = clip(event.sessionId, 160);
+    if (!sessionId) {
+      sessionId =
+        clip(event.housemateKey, 160) ?? clip(event.guestKey, 160) ?? clip(event.id, 160);
+    }
+    if (type === "housemate_summoned") sessionId = clip(event.housemateKey, 160) ?? sessionId;
+    if (type === "guest_arrived" || type === "guest_left") {
+      sessionId = clip(event.guestKey, 160) ?? sessionId;
+    }
+    if (!sessionId) return { ok: false, reason: "sessionId required" };
+
+    if (
+      type === "session_end" ||
+      type === "subagent_ended" ||
+      type === "housemate_evicted" ||
+      type === "guest_left"
+    ) {
       this.deleteTree(harness, sessionId);
       return { ok: true };
     }
@@ -107,12 +161,19 @@ export class Store {
       this.sessions.set(key, rec);
     }
 
-    const parentId = clip(event.parentSessionId, 160);
+    let parentId = clip(event.parentSessionId, 160);
+    if (type === "guest_arrived") parentId = clip(event.hostKey, 160) ?? parentId;
     if (parentId && parentId !== sessionId) rec.parentId = parentId;
     const title = clip(event.title, 80);
     if (title) rec.title = title;
+    const name = clip(event.name, 80);
+    if (name) rec.title = name;
     const directory = clip(event.directory, 200);
     if (directory) rec.directory = directory;
+    const housemateKey = clip(event.housemateKey, 80);
+    if (housemateKey) rec.housemateKey = housemateKey;
+    if (type === "housemate_summoned" && !rec.housemateKey) rec.housemateKey = sessionId;
+    if (type === "guest_arrived") rec.guest = true;
 
     if (type === "session_start" || type === "subagent_started") {
       rec.state = event.state ?? (rec.parentId ? "working" : "idle");
@@ -140,6 +201,60 @@ export class Store {
       if (tool) rec.tool = tool;
       rec.state = "working";
       rec.workingUntil = now + IDLE_MS;
+    } else if (type === "housemate_summoned") {
+      rec.state = "arriving";
+      rec.workingUntil = HOLD;
+      rec.source = "adapter";
+    } else if (type === "housemate_arrived") {
+      rec.state = "idle";
+      rec.workingUntil = 0;
+    } else if (type === "housemate_evict_started") {
+      rec.state = "evicting";
+      rec.workingUntil = HOLD;
+      if (event.reason) rec.title = clip(event.title ?? rec.title, 80);
+    } else if (type === "kuya_call") {
+      rec.state = "called";
+      rec.workingUntil = HOLD;
+    } else if (type === "kuya_call_ended") {
+      rec.state = "idle";
+      rec.workingUntil = 0;
+    } else if (type === "question_asked") {
+      const id = clip(event.id, 80);
+      const kind = event.kind;
+      const text = clip(event.text, MAX_QUESTION_TEXT);
+      if (!id || !kind || !text) {
+        return { ok: false, reason: "question_asked requires id, kind, text" };
+      }
+      if (!["permission", "question", "choice", "text"].includes(kind)) {
+        return { ok: false, reason: `bad question kind: ${String(kind)}` };
+      }
+      if (kind === "choice" && (!Array.isArray(event.options) || event.options.length === 0)) {
+        return { ok: false, reason: "choice questions require options" };
+      }
+      const question = this.questions.ask({
+        id,
+        harness,
+        sessionId,
+        housemateKey: rec.housemateKey,
+        kind,
+        text,
+        options: event.options,
+        now,
+      });
+      rec.state = question.status === "in_confession" ? "in_confession" : "queued_for_confession";
+      rec.workingUntil = HOLD;
+    } else if (type === "chat_message") {
+      const text = clip(event.text, 400);
+      const role = event.role === "kuya" ? "kuya" : "housemate";
+      if (text) {
+        this.chat.push({ sessionId, role, text, ts: now });
+        if (this.chat.length > CHAT_MAX) this.chat = this.chat.slice(-CHAT_MAX);
+      }
+    } else if (type === "guest_arrived") {
+      rec.state = "working";
+      rec.workingUntil = HOLD;
+      rec.guest = true;
+      if (!rec.title) rec.title = "guest";
     }
 
     rec.lastEventTs = now;
@@ -148,6 +263,32 @@ export class Store {
       if (scanRec.harness === harness && scanRec.source === "scan") this.sessions.delete(key);
     }
     return { ok: true };
+  }
+
+  /** Resolve a question and move the queue chair to the next asker. */
+  answerQuestion(
+    id: string,
+    answer: { option?: number; text?: string },
+  ): { ok: boolean; reason?: string; promoted?: QuestionView } {
+    const result = this.questions.answer(id, answer, Date.now());
+    if (!result.ok) return { ok: false, reason: `unknown or already answered question: ${id}` };
+    this.applyQuestionState(result.question!, "idle");
+    if (result.promoted) this.applyQuestionState(result.promoted, "in_confession");
+    return { ok: true, promoted: result.promoted ?? undefined };
+  }
+
+  /** Skip (re-queue) a question; returns the promoted next asker, if any. */
+  skipQuestion(id: string): { ok: boolean; promoted?: QuestionView } {
+    const promoted = this.questions.skip(id);
+    if (promoted) this.applyQuestionState(promoted, "in_confession");
+    return { ok: true, promoted: promoted ?? undefined };
+  }
+
+  private applyQuestionState(question: QuestionView, state: SessionState): void {
+    const rec = this.sessions.get(keyOf(question.harness as Harness, question.sessionId));
+    if (!rec) return;
+    rec.state = state;
+    rec.workingUntil = state === "in_confession" ? HOLD : 0;
   }
 
   applyScan(procs: ProcInfo[], now = Date.now()): void {
@@ -257,7 +398,9 @@ export class Store {
     const sessions: SessionView[] = [];
     for (const rec of this.sessions.values()) {
       let state: SessionState = "idle";
-      if (rec.state === "blocked") {
+      if (HELD_STATES[rec.state ?? ""] === true) {
+        state = rec.state as SessionState;
+      } else if (rec.state === "blocked") {
         state = now < rec.workingUntil ? "blocked" : "idle";
       } else if (rec.state === "error") {
         state = now < rec.workingUntil ? "error" : "idle";
@@ -279,6 +422,8 @@ export class Store {
         source: rec.source,
         errorCount: rec.errorCount,
         nominated: rec.nominated,
+        housemateKey: rec.housemateKey,
+        guest: rec.guest,
       });
     }
     sessions.sort((a, b) => {
@@ -294,12 +439,22 @@ export class Store {
       return { name, installed: state.installed, running: state.running, procs: state.procs };
     });
 
-    return { type: "snapshot", ts: now, harnesses, sessions };
+    return {
+      type: "snapshot",
+      ts: now,
+      harnesses,
+      sessions,
+      questions: this.questions.list(now),
+      chat: [...this.chat],
+    };
   }
 
   private deleteTree(harness: Harness, sessionId: string): void {
     const rootKey = keyOf(harness, sessionId);
-    if (!this.sessions.has(rootKey)) return;
+    if (!this.sessions.has(rootKey)) {
+      this.dropQuestionsFor(sessionId);
+      return;
+    }
     const doomed = new Set<string>([rootKey]);
     let grew = true;
     while (grew) {
@@ -312,7 +467,17 @@ export class Store {
         }
       }
     }
-    for (const key of doomed) this.sessions.delete(key);
+    for (const key of doomed) {
+      const rec = this.sessions.get(key);
+      if (rec) this.dropQuestionsFor(rec.sessionId);
+      this.sessions.delete(key);
+    }
+  }
+
+  /** Remove all questions for a dead session; promote the next asker if the chair freed. */
+  private dropQuestionsFor(sessionId: string): void {
+    const promoted = this.questions.drop(sessionId);
+    if (promoted) this.applyQuestionState(promoted, "in_confession");
   }
 
   private dropHarnessSessions(harness: Harness): void {

@@ -11,7 +11,7 @@ import type { EventType, Harness, SessionState } from "../src/types";
 
 interface DemoEvent {
   harness: Harness;
-  sessionId: string;
+  sessionId?: string;
   parentSessionId?: string;
   type: EventType;
   state?: SessionState;
@@ -20,6 +20,16 @@ interface DemoEvent {
   directory?: string;
   reason?: string;
   error?: string;
+  housemateKey?: string;
+  name?: string;
+  id?: string;
+  kind?: "permission" | "question" | "choice" | "text";
+  text?: string;
+  options?: string[];
+  option?: number;
+  guestKey?: string;
+  hostKey?: string;
+  role?: "housemate" | "kuya";
 }
 
 interface Step {
@@ -97,6 +107,25 @@ const steps: Step[] = [
   { at: 18900, label: "night falls: pi goes to bed", event: { harness: "pi", sessionId: SES_PI, type: "session_end" } },
   { at: 19100, label: "night falls: omp goes to bed", event: { harness: "omp", sessionId: SES_OMP, type: "session_end" } },
   { at: 19300, label: "night falls: hermes goes to bed (all sleeping Zzz)", event: { harness: "hermes", sessionId: SES_HERMES, type: "session_end" } },
+
+  // 11. PHASE 2 — PBB FLOW: summon, confession queue, call, guest, evict
+  { at: 20000, label: "KUYA summons bea (walks in with a bag)", event: { harness: "opencode", type: "housemate_summoned", housemateKey: "hm_bea", name: "Bea" } },
+  { at: 21500, label: "bea has arrived, starts house life", event: { harness: "opencode", type: "housemate_arrived", housemateKey: "hm_bea" } },
+  { at: 22000, label: "KUYA summons ben", event: { harness: "opencode", type: "housemate_summoned", housemateKey: "hm_ben", name: "Ben" } },
+  { at: 23500, label: "ben has arrived", event: { harness: "opencode", type: "housemate_arrived", housemateKey: "hm_ben" } },
+  { at: 25000, label: "bea asks a permission question (chair free)", event: { harness: "opencode", type: "question_asked", housemateKey: "hm_bea", id: "q_bea_1", kind: "permission", text: "Kailangan ko po mag-edit ng src/api.ts. Ituloy?" } },
+  { at: 27000, label: "ben asks while bea is inside (queue)", event: { harness: "opencode", type: "question_asked", housemateKey: "hm_ben", id: "q_ben_1", kind: "choice", text: "Anong diskarte po ang gagamitin ko?", options: ["Refactor", "Patch lang"] } },
+  { at: 30000, label: "KUYA answers bea's permission", event: { harness: "opencode", type: "question_answered", id: "q_bea_1", option: 0 } },
+  { at: 32000, label: "KUYA answers ben's choice", event: { harness: "opencode", type: "question_answered", id: "q_ben_1", option: 1 } },
+  { at: 34000, label: "KUYA calls bea to the Confession Room", event: { harness: "opencode", type: "kuya_call", housemateKey: "hm_bea" } },
+  { at: 35000, label: "bea: narito na po ako, Kuya", event: { harness: "opencode", type: "chat_message", housemateKey: "hm_bea", role: "housemate", text: "Narito na po ako, Kuya." } },
+  { at: 36000, label: "KUYA: kumusta ang task?", event: { harness: "opencode", type: "chat_message", housemateKey: "hm_bea", role: "kuya", text: "Kumusta ang task mo?" } },
+  { at: 37000, label: "bea: okay naman po", event: { harness: "opencode", type: "chat_message", housemateKey: "hm_bea", role: "housemate", text: "Okay naman po, malapit na matapos." } },
+  { at: 38000, label: "call ended, bea walks back", event: { harness: "opencode", type: "kuya_call_ended", housemateKey: "hm_bea" } },
+  { at: 40000, label: "ben's guest arrives (lanyard)", event: { harness: "opencode", type: "guest_arrived", guestKey: "hm_guest_1", hostKey: "hm_ben" } },
+  { at: 42000, label: "ben's guest leaves (folder handed over)", event: { harness: "opencode", type: "guest_left", guestKey: "hm_guest_1", hostKey: "hm_ben" } },
+  { at: 44000, label: "KUYA evicts ben (suitcase, walk-out)", event: { harness: "opencode", type: "housemate_evict_started", housemateKey: "hm_ben", reason: "kuya_evict" } },
+  { at: 49000, label: "ben has left the house", event: { harness: "opencode", type: "housemate_evicted", housemateKey: "hm_ben" } },
 ];
 
 function sleep(ms: number): Promise<void> {

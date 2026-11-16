@@ -7,7 +7,18 @@ export const HARD_TTL_MS = 24 * 60 * 60 * 1000;
 export const SCAN_MS = 5_000;
 export const INSTALLED_REFRESH_MS = 60_000;
 
-export type SessionState = "idle" | "working" | "blocked" | "error";
+export type SessionState =
+  | "idle"
+  | "working"
+  | "blocked"
+  | "error"
+  // v2 (Phase 2) states — additive; v1 consumers render unknown states as idle
+  | "arriving"
+  | "evicting"
+  | "queued_for_confession"
+  | "in_confession"
+  | "called";
+
 export type EventType =
   | "session_start"
   | "session_end"
@@ -18,7 +29,22 @@ export type EventType =
   | "task_completed"
   | "blocked"
   | "subagent_started"
-  | "subagent_ended";
+  | "subagent_ended"
+  // v2 (Phase 2) events — additive
+  | "housemate_summoned"
+  | "housemate_arrived"
+  | "housemate_evict_started"
+  | "housemate_evicted"
+  | "question_asked"
+  | "question_answered"
+  | "kuya_call"
+  | "kuya_call_ended"
+  | "chat_message"
+  | "guest_arrived"
+  | "guest_left";
+
+export type QuestionKind = "permission" | "question" | "choice" | "text";
+export type QuestionStatus = "queued" | "in_confession" | "answered";
 
 export interface IngestEvent {
   harness: string;
@@ -32,6 +58,39 @@ export interface IngestEvent {
   reason?: string;
   error?: string;
   ts?: number;
+  // v2 fields (all optional, additive)
+  housemateKey?: string;
+  name?: string;
+  presetId?: string;
+  id?: string;
+  kind?: QuestionKind;
+  options?: string[];
+  option?: number;
+  text?: string;
+  guestKey?: string;
+  hostKey?: string;
+  role?: "housemate" | "kuya";
+}
+
+export interface QuestionView {
+  id: string;
+  harness: string;
+  sessionId: string;
+  housemateKey?: string;
+  kind: QuestionKind;
+  text: string;
+  options?: string[];
+  askedAt: number;
+  status: QuestionStatus;
+  answer?: { option?: number; text?: string };
+  answeredAt?: number;
+}
+
+export interface ChatLine {
+  sessionId: string;
+  role: "housemate" | "kuya";
+  text: string;
+  ts: number;
 }
 
 export interface SessionView {
@@ -48,6 +107,8 @@ export interface SessionView {
   source: "adapter" | "scan";
   errorCount?: number;
   nominated?: boolean;
+  housemateKey?: string;
+  guest?: boolean;
 }
 
 export interface HarnessView {
@@ -62,4 +123,6 @@ export interface Snapshot {
   ts: number;
   harnesses: HarnessView[];
   sessions: SessionView[];
+  questions: QuestionView[];
+  chat: ChatLine[];
 }
