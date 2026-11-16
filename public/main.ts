@@ -1245,6 +1245,7 @@ window.addEventListener("resize", fitCanvas);
 kuya.initDOM();
 kuya.loadLines();
 kuyaConsole.init();
+document.getElementById("empty-house-summon")?.addEventListener("click", () => kuyaConsole.openSummon());
 void houseManager.init();
 void diary.init();
 

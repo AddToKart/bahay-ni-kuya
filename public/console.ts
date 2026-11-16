@@ -41,8 +41,6 @@ export class HouseManager {
     this.errorEl = document.getElementById("new-house-error");
     this.rootsHint = document.getElementById("new-house-roots-hint");
 
-    await this.fetchToken();
-
     document.getElementById("new-house-close")?.addEventListener("click", () => this.closeNewHouseModal());
     document.getElementById("new-house-cancel")?.addEventListener("click", () => this.closeNewHouseModal());
     document.getElementById("new-house-submit")?.addEventListener("click", () => void this.createHouse());
@@ -58,6 +56,7 @@ export class HouseManager {
       }
     });
 
+    await this.fetchToken();
     await this.fetchRootsHint();
     await this.fetchHouses();
   }
@@ -309,10 +308,6 @@ export class KuyaConsole {
     this.summonError = document.getElementById("summon-error");
     this.modelFilter = document.getElementById("summon-model-filter") as HTMLInputElement | null;
 
-    // Fetch same-origin token (never in query params)
-    await this.fetchToken();
-    await this.fetchRoots();
-
     if (this.submitBtn) {
       this.submitBtn.addEventListener("click", () => this.submitTask());
     }
@@ -339,6 +334,9 @@ export class KuyaConsole {
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && this.summonModal && !this.summonModal.hasAttribute("hidden")) this.closeSummon();
     });
+
+    await this.fetchToken();
+    await this.fetchRoots();
 
     void this.loadOpenCodeOptions();
     void this.refreshHousemates();
@@ -386,11 +384,23 @@ export class KuyaConsole {
   }
 
   openSummon(): void {
+    if (!this.summonModal) {
+      this.summonModal = document.getElementById("summon-modal");
+    }
+    if (!this.folderInput) {
+      this.folderInput = document.getElementById("summon-folder") as HTMLInputElement | null;
+    }
     const activeHouse = this.houseManager?.getActiveHouse();
     if (activeHouse && activeHouse.id !== "global" && this.folderInput) {
       this.folderInput.value = activeHouse.root;
     }
-    this.summonModal?.removeAttribute("hidden");
+    if (this.allModels.length === 0) {
+      void this.loadOpenCodeOptions();
+    }
+    if (this.summonModal) {
+      this.summonModal.removeAttribute("hidden");
+      this.summonModal.hidden = false;
+    }
     if (this.summonError) {
       this.summonError.hidden = true;
       this.summonError.textContent = "";
@@ -400,7 +410,10 @@ export class KuyaConsole {
   }
 
   private closeSummon(): void {
-    this.summonModal?.setAttribute("hidden", "");
+    if (this.summonModal) {
+      this.summonModal.setAttribute("hidden", "");
+      this.summonModal.hidden = true;
+    }
     if (this.summonError) {
       this.summonError.hidden = true;
       this.summonError.textContent = "";
