@@ -7,7 +7,7 @@ import { NavGrid, type Point } from "./nav.js";
 import { drawAnimatedCharacter, type Action, type Facing, type Emote } from "./anim.js";
 import { HouseLifeManager, type POI } from "./life.js";
 import { KuyaLayer } from "./kuya.js";
-import { KuyaConsole } from "./console.js";
+import { KuyaConsole, HouseManager, type HouseRecord } from "./console.js";
 import { DiaryRoom } from "./confession.js";
 import { installLayoutEditor } from "./layout-editor.js";
 import type { ChatLine, QuestionView, SessionState } from "../src/types.js";
@@ -45,6 +45,7 @@ interface SessionView {
   agent?: string;
   model?: string;
   guest?: boolean;
+  houseId?: string;
 }
 
 interface Snapshot {
@@ -54,6 +55,7 @@ interface Snapshot {
   sessions: SessionView[];
   questions?: QuestionView[];
   chat?: ChatLine[];
+  houses?: HouseRecord[];
 }
 
 // ---------------------------------------------------------------- characters
@@ -158,17 +160,33 @@ interface Desired {
   guest: boolean;
 }
 
+let activeHouseId = "global";
+let lastSnapshot: Snapshot | null = null;
+
+const houseManager = new HouseManager((houseId) => {
+  activeHouseId = houseId;
+  if (lastSnapshot) {
+    applySnapshot(lastSnapshot);
+  }
+});
+kuyaConsole.setHouseManager(houseManager);
+
 function reconcile(snap: Snapshot, now: number): number {
+  const visibleSessions = snap.sessions.filter((s) => {
+    if (activeHouseId === "global") return true;
+    return s.houseId === activeHouseId;
+  });
+
   const byKey = new Map<string, SessionView>();
-  for (const s of snap.sessions) byKey.set(sessionKey(s.harness, s.sessionId), s);
+  for (const s of visibleSessions) byKey.set(sessionKey(s.harness, s.sessionId), s);
 
   const perHarness = new Map<string, number>();
-  for (const s of snap.sessions) perHarness.set(s.harness, (perHarness.get(s.harness) ?? 0) + 1);
+  for (const s of visibleSessions) perHarness.set(s.harness, (perHarness.get(s.harness) ?? 0) + 1);
 
   const desired = new Map<string, Desired>();
   const harnessInstances = new Map<string, number>();
 
-  for (const s of snap.sessions) {
+  for (const s of visibleSessions) {
     const key = sessionKey(s.harness, s.sessionId);
     charMeta.set(key, { agent: s.agent, model: s.model, housemateKey: s.housemateKey });
     const parent = s.parentId ? byKey.get(sessionKey(s.harness, s.parentId)) : undefined;
@@ -241,45 +259,47 @@ function reconcile(snap: Snapshot, now: number): number {
   }
 
   let sleepingCount = 0;
-  for (const h of snap.harnesses) {
-    const count = perHarness.get(h.name) ?? 0;
-    if (h.installed && !h.running && count === 0) {
-      sleepingCount += 1;
-      desired.set(`harness:${h.name}`, {
-        key: `harness:${h.name}`,
-        harness: h.name,
-        parentKey: null,
-        sub: false,
-        sleeping: true,
-        state: "idle",
-        room: "bedroom",
-        label: h.name,
-        working: false,
-        blocked: false,
-        errorState: false,
-        errorCount: 0,
-        nominated: false,
-        tool: null,
-        instanceIndex: 0,
-      });
-    } else if (h.running && count === 0) {
-      desired.set(`ambient:${h.name}`, {
-        key: `ambient:${h.name}`,
-        harness: h.name,
-        parentKey: null,
-        sub: false,
-        sleeping: false,
-        state: "idle",
-        room: "living",
-        label: `${h.name} (ambient)`,
-        working: false,
-        blocked: false,
-        errorState: false,
-        errorCount: 0,
-        nominated: false,
-        tool: null,
-        instanceIndex: 0,
-      });
+  if (activeHouseId === "global") {
+    for (const h of snap.harnesses) {
+      const count = perHarness.get(h.name) ?? 0;
+      if (h.installed && !h.running && count === 0) {
+        sleepingCount += 1;
+        desired.set(`harness:${h.name}`, {
+          key: `harness:${h.name}`,
+          harness: h.name,
+          parentKey: null,
+          sub: false,
+          sleeping: true,
+          state: "idle",
+          room: "bedroom",
+          label: h.name,
+          working: false,
+          blocked: false,
+          errorState: false,
+          errorCount: 0,
+          nominated: false,
+          tool: null,
+          instanceIndex: 0,
+        });
+      } else if (h.running && count === 0) {
+        desired.set(`ambient:${h.name}`, {
+          key: `ambient:${h.name}`,
+          harness: h.name,
+          parentKey: null,
+          sub: false,
+          sleeping: false,
+          state: "idle",
+          room: "living",
+          label: `${h.name} (ambient)`,
+          working: false,
+          blocked: false,
+          errorState: false,
+          errorCount: 0,
+          nominated: false,
+          tool: null,
+          instanceIndex: 0,
+        });
+      }
     }
   }
 
@@ -1040,9 +1060,19 @@ function setConnected(connected: boolean): void {
   bannerEl.hidden = connected;
 }
 
-function updateHeader(snap: Snapshot, sleeping: number): void {
-  const working = snap.sessions.filter((s) => s.state === "working").length;
-  const idle = snap.sessions.length - working;
+function updateEmptyOverlay(visibleCount: number): void {
+  const overlay = document.getElementById("empty-house-overlay");
+  if (!overlay) return;
+  if (activeHouseId === "global") {
+    overlay.hidden = true;
+    return;
+  }
+  overlay.hidden = visibleCount > 0;
+}
+
+function updateHeader(sessions: SessionView[], sleeping: number): void {
+  const working = sessions.filter((s) => s.state === "working").length;
+  const idle = sessions.length - working;
   statusEl.textContent = `${working} working · ${idle} idle · ${sleeping} sleeping`;
 }
 
@@ -1061,14 +1091,23 @@ function applySnapshot(snap: Snapshot): void {
   ) {
     return;
   }
+  lastSnapshot = snap;
   gotSnapshot = true;
+  if (snap.houses) {
+    houseManager.setHouses(snap.houses);
+  }
   const sleeping = reconcile(snap, performance.now());
-  updateHeader(snap, sleeping);
+  const visibleSessions = snap.sessions.filter((s) => {
+    if (activeHouseId === "global") return true;
+    return s.houseId === activeHouseId;
+  });
+  updateHeader(visibleSessions, sleeping);
+  updateEmptyOverlay(visibleSessions.length);
   kuyaConsole.updateInstalled(snap.harnesses);
   diary.update(snap);
-  const called = snap.sessions.find((s) => s.state === "called");
+  const called = visibleSessions.find((s) => s.state === "called");
   if (called) diary.openChat(called.sessionId);
-  for (const s of snap.sessions) {
+  for (const s of visibleSessions) {
     if (s.directory) kuyaConsole.recordDirectory(s.directory);
   }
 }
@@ -1206,6 +1245,7 @@ window.addEventListener("resize", fitCanvas);
 kuya.initDOM();
 kuya.loadLines();
 kuyaConsole.init();
+void houseManager.init();
 void diary.init();
 
 // Load house map & POIs, then initialize renderer, navGrid, and house life

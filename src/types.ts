@@ -41,7 +41,10 @@ export type EventType =
   | "kuya_call_ended"
   | "chat_message"
   | "guest_arrived"
-  | "guest_left";
+  | "guest_left"
+  // v3 (houses) events — additive
+  | "house_opened"
+  | "house_closed";
 
 export type QuestionKind = "permission" | "question" | "choice" | "text";
 export type QuestionStatus = "queued" | "in_confession" | "answered";
@@ -83,6 +86,8 @@ export interface IngestEvent {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  // v3 (houses)
+  houseId?: string;
 }
 
 export interface QuestionView {
@@ -126,6 +131,7 @@ export interface SessionView {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  houseId?: string;
 }
 
 export interface HarnessView {

@@ -12,9 +12,266 @@ interface TaskItem {
   createdAt: number;
 }
 
+export interface HouseRecord {
+  id: string;
+  label: string;
+  root: string;
+  createdAt: number;
+}
+
+export class HouseManager {
+  private token: string | null = null;
+  private houses: HouseRecord[] = [];
+  private activeHouseId = "global";
+  private onHouseChange: (houseId: string, house?: HouseRecord) => void;
+  private tabsContainer: HTMLElement | null = null;
+  private modal: HTMLElement | null = null;
+  private folderInput: HTMLInputElement | null = null;
+  private errorEl: HTMLElement | null = null;
+  private rootsHint: HTMLElement | null = null;
+
+  constructor(onHouseChange: (houseId: string, house?: HouseRecord) => void) {
+    this.onHouseChange = onHouseChange;
+  }
+
+  async init(): Promise<void> {
+    this.tabsContainer = document.getElementById("house-tabs");
+    this.modal = document.getElementById("new-house-modal");
+    this.folderInput = document.getElementById("new-house-folder") as HTMLInputElement | null;
+    this.errorEl = document.getElementById("new-house-error");
+    this.rootsHint = document.getElementById("new-house-roots-hint");
+
+    await this.fetchToken();
+
+    document.getElementById("new-house-close")?.addEventListener("click", () => this.closeNewHouseModal());
+    document.getElementById("new-house-cancel")?.addEventListener("click", () => this.closeNewHouseModal());
+    document.getElementById("new-house-submit")?.addEventListener("click", () => void this.createHouse());
+    this.folderInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") void this.createHouse();
+    });
+    this.modal?.addEventListener("click", (e) => {
+      if (e.target === this.modal) this.closeNewHouseModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.modal && !this.modal.hasAttribute("hidden")) {
+        this.closeNewHouseModal();
+      }
+    });
+
+    await this.fetchRootsHint();
+    await this.fetchHouses();
+  }
+
+  private async fetchToken(): Promise<void> {
+    try {
+      const res = await fetch("/api/auth/token");
+      if (res.ok) {
+        const data = (await res.json()) as { token?: string };
+        this.token = data.token ?? null;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private async fetchRootsHint(): Promise<void> {
+    if (!this.rootsHint) return;
+    try {
+      const res = await fetch("/api/roots");
+      if (res.ok) {
+        const data = (await res.json()) as { roots?: string[] };
+        const roots = data.roots ?? [];
+        if (roots.length > 0) {
+          this.rootsHint.innerHTML = `Allowlisted roots: ${roots.map((r) => `<code>${r}</code>`).join(", ")}`;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async fetchHouses(): Promise<void> {
+    try {
+      const res = await fetch("/api/houses");
+      if (res.ok) {
+        const data = (await res.json()) as { houses?: HouseRecord[] };
+        if (Array.isArray(data.houses)) {
+          this.setHouses(data.houses);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  setHouses(houses: HouseRecord[]): void {
+    this.houses = houses;
+    if (!this.houses.some((h) => h.id === this.activeHouseId)) {
+      this.activeHouseId = "global";
+      this.onHouseChange(this.activeHouseId, this.getActiveHouse());
+    }
+    this.renderTabs();
+  }
+
+  getActiveHouseId(): string {
+    return this.activeHouseId;
+  }
+
+  getActiveHouse(): HouseRecord | undefined {
+    return this.houses.find((h) => h.id === this.activeHouseId);
+  }
+
+  renderTabs(): void {
+    if (!this.tabsContainer) return;
+    this.tabsContainer.innerHTML = "";
+
+    for (const house of this.houses) {
+      const tab = document.createElement("button");
+      tab.className = `house-tab${house.id === this.activeHouseId ? " active" : ""}`;
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-selected", String(house.id === this.activeHouseId));
+
+      const icon = house.id === "global" ? "🌐" : "📁";
+      const label = document.createElement("span");
+      label.textContent = `${icon} ${house.label}`;
+      tab.appendChild(label);
+
+      if (house.id !== "global") {
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "house-tab-close";
+        closeBtn.innerHTML = "&times;";
+        closeBtn.title = `Close ${house.label}`;
+        closeBtn.setAttribute("aria-label", `Close ${house.label}`);
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          void this.closeHouse(house.id, house.label);
+        });
+        tab.appendChild(closeBtn);
+      }
+
+      tab.addEventListener("click", () => {
+        if (this.activeHouseId !== house.id) {
+          this.switchTo(house.id);
+        }
+      });
+
+      this.tabsContainer.appendChild(tab);
+    }
+
+    const addBtn = document.createElement("button");
+    addBtn.className = "house-tab house-tab-add";
+    addBtn.id = "btn-new-house";
+    addBtn.textContent = "➕ New House";
+    addBtn.title = "Create a new project house";
+    addBtn.addEventListener("click", () => this.openNewHouseModal());
+    this.tabsContainer.appendChild(addBtn);
+  }
+
+  switchTo(id: string): void {
+    this.activeHouseId = id;
+    this.renderTabs();
+    this.onHouseChange(id, this.getActiveHouse());
+  }
+
+  openNewHouseModal(): void {
+    if (!this.modal) return;
+    this.modal.removeAttribute("hidden");
+    if (this.errorEl) {
+      this.errorEl.hidden = true;
+      this.errorEl.textContent = "";
+    }
+    if (this.folderInput) {
+      this.folderInput.value = "";
+      setTimeout(() => this.folderInput?.focus(), 0);
+    }
+  }
+
+  closeNewHouseModal(): void {
+    this.modal?.setAttribute("hidden", "");
+    if (this.errorEl) {
+      this.errorEl.hidden = true;
+      this.errorEl.textContent = "";
+    }
+  }
+
+  private showError(msg: string): void {
+    if (!this.errorEl) return;
+    this.errorEl.textContent = msg;
+    this.errorEl.hidden = false;
+  }
+
+  private async createHouse(): Promise<void> {
+    const root = this.folderInput?.value.trim() ?? "";
+    if (!root) {
+      return this.showError("Enter a project folder path.");
+    }
+    if (!this.token) await this.fetchToken();
+    const submitBtn = document.getElementById("new-house-submit") as HTMLButtonElement | null;
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      const res = await fetch("/api/houses", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ root }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        house?: HouseRecord;
+      };
+      if (!res.ok) {
+        return this.showError(data.error ?? `Failed to create house: ${res.statusText}`);
+      }
+      this.closeNewHouseModal();
+      await this.fetchHouses();
+      if (data.house?.id) {
+        this.switchTo(data.house.id);
+      }
+    } catch (err) {
+      this.showError(`Error creating house: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  }
+
+  private async closeHouse(id: string, label: string): Promise<void> {
+    if (!confirm(`Close house "${label}"?`)) return;
+    if (!this.token) await this.fetchToken();
+
+    try {
+      const res = await fetch(`/api/houses/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          authorization: `Bearer ${this.token}`,
+        },
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        alert(`Failed to close house: ${data.error ?? res.statusText}`);
+        return;
+      }
+      if (this.activeHouseId === id) {
+        this.activeHouseId = "global";
+      }
+      await this.fetchHouses();
+      this.onHouseChange(this.activeHouseId, this.getActiveHouse());
+    } catch (err) {
+      alert(`Error closing house: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+}
+
 export class KuyaConsole {
   private token: string | null = null;
+  private houseManager: HouseManager | null = null;
   private roots: string[] = [];
+
+  setHouseManager(hm: HouseManager): void {
+    this.houseManager = hm;
+  }
   private knownDirs = new Set<string>();
   private installedHarnesses = new Set<string>();
 
@@ -32,6 +289,10 @@ export class KuyaConsole {
   private summonError: HTMLElement | null = null;
   private modelFilter: HTMLInputElement | null = null;
   private allModels: { providerID: string; modelID: string }[] = [];
+
+  setHouseManager(hm: HouseManager): void {
+    this.houseManager = hm;
+  }
 
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
@@ -62,6 +323,7 @@ export class KuyaConsole {
     const summonName = document.getElementById("summon-name") as HTMLInputElement | null;
 
     summonBtn?.addEventListener("click", () => this.openSummon());
+    document.getElementById("empty-house-summon")?.addEventListener("click", () => this.openSummon());
     evictBtn?.addEventListener("click", () => void this.evictHousemate());
     callBtn?.addEventListener("click", () => void this.callHousemate());
     document.getElementById("summon-close")?.addEventListener("click", () => this.closeSummon());
@@ -123,7 +385,11 @@ export class KuyaConsole {
     }
   }
 
-  private openSummon(): void {
+  openSummon(): void {
+    const activeHouse = this.houseManager?.getActiveHouse();
+    if (activeHouse && activeHouse.id !== "global" && this.folderInput) {
+      this.folderInput.value = activeHouse.root;
+    }
     this.summonModal?.removeAttribute("hidden");
     if (this.summonError) {
       this.summonError.hidden = true;
@@ -168,6 +434,10 @@ export class KuyaConsole {
   }
 
   private async summonHousemate(): Promise<void> {
+    const activeHouseId = this.houseManager?.getActiveHouseId() ?? "global";
+    if (activeHouseId === "global") {
+      return this.showSummonError("Cannot summon in Global House. Please create or switch to a Project House first.");
+    }
     const name = (document.getElementById("summon-name") as HTMLInputElement | null)?.value.trim() ?? "";
     if (!name) return this.showSummonError("Enter a name for the housemate.");
     const agent = this.agentSelect?.value ?? "";
@@ -175,7 +445,8 @@ export class KuyaConsole {
     const model = this.modelSelect?.value ?? "";
     const [providerID, modelID] = model.split("/");
     if (!providerID || !modelID) return this.showSummonError("Pick a model.");
-    const projectRoot = this.folderInput?.value.trim() || "";
+    const activeHouse = this.houseManager?.getActiveHouse();
+    const projectRoot = this.folderInput?.value.trim() || activeHouse?.root || "";
     const submit = document.getElementById("summon-submit") as HTMLButtonElement | null;
     if (submit) submit.disabled = true;
     try {
@@ -188,14 +459,20 @@ export class KuyaConsole {
           model: { providerID, modelID },
           projectRoot,
           permissions: { bash: "ask" },
+          houseId: activeHouseId,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; housemate?: { key: string } };
       if (!res.ok) return this.showSummonError(`Summon failed: ${data.error ?? res.statusText}`);
-      if (this.folderInput) this.folderInput.value = "";
+      if (this.folderInput) this.folderInput.value = activeHouse?.root ?? "";
       this.closeSummon();
       await this.refreshHousemates();
     } catch (error) {
+      this.showSummonError(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  }
       this.showSummonError(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       if (submit) submit.disabled = false;

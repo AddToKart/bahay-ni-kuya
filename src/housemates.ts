@@ -30,6 +30,7 @@ export interface SummonInput {
   projectRoot: string;
   persona?: string;
   permissions?: Record<string, "ask" | "allow" | "deny">;
+  houseId?: string;
 }
 
 export interface HousemateRec {
@@ -194,6 +195,7 @@ export class Housemates {
       agent,
       model: `${rec.provider}/${rec.model}`,
       directory,
+      houseId: input.houseId,
     });
 
     const timer = setTimeout(() => {

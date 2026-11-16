@@ -10,6 +10,7 @@
     <main class="page">
       <header class="house-header">
         <h1>Bahay ni Kuya</h1>
+        <div id="house-tabs" class="house-tabs" role="tablist" aria-label="House selector"></div>
         <span class="day-badge" id="day-counter">Day 1 in the House</span>
         <p class="status" id="status" role="status" aria-live="polite">connecting…</p>
         <span class="conn" id="conn" data-state="off" aria-label="disconnected"></span>
@@ -47,6 +48,14 @@
           role="img"
           aria-label="Pixel cross-section of the bahay ni kuya at dusk: a bedroom with bunk beds, a living room with a sofa and lamp, an office with two rows of desks, and a corridor joining them. Characters show each AI harness session; working sessions sit in the office, idle ones in the living room, and sleeping harnesses are in the bedroom."
         ></canvas>
+
+        <div id="empty-house-overlay" hidden>
+          <div class="empty-house-content">
+            <div class="empty-house-icon">🏠</div>
+            <p class="empty-house-msg">Walang tao. Summon a housemate to start the season!</p>
+            <button class="dispatch-btn" id="empty-house-summon">🚪 Summon Housemate</button>
+          </div>
+        </div>
 
         <div id="char-card" class="char-card" hidden aria-live="polite">
           <div class="char-card-header">
@@ -166,6 +175,24 @@
           <div class="summon-actions">
             <button class="dispatch-btn summon-cancel" id="summon-cancel">Cancel</button>
             <button class="dispatch-btn" id="summon-submit">Summon</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop" id="new-house-modal" hidden>
+        <section class="summon-panel" role="dialog" aria-modal="true" aria-labelledby="new-house-title">
+          <div class="summon-head">
+            <h3 id="new-house-title">📁 New Project House</h3>
+            <button class="summon-close" id="new-house-close" aria-label="Close">&times;</button>
+          </div>
+          <label class="summon-field">Project Folder Path
+            <input id="new-house-folder" type="text" placeholder="e.g. D:/code_ni_kurt/pixel-office" aria-label="Project folder path" />
+          </label>
+          <div id="new-house-roots-hint" class="summon-note"></div>
+          <p class="summon-error" id="new-house-error" hidden></p>
+          <div class="summon-actions">
+            <button class="dispatch-btn summon-cancel" id="new-house-cancel">Cancel</button>
+            <button class="dispatch-btn" id="new-house-submit">Create House</button>
           </div>
         </section>
       </div>

@@ -16,6 +16,7 @@ import {
 } from "./security";
 import { Dispatcher } from "./dispatcher";
 import { Housemates } from "./housemates";
+import { Houses } from "./houses";
 import { OpenCodeSupervisor } from "./opencode-supervisor";
 import { RateLimiter } from "./ratelimit";
 import { audit, auditTail } from "./audit";
@@ -103,6 +104,7 @@ const store = new Store();
 const dispatcher = new Dispatcher(store);
 const supervisor = new OpenCodeSupervisor();
 const housemates = new Housemates(store, supervisor);
+const houses = new Houses();
 const limiter = new RateLimiter();
 const clients = new Set<WsLike>();
 const transpiler = new Bun.Transpiler({ loader: "ts" });
@@ -167,8 +169,13 @@ async function serveStatic(pathname: string): Promise<Response | null> {
 
 let lastSignature = "";
 
+function fullSnapshot(): object {
+  const snap = store.snapshot(Date.now());
+  return { ...snap, houses: houses.list() };
+}
+
 function broadcast(force = false): void {
-  const snapshot = store.snapshot(Date.now());
+  const snapshot = fullSnapshot() as ReturnType<typeof store.snapshot> & { houses: unknown };
   const signature = JSON.stringify({ harnesses: snapshot.harnesses, sessions: snapshot.sessions });
   if (!force && signature === lastSignature) return;
   lastSignature = signature;
@@ -297,9 +304,9 @@ try {
         return new Response(null, { status: 204 });
       }
       if (req.method === "GET" && url.pathname === "/healthz") return jsonResponse({ ok: true, port: PORT });
-      if (req.method === "GET" && url.pathname === "/state") return jsonResponse(store.snapshot(Date.now()));
+      if (req.method === "GET" && url.pathname === "/state") return jsonResponse(fullSnapshot());
       if (req.method === "GET" && url.pathname === "/debug") {
-        return jsonResponse({ ...store.snapshot(Date.now()), log: logTail(80) });
+        return jsonResponse({ ...fullSnapshot(), log: logTail(80) });
       }
       if (req.method === "GET" && url.pathname === "/favicon.ico") return new Response(null, { status: 204 });
 
@@ -334,6 +341,54 @@ try {
           }
         }
 
+        // --- Houses: global + project house management ---
+        if (url.pathname === "/api/houses" || url.pathname.startsWith("/api/houses/")) {
+          if (req.method === "GET" && url.pathname === "/api/houses") {
+            return jsonResponse({ houses: houses.list() });
+          }
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+          if (req.method === "POST" && url.pathname === "/api/houses") {
+            let body: Record<string, unknown>;
+            try {
+              body = (await req.json()) as Record<string, unknown>;
+            } catch {
+              return jsonResponse({ error: "Bad json" }, 400);
+            }
+            const root = typeof body.root === "string" ? body.root.trim() : "";
+            if (!root) return jsonResponse({ error: "root is required" }, 400);
+            const cwdCheck = validateCwd(root);
+            if (!cwdCheck.ok) return jsonResponse({ error: cwdCheck.error }, 400);
+            try {
+              const house = houses.create(cwdCheck.path!);
+              const payload = JSON.stringify({ type: "house_opened", houseId: house.id, label: house.label });
+              for (const ws of clients) {
+                try { ws.send(payload); } catch { clients.delete(ws); }
+              }
+              scheduleBroadcast();
+              return jsonResponse({ house }, 201);
+            } catch (err) {
+              return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+            }
+          }
+          const houseDeleteMatch = url.pathname.match(/^\/api\/houses\/([^/]+)$/);
+          if (req.method === "DELETE" && houseDeleteMatch) {
+            const houseId = decodeURIComponent(houseDeleteMatch[1]);
+            const house = houses.get(houseId);
+            if (!house) return jsonResponse({ error: "house not found" }, 404);
+            const closed = houses.close(houseId);
+            if (!closed) return jsonResponse({ error: "house not found" }, 404);
+            const payload = JSON.stringify({ type: "house_closed", houseId, label: house.label });
+            for (const ws of clients) {
+              try { ws.send(payload); } catch { clients.delete(ws); }
+            }
+            scheduleBroadcast();
+            return jsonResponse({ ok: true });
+          }
+          return jsonResponse({ error: "not found" }, 404);
+        }
+
         // --- Phase 4: real opencode housemates ---
         if (url.pathname === "/api/housemates" || url.pathname.startsWith("/api/housemates/")) {
           if (!isAuthenticated(req)) {
@@ -361,6 +416,7 @@ try {
             const name = typeof body.name === "string" ? body.name : "";
             const agent = typeof body.agent === "string" ? body.agent : "";
             const projectRoot = typeof body.projectRoot === "string" ? body.projectRoot : process.cwd();
+            const houseId = typeof body.houseId === "string" ? body.houseId : undefined;
             const permissions =
               body.permissions && typeof body.permissions === "object"
                 ? Object.fromEntries(
@@ -381,6 +437,7 @@ try {
                 projectRoot,
                 permissions,
                 persona: typeof body.persona === "string" ? body.persona : undefined,
+                houseId,
               });
               scheduleBroadcast();
               return jsonResponse(result, 201);

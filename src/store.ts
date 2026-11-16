@@ -37,6 +37,7 @@ interface SessionRec {
   model?: string;
   cost?: number;
   tokens?: TokenUsage;
+  houseId?: string;
 }
 
 interface HarnessState {
@@ -179,6 +180,7 @@ export class Store {
     if (housemateKey) rec.housemateKey = housemateKey;
     if (type === "housemate_summoned" && !rec.housemateKey) rec.housemateKey = sessionId;
     if (type === "guest_arrived") rec.guest = true;
+    if (event.houseId) rec.houseId = clip(event.houseId, 80);
 
     if (type === "session_start" || type === "subagent_started") {
       rec.state = event.state ?? (rec.parentId ? "working" : "idle");
@@ -449,6 +451,7 @@ export class Store {
         model: rec.model,
         cost: rec.cost,
         tokens: rec.tokens,
+        houseId: rec.houseId,
       });
     }
     sessions.sort((a, b) => {
