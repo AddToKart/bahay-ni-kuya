@@ -1,0 +1,39 @@
+# ASSUMPTIONS.md — decisions taken without asking (with rationale)
+
+Recorded per the KUYA directive ("decide, record assumptions, flag real decisions"). Every entry
+here is either (a) an inference from repo evidence, or (b) a default chosen because the spec left
+it open. Real decisions needing the human are in master-plan §13 (NEEDS HUMAN DECISION D1–D12)
+and docs/OPEN-QUESTIONS.md.
+
+| # | Assumption | Basis / rationale | Risk if wrong |
+| --- | --- | --- | --- |
+| A-01 | Phase 1 was already executed before this planning pass; the plan records it as delivered and re-verifies rather than re-implementing. | Branches `furniture-fix`/`furniture-fix-2`, commits `fd5d129..39df6e2`, validator v2 code, editor, save endpoint, screenshots all exist; validators pass. | Low: if the user considers P1 not done, the reopen list is exactly the 5 visual-check items + P1-GAP-1. |
+| A-02 | The spec's "branch master-plan" is for the planning docs only; feature phases branch from the approved tip of the previous phase, not from master-plan. | Spec Global Rule 1. | Low. |
+| A-03 | `CONTRACT.md` is editable only by the protocol phase (P2) and only additively. | Spec says "Extend the wire protocol in CONTRACT.md"; the file header demands it stay in sync with both slices. | Low. |
+| A-04 | v1 event types and fields never change meaning; v2 is additive; unknown states degrade to idle visuals in v1 consumers. | Backward-compat requirement in the spec. | Low. |
+| A-05 | The current dispatcher's auto-delete of worktrees/branches (F-SEC-01) is treated as a bug to fix in P4, because it directly violates the spec's safety rule; until P4, its behavior is documented as-is. | Spec Global Rule 8 vs `src/dispatcher.ts cleanupWorktree`. | Medium: tasks dispatched between now and P4 keep deleting worktrees; acceptable because no housemate feature exists yet. |
+| A-06 | `/event` ingest stays unauthenticated (loopback-only) as today; control endpoints get the full Rule 7 treatment. | The spec lists security for *control* endpoints; adapters are fire-and-forget local POSTs; changing ingest auth would break all five adapters. | Medium: a malicious local process could POST fake events. Mitigation noted; tightening is a P4 option if desired (see OQ-B04). |
+| A-07 | `config/runners.json allowlistedRoots` becomes authoritative in P4; today's `[cwd, parent, ~/code, ~]` defaults are a bug (F-SEC-03), not a design. | The config field exists and the docs describe allowlisting; `$HOME` as a root is indefensible. | Low. |
+| A-08 | opencode server basic-auth defaults come from env (`OPENCODE_SERVER_USERNAME/PASSWORD`); if the local server runs without them, the house client talks to it unauthenticated on loopback. | `opencode run --help` documents the env fallback; P3 verifies actual server behavior. | Medium: P3 resolves. |
+| A-09 | Managed opencode sessions get their own worktrees `kuya/<name>-<id>` created from the repo's current HEAD (or chosen base), kept after evict. | Spec P4 + Rule 8. | Low. |
+| A-10 | The house never runs `git merge` except on the P5 Approve button, and only into a user-chosen target branch (default suggestion `kuya/ready`, never `main`). | Spec P5 + Rule 8. | Low. |
+| A-11 | Squad roles are fixed (`frontend, backend, tester, proofreader`); the first squad is exactly frontend, backend, tester-1, tester-2, proofreader as spec'd. | Spec P5. Tester-2's agent/model is D7. | Low. |
+| A-12 | Test files are whatever matches the job template's `tests.globs` (default `test/**`, `*.test.*`, `*.spec.*`); hash-locked at job start. | Spec says "test files are hash-tracked" without defining detection; globs are the concrete boring option. | Low. |
+| A-13 | "One commit per turn authored as the role" uses `git -c user.name=<role> -c user.email=<role>@house.local commit`; no global git config is touched. | Concrete implementation of the spec line. | Low. |
+| A-14 | The user's opencode config contains a plaintext provider key today; the house never reads any opencode config values (only names via the live catalog API), never writes config, and redacts key-shaped strings in anything it stores. | Observed in `~/.config/opencode/opencode.json` during the audit; spec Rule 7 forbids reading credentials. | Low (if the rule holds). |
+| A-15 | The confession queue lives server-side (`src/questions.ts`) so restarts keep pending questions (persisted with the session registry in the P4 state file). | Spec requires queueing + dead-session cleanup; server-side is the only durable place. | Low. |
+| A-16 | Guests inherit the host's project root and worktree; they do not get their own worktrees (they are child sessions inside the host's). | Spec: guests are child sessions (parentID) tethered to the host. | Low. |
+| A-17 | `kuya` CLI subcommands map 1:1 to documented house endpoints; the CLI is a thin authenticated client, no business logic. | Spec lists the subcommands; thin client keeps one source of truth (the server). | Low. |
+| A-18 | Budgets use verified opencode usage data only; when a model reports no usage (`{"available":false}`), budget enforcement falls back to wall-time and turn caps and the UI shows `n/a`. | Spec Rule 4 + "show n/a instead of estimating". | Low. |
+| A-19 | Phase 7 "weekly" nomination cadence means a rolling 7-day window checked at server start and at each job end; per-job is the recommended default (D10). | Spec offers both. | Low. |
+| A-20 | Phase 8 items are individually approved; the final security review is always last. | Spec P8 "each item needs my approval before it starts" + logical hardening order. | Low. |
+| A-21 | The plan keeps PixiJS (already in use) and adds no framework; UI overlays are plain DOM/CSS modules like the existing console/diary pattern. | Spec Rule 9 ("PixiJS and a small UI layer allowed only where the current code needs them"). | Low. |
+| A-22 | bun:sqlite is introduced in P5 (`data/bahay.db`), not earlier; P4 state persists in JSON state files because supervisor state is small and restart-critical. | Spec puts bun:sqlite at P5; P4 needs lightweight reconcile state. | Low. |
+| A-23 | Screenshots are PNG under `docs/screenshots/<phase>/` with names `before-*` / `after-*` matching the P1 convention. | Existing convention. | Low. |
+| A-24 | The audit's leftover branch `kuya/opencode-task_1794772219931_1` and prunable worktree are left untouched by planning (read-only rule); cleanup belongs to P4's reconcile sweep or a manual `git worktree prune`. | HARD RULES: no fixing during planning. | Cosmetic. |
+| A-25 | Phase documents may be shorter than the spec section ONLY where the work already exists (P1); everywhere else they expand the spec. | Detail rule; P1 is a delivered-state record with reopen tasks. | Low. |
+| A-26 | `validate-furniture` pair-exemption mechanism (tabletop/rug/chair) is the only "flagged pairs" allowlist the spec itself defines; no other exemption may be added without NEEDS HUMAN DECISION. | Spec P1 defines exactly those exemptions. | Low. |
+| A-27 | The G overlay and layout editor share the browser mirror `public/furniture-validate.ts` (already true); server-side validation remains the script. | Existing architecture. | Low. |
+| A-28 | Housemates are keyed `hm_<name>_<id4>`; guests `hm_guest_<nn>`; jobs `job_<ts>_<n>`; rounds/turns/findings/messages get prefixed ids with a per-process counter + timestamp. | Concrete id scheme for the wire examples; collision-safe enough for a single-user local app. | Low. |
+| A-29 | The confession chair holds exactly one asker at a time; the ON AIR light and diary panel bind to the chair occupant only. | Spec: "several askers queue outside the door and enter one at a time". | Low. |
+| A-30 | `fake` never runs automatically (tests/demo only) once real control exists; a marker comment in the script says so. | Spec P4 real flows replace fake; keeping the demo distinct avoids accidental fake runs. | Low. |
