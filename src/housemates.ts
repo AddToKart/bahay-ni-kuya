@@ -48,7 +48,14 @@ export interface HousemateRec {
   directory: string;
   worktree?: string;
   branch?: string;
-  state: "arriving" | "idle" | "working" | "blocked" | "in_confession" | "called" | "evicting";
+  state:
+    | "arriving"
+    | "idle"
+    | "working"
+    | "blocked"
+    | "in_confession"
+    | "called"
+    | "evicting";
   guests: string[];
   cost: number;
   tokens?: TokenUsage;
@@ -153,20 +160,27 @@ export class Housemates {
   }
 
   async summon(input: SummonInput): Promise<SummonResult> {
-    if (this.recs.size >= CAP) throw new Error(`housemate cap reached (${CAP})`);
+    if (this.recs.size >= CAP)
+      throw new Error(`housemate cap reached (${CAP})`);
     const name = input.name.trim();
     const agent = input.agent.trim();
     if (!name) throw new Error("name required");
     if (!agent) throw new Error("agent required");
-    if (!input.model?.modelID || !input.model.providerID) throw new Error("model required");
+    if (!input.model?.modelID || !input.model.providerID)
+      throw new Error("model required");
 
-    const cwd = validateCwd(input.projectRoot?.trim() ? input.projectRoot : process.cwd());
-    if (!cwd.ok || !cwd.path) throw new Error(cwd.error ?? "project root is not allowlisted");
+    const cwd = validateCwd(
+      input.projectRoot?.trim() ? input.projectRoot : process.cwd(),
+    );
+    if (!cwd.ok || !cwd.path)
+      throw new Error(cwd.error ?? "project root is not allowlisted");
 
     const client = await this.start();
     const key = `hm_${slug(name)}_${Date.now().toString(36).slice(-4)}`;
     const useWorktree = input.useWorktree !== false;
-    let created: { worktree?: string; branch?: string; warnings: string[] } = { warnings: [] };
+    let created: { worktree?: string; branch?: string; warnings: string[] } = {
+      warnings: [],
+    };
     if (useWorktree) {
       created = this.createWorktree(cwd.path, key, name);
     }
@@ -174,11 +188,19 @@ export class Housemates {
 
     const autoApprove =
       input.autoApprove ??
-      (input.permissions?.bash === "allow" || input.permissions?.["*"] === "allow" || true);
+      (input.permissions?.bash === "allow" ||
+        input.permissions?.["*"] === "allow" ||
+        true);
     const permissions: Record<string, "ask" | "allow" | "deny"> =
       input.permissions ??
       (autoApprove
-        ? { "*": "allow", bash: "allow", edit: "allow", read: "allow", glob: "allow" }
+        ? {
+            "*": "allow",
+            bash: "allow",
+            edit: "allow",
+            read: "allow",
+            glob: "allow",
+          }
         : { bash: "ask", edit: "ask" });
 
     const session = await client.createSession({
@@ -236,7 +258,12 @@ export class Housemates {
     const timer = setTimeout(() => {
       if (rec.state !== "called" && !this.callActive.has(key)) {
         rec.state = "idle";
-        this.store.ingest({ harness: HARNESS, type: "housemate_arrived", sessionId: session.id, housemateKey: key });
+        this.store.ingest({
+          harness: HARNESS,
+          type: "housemate_arrived",
+          sessionId: session.id,
+          housemateKey: key,
+        });
       }
       this.arrivedTimers.delete(key);
     }, 8000);
@@ -256,7 +283,8 @@ export class Housemates {
     const rec = this.recs.get(key);
     if (!rec) throw new Error(`unknown housemate: ${key}`);
     const client = this.supervisor.client;
-    if (client) await client.abort(rec.sessionId, rec.directory).catch(() => false);
+    if (client)
+      await client.abort(rec.sessionId, rec.directory).catch(() => false);
 
     const diffStat = rec.worktree ? this.gitDiffStat(rec.worktree) : "";
     this.store.ingest({
@@ -272,7 +300,12 @@ export class Housemates {
     setTimeout(resolve, 5000);
     await promise;
 
-    this.store.ingest({ harness: HARNESS, type: "housemate_evicted", sessionId: rec.sessionId, housemateKey: key });
+    this.store.ingest({
+      harness: HARNESS,
+      type: "housemate_evicted",
+      sessionId: rec.sessionId,
+      housemateKey: key,
+    });
     this.recs.delete(key);
     this.sessionToKey.delete(rec.sessionId);
     this.activeTurns.delete(key);
@@ -281,12 +314,20 @@ export class Housemates {
     clearTimeout(timer);
     this.arrivedTimers.delete(key);
 
-    audit("kuya", "evict", key, { worktree: rec.worktree, branch: rec.branch, diffStat: diffStat || "(clean)" });
+    audit("kuya", "evict", key, {
+      worktree: rec.worktree,
+      branch: rec.branch,
+      diffStat: diffStat || "(clean)",
+    });
     return { worktree: rec.worktree, branch: rec.branch, diffStat };
   }
 
   /** Assign a work task to a housemate: walks them to an office desk to execute via opencode. */
-  async assignTask(key: string, prompt: string, cwd?: string): Promise<{ taskId: string; sessionId: string }> {
+  async assignTask(
+    key: string,
+    prompt: string,
+    cwd?: string,
+  ): Promise<{ taskId: string; sessionId: string }> {
     const rec = this.recs.get(key);
     if (!rec) throw new Error(`unknown housemate: ${key}`);
     const client = this.supervisor.client;
@@ -336,7 +377,11 @@ export class Housemates {
     return { taskId, sessionId: rec.sessionId };
   }
 
-  async call(key: string, message: string, when: "after-turn" | "interrupt"): Promise<void> {
+  async call(
+    key: string,
+    message: string,
+    when: "after-turn" | "interrupt",
+  ): Promise<void> {
     const rec = this.recs.get(key);
     if (!rec) throw new Error(`unknown housemate: ${key}`);
     const text = message.trim().slice(0, 400);
@@ -358,7 +403,10 @@ export class Housemates {
   }
 
   /** Answer a question/permission through the verified opencode reply routes. */
-  async answer(questionId: string, answer: { option?: number; text?: string }): Promise<boolean> {
+  async answer(
+    questionId: string,
+    answer: { option?: number; text?: string },
+  ): Promise<boolean> {
     const route = this.questions.get(questionId);
     const client = this.supervisor.client;
     if (!route || !client) return false;
@@ -371,14 +419,22 @@ export class Housemates {
         : /no|hindi|reject|deny|huwag/.test(text)
           ? "reject"
           : "once";
-      ok = await client.replyPermission(route.requestId, reply, route.directory);
+      ok = await client.replyPermission(
+        route.requestId,
+        reply,
+        route.directory,
+      );
     } else {
       const labels = route.options ?? [];
       const value =
         typeof answer.option === "number" && labels[answer.option]
           ? labels[answer.option]
           : (answer.text ?? "");
-      ok = await client.replyQuestion(route.requestId, [[value]], route.directory);
+      ok = await client.replyQuestion(
+        route.requestId,
+        [[value]],
+        route.directory,
+      );
     }
 
     if (ok) {
@@ -395,7 +451,11 @@ export class Housemates {
     return ok;
   }
 
-  getUsage(key: string): { available: boolean; cost?: number; tokens?: TokenUsage } {
+  getUsage(key: string): {
+    available: boolean;
+    cost?: number;
+    tokens?: TokenUsage;
+  } {
     const rec = this.recs.get(key);
     if (!rec) return { available: false };
     if (rec.tokens || typeof rec.cost === "number") {
@@ -424,7 +484,12 @@ export class Housemates {
     if (!client) throw new Error("opencode server not ready");
     this.callActive.set(rec.key, HOLD);
     rec.state = "called";
-    this.store.ingest({ harness: HARNESS, type: "kuya_call", sessionId: rec.sessionId, housemateKey: rec.key });
+    this.store.ingest({
+      harness: HARNESS,
+      type: "kuya_call",
+      sessionId: rec.sessionId,
+      housemateKey: rec.key,
+    });
     this.store.ingest({
       harness: HARNESS,
       type: "chat_message",
@@ -481,7 +546,10 @@ export class Housemates {
   }
 
   private drainQueue(): void {
-    while (this.promptQueue.length > 0 && this.activeTurns.size < MAX_CONCURRENT_TURNS) {
+    while (
+      this.promptQueue.length > 0 &&
+      this.activeTurns.size < MAX_CONCURRENT_TURNS
+    ) {
       const next = this.promptQueue.shift();
       if (!next) break;
       const rec = this.recs.get(next.key);
@@ -490,33 +558,56 @@ export class Housemates {
     }
   }
 
-  private createWorktree(root: string, key: string, name: string): {
+  private createWorktree(
+    root: string,
+    key: string,
+    name: string,
+  ): {
     worktree?: string;
     branch?: string;
     warnings: string[];
   } {
     const warnings: string[] = [];
-    const inside = spawnSync("git", ["-C", root, "rev-parse", "--is-inside-work-tree"], {
+    const inside = spawnSync(
+      "git",
+      ["-C", root, "rev-parse", "--is-inside-work-tree"],
+      {
+        encoding: "utf8",
+      },
+    );
+    if (inside.status !== 0)
+      throw new Error(
+        "project root is not a git repository; refusing to run outside a worktree",
+      );
+    const dirty = spawnSync("git", ["-C", root, "status", "--porcelain"], {
       encoding: "utf8",
     });
-    if (inside.status !== 0) throw new Error("project root is not a git repository; refusing to run outside a worktree");
-    const dirty = spawnSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8" });
-    if (dirty.stdout.trim()) warnings.push("main worktree has uncommitted changes");
+    if (dirty.stdout.trim())
+      warnings.push("main worktree has uncommitted changes");
 
     const branch = `kuya/${slug(name)}-${key.slice(-4)}`;
     const worktree = join(root, ".kuya-worktrees", key);
-    if (existsSync(worktree)) throw new Error(`worktree already exists: ${worktree}`);
-    const add = spawnSync("git", ["-C", root, "worktree", "add", "-b", branch, worktree, "HEAD"], {
-      encoding: "utf8",
-    });
+    if (existsSync(worktree))
+      throw new Error(`worktree already exists: ${worktree}`);
+    const add = spawnSync(
+      "git",
+      ["-C", root, "worktree", "add", "-b", branch, worktree, "HEAD"],
+      {
+        encoding: "utf8",
+      },
+    );
     if (add.status !== 0) {
-      throw new Error(`git worktree add failed: ${(add.stderr || add.stdout || "").trim()}`);
+      throw new Error(
+        `git worktree add failed: ${(add.stderr || add.stdout || "").trim()}`,
+      );
     }
     return { worktree, branch, warnings };
   }
 
   private gitDiffStat(worktree: string): string {
-    const res = spawnSync("git", ["-C", worktree, "diff", "--stat"], { encoding: "utf8" });
+    const res = spawnSync("git", ["-C", worktree, "diff", "--stat"], {
+      encoding: "utf8",
+    });
     return (res.stdout || "").trim();
   }
 
@@ -534,7 +625,12 @@ export class Housemates {
             cost: info.cost,
             tokens: info.tokens,
           });
-          this.store.ingest({ harness: HARNESS, type: "guest_arrived", guestKey: info.id, hostKey: info.parentID });
+          this.store.ingest({
+            harness: HARNESS,
+            type: "guest_arrived",
+            guestKey: info.id,
+            hostKey: info.parentID,
+          });
           const parentKey = this.sessionToKey.get(info.parentID);
           if (parentKey) {
             const host = this.recs.get(parentKey);
@@ -564,7 +660,9 @@ export class Housemates {
       }
       case "session.status": {
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
-        const status = p.status as { type?: string; message?: string } | undefined;
+        const status = p.status as
+          | { type?: string; message?: string }
+          | undefined;
         if (!sid || !status) break;
         const key = this.sessionToKey.get(sid);
         if (key) {
@@ -581,12 +679,21 @@ export class Housemates {
           if (status.type === "busy") {
             if (rec) rec.state = "working";
             this.activeTurns.add(key);
-            this.store.ingest({ harness: HARNESS, type: "task_started", sessionId: sid, title: key });
+            this.store.ingest({
+              harness: HARNESS,
+              type: "task_started",
+              sessionId: sid,
+              title: key,
+            });
           } else if (status.type === "idle") {
             if (rec) rec.state = "idle";
             this.activeTurns.delete(key);
             this.callActive.delete(key);
-            this.store.ingest({ harness: HARNESS, type: "task_completed", sessionId: sid });
+            this.store.ingest({
+              harness: HARNESS,
+              type: "task_completed",
+              sessionId: sid,
+            });
             this.drainQueue();
           } else if (status.type === "retry" && key) {
             this.store.ingest({
@@ -627,7 +734,11 @@ export class Housemates {
           }
           this.activeTurns.delete(key);
           this.callActive.delete(key);
-          this.store.ingest({ harness: HARNESS, type: "task_completed", sessionId: sid });
+          this.store.ingest({
+            harness: HARNESS,
+            type: "task_completed",
+            sessionId: sid,
+          });
           this.drainQueue();
         } else if (this.guestHost.has(sid)) {
           this.scheduleGuestLeft(sid);
@@ -656,7 +767,11 @@ export class Housemates {
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         if (!sid) break;
         if (this.sessionToKey.has(sid)) {
-          this.store.ingest({ harness: HARNESS, type: "session_end", sessionId: sid });
+          this.store.ingest({
+            harness: HARNESS,
+            type: "session_end",
+            sessionId: sid,
+          });
           const key = this.sessionToKey.get(sid);
           if (key) {
             this.recs.delete(key);
@@ -668,7 +783,9 @@ export class Housemates {
         break;
       }
       case "message.part.updated": {
-        const part = p.part as { type?: string; tool?: string; text?: string; role?: string } | undefined;
+        const part = p.part as
+          | { type?: string; tool?: string; text?: string; role?: string }
+          | undefined;
         const msg = p.message as { role?: string } | undefined;
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         if (!part || !sid) break;
@@ -676,11 +793,19 @@ export class Housemates {
         if (partRole === "user") break;
 
         if (part.type === "tool" && part.tool) {
-          this.store.ingest({ harness: HARNESS, type: "tool", sessionId: sid, tool: part.tool });
+          this.store.ingest({
+            harness: HARNESS,
+            type: "tool",
+            sessionId: sid,
+            tool: part.tool,
+          });
         } else if (part.type === "text" && part.text) {
           const key = this.sessionToKey.get(sid);
           const activeUntil = key ? (this.callActive.get(key) ?? 0) : 0;
-          if (key && (Date.now() < activeUntil || this.recs.get(key)?.state === "called")) {
+          if (
+            key &&
+            (Date.now() < activeUntil || this.recs.get(key)?.state === "called")
+          ) {
             this.store.ingest({
               harness: HARNESS,
               type: "chat_message",
@@ -698,15 +823,24 @@ export class Housemates {
         const key = this.sessionToKey.get(sid);
         if (!id || !key) break;
         const rec = this.recs.get(key);
-        if (rec && (rec.autoApprove || rec.permissions?.bash === "allow" || rec.permissions?.["*"] === "allow")) {
+        if (
+          rec &&
+          (rec.autoApprove ||
+            rec.permissions?.bash === "allow" ||
+            rec.permissions?.["*"] === "allow")
+        ) {
           const client = this.supervisor.client;
           if (client) {
-            void client.replyPermission(id, "always", rec.directory).catch(() => {});
+            void client
+              .replyPermission(id, "always", rec.directory)
+              .catch(() => {});
             break;
           }
         }
         const meta = p.metadata as { command?: string } | undefined;
-        const text = meta?.command ? `Bash: ${meta.command}` : `Permission: ${String(p.permission ?? "request")}`;
+        const text = meta?.command
+          ? `Bash: ${meta.command}`
+          : `Permission: ${String(p.permission ?? "request")}`;
         this.questions.set(id, {
           kind: "permission",
           requestId: id,
@@ -731,7 +865,9 @@ export class Housemates {
         const key = this.sessionToKey.get(sid);
         if (!id || !key) break;
         const questions = Array.isArray(p.questions) ? p.questions : [];
-        const first = questions[0] as { question?: string; options?: Array<{ label?: string }> } | undefined;
+        const first = questions[0] as
+          | { question?: string; options?: Array<{ label?: string }> }
+          | undefined;
         if (!first?.question) break;
         const options = (first.options ?? [])
           .map((option) => option.label)
@@ -757,13 +893,26 @@ export class Housemates {
       }
       case "question.replied": {
         const id = typeof p.requestID === "string" ? p.requestID : "";
-        const answers = Array.isArray(p.answers) ? p.answers.flat().join(", ") : undefined;
-        if (id) this.store.ingest({ harness: HARNESS, type: "question_answered", id, text: answers });
+        const answers = Array.isArray(p.answers)
+          ? p.answers.flat().join(", ")
+          : undefined;
+        if (id)
+          this.store.ingest({
+            harness: HARNESS,
+            type: "question_answered",
+            id,
+            text: answers,
+          });
         break;
       }
       case "permission.replied": {
         const id = typeof p.requestID === "string" ? p.requestID : "";
-        if (id) this.store.ingest({ harness: HARNESS, type: "question_answered", id });
+        if (id)
+          this.store.ingest({
+            harness: HARNESS,
+            type: "question_answered",
+            id,
+          });
         break;
       }
       default:
@@ -783,7 +932,12 @@ export class Housemates {
     const { promise, resolve } = Promise.withResolvers<void>();
     setTimeout(resolve, MIN_GUEST_VISIBLE_MS);
     void promise.then(() => {
-      this.store.ingest({ harness: HARNESS, type: "guest_left", guestKey: sid, hostKey });
+      this.store.ingest({
+        harness: HARNESS,
+        type: "guest_left",
+        guestKey: sid,
+        hostKey,
+      });
     });
   }
 }

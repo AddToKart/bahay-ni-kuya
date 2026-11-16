@@ -1,24 +1,36 @@
 // CollabManager: Multi-housemate collaboration ("Lingguhang Hamon")
-// Coordinates up to 4 OpenCode housemates in an autonomous test-fix pipeline:
-// Developer/Coder -> Tester/QA -> Self-Healing Retry Loop -> Kuya Circuit Breaker.
+// Coordinates up to 4 OpenCode housemates using their actual OpenCode agents
+// (e.g. custom agents like "tester", "build", "qa", etc.) in an autonomous test-fix pipeline:
+// Builder/Coder -> Tester/Verifier -> Self-Healing Retry Loop -> Kuya Circuit Breaker.
 
 import { audit } from "./audit";
 import { log } from "./log";
 import type { Store } from "./store";
-import type { Housemates, HousemateRec } from "./housemates";
+import type { Housemates } from "./housemates";
 import type { OpenCodeSupervisor } from "./opencode-supervisor";
 
-export type CollabRole = "coder" | "tester" | "frontend" | "reviewer";
+export function isVerifierAgent(agentName: string): boolean {
+  const name = (agentName || "").toLowerCase();
+  return (
+    name.includes("test") ||
+    name.includes("qa") ||
+    name.includes("review") ||
+    name.includes("eval") ||
+    name.includes("check") ||
+    name.includes("audit")
+  );
+}
 
 export interface CollabMemberInput {
   key: string;
-  role: CollabRole;
+  isVerifier?: boolean;
 }
 
 export interface CollabMember {
   key: string;
   name: string;
-  role: CollabRole;
+  agent: string; // The housemate's native OpenCode agent (e.g. "tester", "build", custom agent)
+  isVerifier: boolean;
   state: "standby" | "working" | "blocked" | "done";
   sessionId: string;
 }
@@ -28,7 +40,7 @@ export interface CollabTask {
   goal: string;
   cwd: string;
   members: CollabMember[];
-  currentStep: "coding" | "testing" | "reviewing" | "done" | "blocked";
+  currentStep: "building" | "verifying" | "done" | "blocked";
   activeMemberKey: string;
   attempt: number;
   maxAttempts: number;
@@ -36,7 +48,7 @@ export interface CollabTask {
   createdAt: number;
   completedAt?: number;
   status: "running" | "done" | "failed" | "blocked" | "canceled";
-  log: Array<{ role: string; name: string; text: string; ts: number }>;
+  log: Array<{ agent: string; name: string; text: string; ts: number }>;
 }
 
 export class CollabManager {
@@ -79,39 +91,39 @@ export class CollabManager {
       throw new Error("Collaboration supports up to 4 housemates");
     }
 
-    // Validate members exist
+    // Resolve members from real summoned housemates and their OpenCode agents
     const resolvedMembers: CollabMember[] = [];
     for (const m of input.members) {
       const rec = this.housemates.get(m.key);
       if (!rec) throw new Error(`Housemate not found: ${m.key}`);
+      const isVerifier = m.isVerifier ?? isVerifierAgent(rec.agent);
       resolvedMembers.push({
         key: rec.key,
         name: rec.name,
-        role: m.role || "coder",
+        agent: rec.agent,
+        isVerifier,
         state: "standby",
         sessionId: rec.sessionId,
       });
     }
 
-    // Ensure we have at least one tester/reviewer role
-    let hasTester = resolvedMembers.some((m) => m.role === "tester" || m.role === "reviewer");
-    if (!hasTester) {
-      // Designate the last housemate as tester
-      resolvedMembers[resolvedMembers.length - 1].role = "tester";
+    // Ensure at least one member acts as the verifier in the pipeline
+    if (!resolvedMembers.some((m) => m.isVerifier)) {
+      resolvedMembers[resolvedMembers.length - 1].isVerifier = true;
     }
 
-    // Find the primary coder (first non-tester)
-    const coder = resolvedMembers.find((m) => m.role !== "tester") || resolvedMembers[0];
+    // The primary builder is the first non-verifier (or the first member)
+    const primaryBuilder = resolvedMembers.find((m) => !m.isVerifier) || resolvedMembers[0];
     const taskId = `collab_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const cwd = input.cwd || this.housemates.get(coder.key)?.directory || process.cwd();
+    const cwd = input.cwd || this.housemates.get(primaryBuilder.key)?.directory || process.cwd();
 
     const task: CollabTask = {
       id: taskId,
       goal,
       cwd,
       members: resolvedMembers,
-      currentStep: "coding",
-      activeMemberKey: coder.key,
+      currentStep: "building",
+      activeMemberKey: primaryBuilder.key,
       attempt: 1,
       maxAttempts: input.maxAttempts && input.maxAttempts > 0 ? input.maxAttempts : 3,
       lastHandoffReport: "",
@@ -123,27 +135,27 @@ export class CollabManager {
     this.tasks.set(taskId, task);
     this.activeTaskId = taskId;
 
-    // Set desk standby for all members; coder becomes working
+    // Set desk standby for all members; primary builder becomes working
     for (const m of resolvedMembers) {
-      const isCoder = m.key === coder.key;
-      m.state = isCoder ? "working" : "standby";
+      const isWorking = m.key === primaryBuilder.key;
+      m.state = isWorking ? "working" : "standby";
       const rec = this.housemates.get(m.key);
       if (rec) {
-        rec.state = isCoder ? "working" : "standby";
+        rec.state = isWorking ? "working" : "standby";
       }
       this.store.ingest({
         harness: "opencode",
         sessionId: m.sessionId,
         type: "collab_step",
-        state: isCoder ? "working" : "standby",
-        title: isCoder
-          ? `[Lingguhang Hamon] ${m.name} (${m.role}): ${goal.slice(0, 40)}`
-          : `[Lingguhang Hamon] ${m.name} Standby (${m.role})`,
+        state: isWorking ? "working" : "standby",
+        title: isWorking
+          ? `[Lingguhang Hamon] ${m.name} [agent: ${m.agent}]: ${goal.slice(0, 40)}`
+          : `[Lingguhang Hamon] ${m.name} Standby [agent: ${m.agent}]`,
         directory: cwd,
       });
     }
 
-    const memberSummary = resolvedMembers.map((m) => `${m.name} (${m.role})`).join(", ");
+    const memberSummary = resolvedMembers.map((m) => `${m.name} [agent: ${m.agent}]`).join(", ");
     this.announce(`Pakinggan ang inyong bagong Lingguhang Hamon: "${goal}". Team: ${memberSummary}`);
 
     audit("kuya", "collab_start", taskId, {
@@ -151,8 +163,8 @@ export class CollabManager {
       members: memberSummary,
     });
 
-    // Prompt the first coder to begin implementation
-    await this.promptActiveMember(task, coder);
+    // Prompt the primary builder to start
+    await this.promptActiveMember(task, primaryBuilder);
 
     return task;
   }
@@ -167,76 +179,6 @@ export class CollabManager {
       text,
     });
     this.onAnnounce?.(text);
-  }
-
-  /** Dispatches an OpenCode prompt to the active member */
-  private async promptActiveMember(task: CollabTask, member: CollabMember, extraPrompt?: string): Promise<void> {
-    const client = this.supervisor.client;
-    if (!client) throw new Error("opencode supervisor not ready");
-
-    const rec = this.housemates.get(member.key);
-    if (!rec) return;
-
-    const teamList = task.members.map((m) => `- ${m.name} (Role: ${m.role})`).join("\n");
-    let message = "";
-
-    if (member.role === "tester") {
-      message = [
-        `[KUYA'S LINGGUHANG HAMON - VERIFICATION STEP (Attempt ${task.attempt}/${task.maxAttempts})]`,
-        `Overall Mission Goal: ${task.goal}`,
-        `Team Roster:`,
-        teamList,
-        ``,
-        `Recent Handoff Report from Developer:`,
-        task.lastHandoffReport || "(None provided)",
-        ``,
-        `Instructions for ${member.name} (Tester / QA):`,
-        `1. Inspect the codebase changes in this project.`,
-        `2. Run tests (e.g. bun test, npm test, or whatever verification scripts apply).`,
-        `3. If all tests PASS and feature is verified, end your response with:`,
-        `   VERIFICATION_PASSED: <summary of tests run and verified>`,
-        `4. If any tests FAIL or bugs are found, end your response with:`,
-        `   VERIFICATION_FAILED: <exact error message, failing file, and description of the bug>`,
-      ].join("\n");
-    } else {
-      // Coder / Developer
-      const retryContext =
-        task.attempt > 1
-          ? `[BUG FIX ROUND ${task.attempt}/${task.maxAttempts}]\nThe tester found the following issues:\n${extraPrompt || task.lastHandoffReport}\n`
-          : "";
-
-      message = [
-        `[KUYA'S LINGGUHANG HAMON - COLLABORATION TASK]`,
-        `Overall Mission Goal: ${task.goal}`,
-        `Your Role: ${member.role}`,
-        `Team Roster:`,
-        teamList,
-        ``,
-        retryContext,
-        `Instructions for ${member.name}:`,
-        `Work directly in this repository to implement your part of the mission.`,
-        `When complete, provide a concise handoff summary describing:`,
-        `- What files you modified or created.`,
-        `- What features or fixes were implemented.`,
-        `- Instructions for what the next housemate (Tester/QA) should verify.`,
-      ].join("\n");
-    }
-
-    task.log.push({ role: member.role, name: member.name, text: message.slice(0, 300), ts: Date.now() });
-
-    void client
-      .promptAsync(rec.sessionId, rec.directory, {
-        message,
-        agent: rec.agent,
-        model: {
-          providerID: rec.provider,
-          modelID: rec.model,
-          ...(rec.variant ? { variant: rec.variant } : {}),
-        },
-      })
-      .catch((err: unknown) => {
-        log(`collab: promptAsync failed for ${member.name}: ${String(err)}`);
-      });
   }
 
   private async getLastAssistantMessage(sessionId: string, directory: string): Promise<string> {
@@ -261,6 +203,76 @@ export class CollabManager {
     return "";
   }
 
+  /** Dispatches an OpenCode prompt to the active member using their native agent */
+  private async promptActiveMember(task: CollabTask, member: CollabMember, extraPrompt?: string): Promise<void> {
+    const client = this.supervisor.client;
+    if (!client) throw new Error("opencode supervisor not ready");
+
+    const rec = this.housemates.get(member.key);
+    if (!rec) return;
+
+    const teamList = task.members.map((m) => `- ${m.name} (OpenCode Agent: ${m.agent})`).join("\n");
+    let message = "";
+
+    if (member.isVerifier) {
+      message = [
+        `[KUYA'S LINGGUHANG HAMON - VERIFICATION STEP (Attempt ${task.attempt}/${task.maxAttempts})]`,
+        `Overall Mission Goal: ${task.goal}`,
+        `Team Roster:`,
+        teamList,
+        ``,
+        `Recent Handoff Report from Builder:`,
+        task.lastHandoffReport || "(None provided)",
+        ``,
+        `Instructions for ${member.name} (${member.agent}):`,
+        `1. Using your capabilities as '${member.agent}', inspect the changes in this repository.`,
+        `2. Run tests and validations (e.g. bun test, npm test, or your testing tools).`,
+        `3. If all tests PASS and the goal is satisfied, end your reply with:`,
+        `   VERIFICATION_PASSED: <summary of tests run and verified>`,
+        `4. If any tests FAIL or bugs are found, end your reply with:`,
+        `   VERIFICATION_FAILED: <exact error output, failing file, and description of what broke>`,
+      ].join("\n");
+    } else {
+      // Builder / Developer
+      const retryContext =
+        task.attempt > 1
+          ? `[BUG FIX ROUND ${task.attempt}/${task.maxAttempts}]\nThe verification agent found the following issues:\n${extraPrompt || task.lastHandoffReport}\n`
+          : "";
+
+      message = [
+        `[KUYA'S LINGGUHANG HAMON - COLLABORATION TASK]`,
+        `Overall Mission Goal: ${task.goal}`,
+        `Your OpenCode Agent: ${member.agent}`,
+        `Team Roster:`,
+        teamList,
+        ``,
+        retryContext,
+        `Instructions for ${member.name}:`,
+        `Use your '${member.agent}' agent capabilities in this repository to achieve the mission goal.`,
+        `When complete, provide a concise handoff summary describing:`,
+        `- What files you modified or created.`,
+        `- What features or fixes were implemented.`,
+        `- What the next housemate (${task.members.find((m) => m.isVerifier)?.name || "verifier"}) should test or check.`,
+      ].join("\n");
+    }
+
+    task.log.push({ agent: member.agent, name: member.name, text: message.slice(0, 300), ts: Date.now() });
+
+    void client
+      .promptAsync(rec.sessionId, rec.directory, {
+        message,
+        agent: rec.agent, // Native OpenCode custom agent!
+        model: {
+          providerID: rec.provider,
+          modelID: rec.model,
+          ...(rec.variant ? { variant: rec.variant } : {}),
+        },
+      })
+      .catch((err: unknown) => {
+        log(`collab: promptAsync failed for ${member.name}: ${String(err)}`);
+      });
+  }
+
   /**
    * Called when a housemate's turn reaches idle.
    * Handles handoff, verification pass/fail, and retry loops.
@@ -279,16 +291,18 @@ export class CollabManager {
     if (!reply && rec) {
       reply = await this.getLastAssistantMessage(sessionId, rec.directory);
     }
-    task.log.push({ role: activeMember.role, name: activeMember.name, text: reply, ts: Date.now() });
+    task.log.push({ agent: activeMember.agent, name: activeMember.name, text: reply, ts: Date.now() });
 
-    // Step 1: Was active member a Developer / Coder? -> Handoff to Tester
-    if (activeMember.role !== "tester") {
+    // Step 1: Was active member a Builder? -> Handoff to Verifier
+    if (!activeMember.isVerifier) {
       task.lastHandoffReport = reply;
-      const tester = task.members.find((m) => m.role === "tester") || task.members[task.members.length - 1];
+      const verifier = task.members.find((m) => m.isVerifier) || task.members[task.members.length - 1];
 
-      this.announce(`Natapos na ni ${activeMember.name} ang kanyang bahagi. Handoff kay ${tester.name} para sa pagsusuri!`);
+      this.announce(
+        `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`,
+      );
 
-      // Switch active member to tester
+      // Switch active member to verifier
       activeMember.state = "standby";
       if (rec) rec.state = "standby";
       this.store.ingest({
@@ -296,28 +310,28 @@ export class CollabManager {
         sessionId: activeMember.sessionId,
         type: "collab_step",
         state: "standby",
-        title: `[Hamon] ${activeMember.name} Standby`,
+        title: `[Hamon] ${activeMember.name} (${activeMember.agent}) Standby`,
       });
 
-      tester.state = "working";
-      const testerRec = this.housemates.get(tester.key);
-      if (testerRec) testerRec.state = "working";
-      task.activeMemberKey = tester.key;
-      task.currentStep = "testing";
+      verifier.state = "working";
+      const verifierRec = this.housemates.get(verifier.key);
+      if (verifierRec) verifierRec.state = "working";
+      task.activeMemberKey = verifier.key;
+      task.currentStep = "verifying";
 
       this.store.ingest({
         harness: "opencode",
-        sessionId: tester.sessionId,
+        sessionId: verifier.sessionId,
         type: "collab_step",
         state: "working",
-        title: `[Hamon] ${tester.name} Testing & Verification`,
+        title: `[Hamon] ${verifier.name} (${verifier.agent}) Verification`,
       });
 
-      await this.promptActiveMember(task, tester);
+      await this.promptActiveMember(task, verifier);
       return true;
     }
 
-    // Step 2: Was active member the Tester? -> Check if verification passed or failed
+    // Step 2: Was active member the Verifier? -> Check if verification passed or failed
     const isPassed =
       reply.includes("VERIFICATION_PASSED") ||
       (/all tests pass|0 fail|tests passed/i.test(reply) && !/VERIFICATION_FAILED|1 fail|tests failed/i.test(reply));
@@ -349,12 +363,12 @@ export class CollabManager {
     // Verification failed! Self-healing loop trigger
     task.attempt++;
     if (task.attempt <= task.maxAttempts) {
-      const coder = task.members.find((m) => m.role !== "tester") || task.members[0];
+      const builder = task.members.find((m) => !m.isVerifier) || task.members[0];
       this.announce(
-        `May nakitang problema si ${activeMember.name} sa pagsusuri (Attempt ${task.attempt}/${task.maxAttempts}). ${coder.name}, ayusin ang mga bugs!`,
+        `May nakitang problema si ${activeMember.name} (${activeMember.agent}) sa pagsusuri (Attempt ${task.attempt}/${task.maxAttempts}). ${builder.name} (${builder.agent}), ayusin ang mga bugs!`,
       );
 
-      // Tester goes back to standby, coder wakes up to fix bugs
+      // Verifier goes back to standby, builder wakes up to fix bugs
       activeMember.state = "standby";
       if (rec) rec.state = "standby";
       this.store.ingest({
@@ -362,52 +376,52 @@ export class CollabManager {
         sessionId: activeMember.sessionId,
         type: "collab_step",
         state: "standby",
-        title: `[Hamon] ${activeMember.name} Standby`,
+        title: `[Hamon] ${activeMember.name} (${activeMember.agent}) Standby`,
       });
 
-      coder.state = "working";
-      const coderRec = this.housemates.get(coder.key);
-      if (coderRec) coderRec.state = "working";
-      task.activeMemberKey = coder.key;
-      task.currentStep = "coding";
+      builder.state = "working";
+      const builderRec = this.housemates.get(builder.key);
+      if (builderRec) builderRec.state = "working";
+      task.activeMemberKey = builder.key;
+      task.currentStep = "building";
 
       this.store.ingest({
         harness: "opencode",
-        sessionId: coder.sessionId,
+        sessionId: builder.sessionId,
         type: "collab_step",
         state: "working",
-        title: `[Hamon] ${coder.name} Fixing Bugs (Round ${task.attempt})`,
+        title: `[Hamon] ${builder.name} (${builder.agent}) Fixing Bugs (Round ${task.attempt})`,
       });
 
-      await this.promptActiveMember(task, coder, reply);
+      await this.promptActiveMember(task, builder, reply);
       return true;
     }
 
     // 🚨 Kuya Circuit Breaker: Max attempts exceeded!
     task.status = "blocked";
     task.currentStep = "blocked";
-    const coder = task.members.find((m) => m.role !== "tester") || task.members[0];
+    const builder = task.members.find((m) => !m.isVerifier) || task.members[0];
 
-    coder.state = "blocked";
-    const coderRec = this.housemates.get(coder.key);
-    if (coderRec) coderRec.state = "blocked";
+    builder.state = "blocked";
+    const builderRec = this.housemates.get(builder.key);
+    if (builderRec) builderRec.state = "blocked";
 
     this.store.ingest({
       harness: "opencode",
-      sessionId: coder.sessionId,
+      sessionId: builder.sessionId,
       type: "blocked",
       state: "blocked",
       error: `Circuit breaker tripped: ${task.maxAttempts} failed verification attempts`,
     });
 
     this.announce(
-      `Pansamantalang nahinto ang Lingguhang Hamon dahil lumagpas sa ${task.maxAttempts} retry attempts. ${coder.name}, pumunta ka sa Confession Room!`,
+      `Pansamantalang nahinto ang Lingguhang Hamon dahil lumagpas sa ${task.maxAttempts} retry attempts. ${builder.name}, pumunta ka sa Confession Room!`,
     );
 
-    // Call the coder to the Confession Room so Kuya can talk to them
+    // Call the builder to the Confession Room so Kuya can talk to them
     await this.housemates
       .call(
-        coder.key,
+        builder.key,
         `Kuya: May problema sa Lingguhang Hamon (${task.maxAttempts} attempts na ang nag-fail). Ano ang status at blocker?`,
         "interrupt",
       )

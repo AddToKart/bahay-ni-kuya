@@ -41,7 +41,7 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     const hm2 = await housemates.summon({
       name: "Bea",
-      agent: "build",
+      agent: "tester",
       model: { providerID: "openai", modelID: "gpt-4" },
       projectRoot: process.cwd(),
       useWorktree: false,
@@ -49,21 +49,24 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     const collab = new CollabManager(store, housemates, fakeSupervisor as any);
 
-    // 1. Launch Lingguhang Hamon
+    // 1. Launch Lingguhang Hamon with their actual OpenCode agents
     const task = await collab.startTask({
       goal: "Build authentication endpoints and unit tests",
       members: [
-        { key: hm1.housemate.key, role: "coder" },
-        { key: hm2.housemate.key, role: "tester" },
+        { key: hm1.housemate.key },
+        { key: hm2.housemate.key },
       ],
       maxAttempts: 3,
     });
 
     expect(task.status).toBe("running");
     expect(task.members.length).toBe(2);
+    expect(task.members[0].agent).toBe("build");
+    expect(task.members[1].agent).toBe("tester");
+    expect(task.members[1].isVerifier).toBe(true);
     expect(task.attempt).toBe(1);
 
-    // Hans (coder) is working, Bea (tester) is on standby at her desk
+    // Hans (build agent) is working, Bea (tester agent) is on standby at her desk
     expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
     expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
 
@@ -84,7 +87,7 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
     // Hans transitions to standby, Bea transitions to working (testing)
     expect(housemates.get(hm1.housemate.key)?.state).toBe("standby");
     expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
-    expect(task.currentStep).toBe("testing");
+    expect(task.currentStep).toBe("verifying");
 
     // Bea received the verification prompt with Hans's handoff report
     expect(promptAsyncCalls.length).toBe(2);
@@ -145,7 +148,7 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     const hm2 = await housemates.summon({
       name: "Bea",
-      agent: "build",
+      agent: "tester",
       model: { providerID: "openai", modelID: "gpt-4" },
       projectRoot: process.cwd(),
       useWorktree: false,
@@ -157,8 +160,8 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
     const task = await collab.startTask({
       goal: "Implement tricky feature",
       members: [
-        { key: hm1.housemate.key, role: "coder" },
-        { key: hm2.housemate.key, role: "tester" },
+        { key: hm1.housemate.key },
+        { key: hm2.housemate.key },
       ],
       maxAttempts: 2,
     });
@@ -172,7 +175,7 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     // Self-healing loop: Hans wakes up to fix bugs, attempt becomes 2
     expect(task.attempt).toBe(2);
-    expect(task.currentStep).toBe("coding");
+    expect(task.currentStep).toBe("building");
     expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
     expect(housemates.get(hm2.housemate.key)?.state).toBe("standby");
 

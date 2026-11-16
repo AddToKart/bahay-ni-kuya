@@ -843,8 +843,8 @@ export class KuyaConsole {
       }
     }
 
-    // Fetch housemates
-    let housemates: Array<{ key: string; name: string; model: string }> = [];
+    // Fetch housemates with their actual OpenCode agents
+    let housemates: Array<{ key: string; name: string; model: string; agent: string }> = [];
     try {
       const res = await this.api("/api/housemates");
       if (res.ok) {
@@ -853,6 +853,7 @@ export class KuyaConsole {
           key: h.key,
           name: h.name,
           model: h.model,
+          agent: h.agent || "build",
         }));
       }
     } catch {}
@@ -885,8 +886,9 @@ export class KuyaConsole {
       checkbox.dataset.name = h.name;
       checkbox.checked = idx < 4; // Check up to 4
 
+      const isVerifier = /test|qa|review|eval|check|audit/i.test(h.agent || "");
       const nameSpan = document.createElement("span");
-      nameSpan.textContent = `🦫 ${h.name} (${h.model})`;
+      nameSpan.innerHTML = `<strong>🦫 ${h.name}</strong> <span style="opacity:0.75; font-size:11px;">[agent: <code>${h.agent}</code>]</span>`;
 
       left.append(checkbox, nameSpan);
 
@@ -894,10 +896,8 @@ export class KuyaConsole {
       roleSelect.className = "collab-member-role";
       roleSelect.dataset.key = h.key;
       roleSelect.innerHTML = `
-        <option value="coder" ${idx === 0 ? "selected" : ""}>Developer / Coder</option>
-        <option value="tester" ${idx === 1 ? "selected" : ""}>Tester / QA</option>
-        <option value="frontend" ${idx === 2 ? "selected" : ""}>Frontend UI</option>
-        <option value="reviewer" ${idx === 3 ? "selected" : ""}>Reviewer</option>
+        <option value="builder" ${!isVerifier ? "selected" : ""}>🔨 Builder (${h.agent})</option>
+        <option value="verifier" ${isVerifier ? "selected" : ""}>🔍 Verifier (${h.agent})</option>
       `;
       roleSelect.style.fontSize = "11px";
       roleSelect.style.padding = "2px 6px";
@@ -945,7 +945,7 @@ export class KuyaConsole {
       const roleSel = this.collabMembersList!.querySelector<HTMLSelectElement>(`.collab-member-role[data-key="${key}"]`);
       return {
         key,
-        role: (roleSel?.value || "coder") as "coder" | "tester" | "frontend" | "reviewer",
+        isVerifier: roleSel?.value === "verifier",
       };
     });
 
