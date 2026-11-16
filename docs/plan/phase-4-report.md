@@ -1,60 +1,64 @@
 # Phase 4 report — real opencode housemates (2026-11-16)
 
 Branch: `opencode-housemates`. Scope: managed opencode control, summon/evict/call, question and
-permission bridging, console controls, security/audit/caps. No structure, map, art, doors or
-camera changes.
+permission bridging, observed subagent guests, styled summon dialog, security/audit/caps. No
+structure, map, art, doors or camera changes.
 
 ## What works (observed, not inferred)
 
 | Flow | Evidence |
 |---|---|
 | Managed `opencode serve` on `127.0.0.1:40051`, health/log capture, state-file reuse | Server start log; `/api/housemates` calls |
-| Summon → worktree `kuya/<name>-<id>` under `.kuya-worktrees/`, branch, real session with agent/model | `hm_eli_e0t4`, `kuya/eli-e0t4`; `/state` showed `arriving`→`idle` |
+| Summon → worktree `kuya/<name>-<id>`, branch, real session with agent/model | `hm_eli_e0t4`, `kuya/eli-e0t4`; `/state` showed `arriving`→`idle` |
+| Summon dialog | Styled modal: name, 19 agents, **all 281 models** with filter, folder, inline error; summon closed the modal and created `hm_hana_3zrw` (`arriving`) — screenshots `summon-dialog`, `after-modal-summon` |
 | Call → house `called` state, chat message, prompt delivered, real model reply | Tokens updated (`input 2416`, `cache read 12288`); chat showed Kuya message |
 | Event stream mapping | `/global/event` payloads are wrapped `{directory, project, payload}`; client unwraps. Before the fix, state/usage never updated |
 | Permission ask → Confession Room `in_confession`, options `["Allow once","Reject"]` | `/state`; panel screenshot |
 | Answer via panel → scoped opencode reply → bash tool actually runs | Clicked **Allow once**; tool part `status: "completed", output: "hi\n"`; question `answered`; session `idle` |
+| **Guest from a native child session** | Host called with `subagent_type: "general"`; `/state` showed a child with `parentId` = host + `guest: true`; child returned the `src/` file list; host `task` tool `completed`; guest left after the 3 s minimum — screenshot `guest-office` |
+| Guest visual | 3 px dashed blue tether, 0.9 badge, larger GUEST tag, folder carry; office zoom capture |
 | Evict → abort, session removed, worktree + branch kept, diffstat returned | `DELETE` returned `{ok, worktree, branch, diffStat}`; `git worktree list` still had it |
 | Security | Bearer token from `%USERPROFILE%\.bahay-ni-kuya\token`, Host/Origin, cwd allowlist, rate limit, audit log; rejected requests covered by tests |
 | Caps | 6 housemates, 3 concurrent turns, FIFO prompt queue |
 
 Critical finding: opencode **permissions and questions are directory-scoped**. Replying without
-`?directory=<worktree>` returns HTTP 200 but does nothing; the tool stays `running` forever. The
-client now passes the housemate worktree on both reply routes. This was verified by direct
-`/permission?directory=` inspection and by the completed `echo hi` tool part.
+`?directory=<worktree>` returns HTTP 200 but does nothing; the tool stays `running` forever. Both
+reply routes now pass the housemate worktree. Verified by direct `/permission?directory=` inspection
+and by the completed `echo hi` tool part.
 
 `session.idle` arrives while a permission is open; `task_completed` now leaves
 `in_confession`/`queued_for_confession` intact until the question is answered.
 
-## What is stubbed or missing
+Guest finding: the native `explore` subagent has its own configured model
+`omniroute-local/oc/deepseek-v4-flash-free`, whose endpoint `http://localhost:20128` is offline in
+this environment. The child then retries forever and the host's `task` tool hangs. `general` has
+`model: null` and inherits the host session's working model; that path completed. This is a
+configuration issue, not house code.
 
-1. **Summon/evict UX is inline in the console, not a styled dialog.** Name, agent, model, folder
-   and buttons work; feedback uses `alert`/`confirm`. Folder defaults server-side to the house repo.
-2. **No agent/model badge on the hover card.** The session already carries `agent`/`model`; the
-   card renderer was not extended.
-3. **Guest flow not exercised with a real child session.** `guest_arrived`/`guest_left` mapping and
-   the lanyard visual existed from Phase 2; no real `parentID` session was summoned in Phase 4
-   (the client still never sends `parentID`). No visual proof.
-4. **Model picker lists all 281 models** with no search. Defaults to `opencode/mimo-v2.6-flash-free`
-   when present.
-5. **No `GET /api/opencode/logs`**; managed-server stderr is captured in memory only, so diagnosing
-   a failed turn requires the process window.
-6. **Chat panel is the Phase 2 diary panel**; live token streaming is not rendered (only final
-   assistant text is ingested by the store).
-7. **Evict was tested on an idle session.** Process-tree kill for an actively running turn is
-   unit-covered by `procutil` tests but not exercised against a live long-running tool in this pass.
+## Decisions applied (2026-11-16)
+
+1. **All 281 models stay.** The modal exposes every model and adds a text filter; no allowlist.
+2. **Keep `bash: ask` per session.** No auto-approve preset; the permission panel offers Allow once
+   / Reject.
+3. **Guests are real observed child sessions.** The house never creates a child session and never
+   sends `parentID`; it only maps `session.created` with `parentID` to a guest and `guest_left`
+   after the native child ends.
+4. **Summon is a styled dialog, not alert().** Implemented with a modal matching the diary panel;
+   success/error are inline. Evict still uses `confirm` for the destructive confirmation.
 
 ## Files changed (this pass)
 
-- `src/opencode-client.ts` — global event subscription + unwrap; directory-scoped permission and
-  question replies.
+- `src/opencode-client.ts` — global event subscription + unwrap; directory-scoped replies.
 - `src/housemates.ts` — permission options; route directory; scoped replies.
-- `src/questions.ts` — store options for non-choice questions; `hasOpen(sessionId)`.
-- `src/store.ts` — `task_completed` does not clear an open confession.
-- `public/confession.ts` — real answer endpoint; option buttons for permissions.
-- `public/console.ts` — real summon/evict/call; agent/model/folder/housemate selectors.
-- `public/index.html` — new console controls.
-- `docs/screenshots/phase-4/*.webp` — real captures at 1024×711 (viewport 1440×1000).
+- `src/questions.ts` — options for non-choice questions; `hasOpen(sessionId)`.
+- `src/store.ts` — `task_completed` keeps an open confession.
+- `public/confession.ts` — real answer endpoint; permission option buttons.
+- `public/console.ts` — styled summon dialog, filter, real call/evict, housemate picker.
+- `public/index.html` — modal markup, cleaner console row, hover-card agent/model rows + actions.
+- `public/main.ts` — agent/model metadata, card action API, Call/Evict buttons.
+- `public/renderer.ts` — guest tether (dashed, 3 px), badge scale, GUEST tag.
+- `public/style.css` — modal and card-action styles.
+- `docs/screenshots/phase-4/*.webp` — real captures.
 - `docs/visual-check.md` — Phase 4 section.
 
 Earlier in the branch: `src/opencode-supervisor.ts`, `src/audit.ts`, `src/ratelimit.ts`,
@@ -66,22 +70,37 @@ removal of the dead opencode plugin.
 - `bun test` — 47 pass, 0 fail (1125 expectations).
 - `bun run guard` — OK.
 - `bun build public/main.ts --target browser` — OK (verification only; no build step added).
-- Live: summon → call → permission → UI answer → `echo hi` completed; evict kept worktree/branch.
+- Live: modal summon → `hm_hana_3zrw`; host → `general` guest → child completed → guest left;
+  permission → UI Allow once → `echo hi` completed; evict kept worktree/branch.
+
+## Still missing
+
+1. **Guest caps/time limit not enforced.** `config/guests.json` holds `maxPerHost: 3`,
+   `maxTotal: 8`, `maxDepth: 2`, `timeLimitMs: 300000`; the code only uses the fixed 3 s minimum
+   visible time. Over-cap or over-time guests are not queued/reported.
+2. **`explore` subagent provider is offline.** Its configured model points at
+   `omniroute-local` (`localhost:20128`); use `general` or fix the agent model.
+3. **Hover card visual not captured.** Agent/model rows and Call/Evict buttons are wired and
+   compile; click targeting in the automated browser missed the sprites, so no screenshot.
+4. **No `GET /api/opencode/logs`**; managed-server stderr is captured in memory only.
+5. **Chat panel shows final text only**, not streaming deltas.
+6. **Evict was tested on an idle session.** Process-tree kill for an active long tool is
+   unit-covered but not exercised live.
+7. **`maxDepth`/anomaly path** (unexpected child session) is not implemented; only parentID-linked
+   children are rendered.
 
 ## UNVERIFIED
 
-- Guest child-session lifecycle end to end (no real child session created).
+- Guest caps and 5-minute overrun reporting (not implemented).
 - Evict during a running bash/tool turn (only idle evict observed).
 - opencode server restart adoption with an in-flight turn (state-file reuse observed, not a crash).
-- Codespaces/Unix behavior (Windows only by design).
+- Hover-card Call/Evict buttons clicked successfully in a live browser.
 
 ## NEEDS HUMAN DECISION
 
-1. **Keep the model picker unfiltered?** 281 models is unusable; recommend a short allowlist in
-   `config/models.json` (default `opencode/mimo-v2.6-flash-free`, plus your paid choices).
-2. **Permission policy default.** All sessions currently ask for bash. Keep per-session, or add a
-   preset that allows read-only commands? No auto-approve is implemented.
-3. **Guest sessions.** Wire real `parentID` guests in Phase 5, or drop the guest visual? Recommend
-   wiring them; the schemas already carry `harness`/`guest`.
-4. **Summon dialog styling.** Keep the inline console form (works) or spend an iteration on a modal
-   matching the diary panel?
+1. **Fix `explore`'s model or leave it?** It is configured to `omniroute-local`, which is down, so
+   delegated exploration hangs. Recommend changing the explore agent model to a working provider or
+   inheriting the host model.
+2. **Guest caps/overrun.** Implement the `config/guests.json` caps and the 5-minute Confession Room
+   overrun report, or accept the current unlimited observation? Recommend implementing the caps
+   before leaving agents running unattended.

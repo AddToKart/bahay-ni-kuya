@@ -28,6 +28,10 @@ export class KuyaConsole {
   private modelSelect: HTMLSelectElement | null = null;
   private folderInput: HTMLInputElement | null = null;
   private housemateSelect: HTMLSelectElement | null = null;
+  private summonModal: HTMLElement | null = null;
+  private summonError: HTMLElement | null = null;
+  private modelFilter: HTMLInputElement | null = null;
+  private allModels: { providerID: string; modelID: string }[] = [];
 
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
@@ -40,6 +44,9 @@ export class KuyaConsole {
     this.modelSelect = document.getElementById("summon-model") as HTMLSelectElement | null;
     this.folderInput = document.getElementById("summon-folder") as HTMLInputElement | null;
     this.housemateSelect = document.getElementById("housemate-key") as HTMLSelectElement | null;
+    this.summonModal = document.getElementById("summon-modal");
+    this.summonError = document.getElementById("summon-error");
+    this.modelFilter = document.getElementById("summon-model-filter") as HTMLInputElement | null;
 
     // Fetch same-origin token (never in query params)
     await this.fetchToken();
@@ -54,11 +61,21 @@ export class KuyaConsole {
     const callBtn = document.getElementById("btn-call") as HTMLButtonElement | null;
     const summonName = document.getElementById("summon-name") as HTMLInputElement | null;
 
-    summonBtn?.addEventListener("click", () => void this.summonHousemate());
+    summonBtn?.addEventListener("click", () => this.openSummon());
     evictBtn?.addEventListener("click", () => void this.evictHousemate());
     callBtn?.addEventListener("click", () => void this.callHousemate());
+    document.getElementById("summon-close")?.addEventListener("click", () => this.closeSummon());
+    document.getElementById("summon-cancel")?.addEventListener("click", () => this.closeSummon());
+    document.getElementById("summon-submit")?.addEventListener("click", () => void this.summonHousemate());
     summonName?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") void this.summonHousemate();
+    });
+    this.modelFilter?.addEventListener("input", () => this.applyModelFilter());
+    this.summonModal?.addEventListener("click", (event) => {
+      if (event.target === this.summonModal) this.closeSummon();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && this.summonModal && !this.summonModal.hasAttribute("hidden")) this.closeSummon();
     });
 
     void this.loadOpenCodeOptions();
@@ -95,31 +112,72 @@ export class KuyaConsole {
         if (this.agentSelect.querySelector('option[value="build"]')) this.agentSelect.value = "build";
       }
       if (modelsRes.ok) {
-        const models = (await modelsRes.json()) as { models?: { providerID: string; modelID: string }[] };
-        this.modelSelect.innerHTML = "";
-        for (const model of models.models ?? []) {
-          const opt = document.createElement("option");
-          opt.value = `${model.providerID}/${model.modelID}`;
-          opt.textContent = `${model.providerID}/${model.modelID}`;
-          this.modelSelect.appendChild(opt);
-        }
-        const preferred = Array.from(this.modelSelect.options).find((o) => o.value.includes("flash-free"));
-        if (preferred) this.modelSelect.value = preferred.value;
+        const models = (await modelsRes.json()) as {
+          models?: { providerID: string; modelID: string }[];
+        };
+        this.allModels = models.models ?? [];
+        this.applyModelFilter();
       }
     } catch {
       /* the summon action explains a missing agent/model list */
     }
   }
 
+  private openSummon(): void {
+    this.summonModal?.removeAttribute("hidden");
+    if (this.summonError) {
+      this.summonError.hidden = true;
+      this.summonError.textContent = "";
+    }
+    this.applyModelFilter();
+    setTimeout(() => (document.getElementById("summon-name") as HTMLInputElement | null)?.focus(), 0);
+  }
+
+  private closeSummon(): void {
+    this.summonModal?.setAttribute("hidden", "");
+    if (this.summonError) {
+      this.summonError.hidden = true;
+      this.summonError.textContent = "";
+    }
+  }
+
+  private showSummonError(message: string): void {
+    if (!this.summonError) return;
+    this.summonError.textContent = message;
+    this.summonError.hidden = false;
+  }
+
+  private applyModelFilter(): void {
+    if (!this.modelSelect) return;
+    const query = (this.modelFilter?.value ?? "").trim().toLowerCase();
+    const current = this.modelSelect.value;
+    const models = this.allModels.filter(
+      (model) => !query || `${model.providerID}/${model.modelID}`.toLowerCase().includes(query),
+    );
+    this.modelSelect.innerHTML = "";
+    for (const model of models) {
+      const opt = document.createElement("option");
+      opt.value = `${model.providerID}/${model.modelID}`;
+      opt.textContent = `${model.providerID}/${model.modelID}`;
+      this.modelSelect.appendChild(opt);
+    }
+    const keep = models.find((model) => `${model.providerID}/${model.modelID}` === current);
+    const preferred = models.find((model) => model.modelID.includes("flash-free"));
+    const chosen = keep ?? preferred ?? models[0];
+    if (chosen) this.modelSelect.value = `${chosen.providerID}/${chosen.modelID}`;
+  }
+
   private async summonHousemate(): Promise<void> {
     const name = (document.getElementById("summon-name") as HTMLInputElement | null)?.value.trim() ?? "";
-    if (!name) return alert("Enter a name for the housemate.");
+    if (!name) return this.showSummonError("Enter a name for the housemate.");
     const agent = this.agentSelect?.value ?? "";
-    if (!agent) return alert("No opencode agent available. Check the managed opencode server.");
+    if (!agent) return this.showSummonError("No opencode agent available. Check the managed opencode server.");
     const model = this.modelSelect?.value ?? "";
     const [providerID, modelID] = model.split("/");
-    if (!providerID || !modelID) return alert("Pick a model.");
+    if (!providerID || !modelID) return this.showSummonError("Pick a model.");
     const projectRoot = this.folderInput?.value.trim() || "";
+    const submit = document.getElementById("summon-submit") as HTMLButtonElement | null;
+    if (submit) submit.disabled = true;
     try {
       const res = await this.api("/api/housemates", {
         method: "POST",
@@ -133,12 +191,14 @@ export class KuyaConsole {
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; housemate?: { key: string } };
-      if (!res.ok) return alert(`Summon failed: ${data.error ?? res.statusText}`);
-      alert(`Summoned ${name} (${data.housemate?.key ?? "?"}). They walk in shortly.`);
+      if (!res.ok) return this.showSummonError(`Summon failed: ${data.error ?? res.statusText}`);
       if (this.folderInput) this.folderInput.value = "";
+      this.closeSummon();
       await this.refreshHousemates();
     } catch (error) {
-      alert(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
+      this.showSummonError(`Summon error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (submit) submit.disabled = false;
     }
   }
 

@@ -42,6 +42,8 @@ interface SessionView {
   errorCount?: number;
   nominated?: boolean;
   housemateKey?: string;
+  agent?: string;
+  model?: string;
   guest?: boolean;
 }
 
@@ -93,6 +95,7 @@ interface Char {
 }
 
 const chars = new Map<string, Char>();
+const charMeta = new Map<string, { agent?: string; model?: string; housemateKey?: string }>();
 let houseMap: HouseMap | null = null;
 let navGrid: NavGrid | null = null;
 let renderer: MapRenderer | null = null;
@@ -167,6 +170,7 @@ function reconcile(snap: Snapshot, now: number): number {
 
   for (const s of snap.sessions) {
     const key = sessionKey(s.harness, s.sessionId);
+    charMeta.set(key, { agent: s.agent, model: s.model, housemateKey: s.housemateKey });
     const parent = s.parentId ? byKey.get(sessionKey(s.harness, s.parentId)) : undefined;
     const parentKey = parent ? sessionKey(parent.harness, parent.sessionId) : null;
     const sub = parentKey !== null;
@@ -662,6 +666,12 @@ const cardIconEl = document.getElementById("card-icon") as HTMLElement | null;
 const cardHarnessEl = document.getElementById("card-harness") as HTMLElement | null;
 const cardBadgeEl = document.getElementById("card-badge") as HTMLElement | null;
 const cardProjectEl = document.getElementById("card-project") as HTMLElement | null;
+const cardAgentEl = document.getElementById("card-agent") as HTMLElement | null;
+const cardModelEl = document.getElementById("card-model") as HTMLElement | null;
+const cardActionsEl = document.getElementById("card-actions") as HTMLElement | null;
+const cardCallEl = document.getElementById("card-call") as HTMLButtonElement | null;
+const cardEvictEl = document.getElementById("card-evict") as HTMLButtonElement | null;
+let cardHousemateKey: string | null = null;
 const cardToolEl = document.getElementById("card-tool") as HTMLElement | null;
 const cardSubagentsEl = document.getElementById("card-subagents") as HTMLElement | null;
 const cardPidEl = document.getElementById("card-pid") as HTMLElement | null;
@@ -704,6 +714,11 @@ function updateCard(c: Char): void {
     cardBadgeEl.className = `char-card-badge state-${stateStr}`;
   }
   if (cardProjectEl) cardProjectEl.textContent = project;
+  const meta = charMeta.get(c.key);
+  if (cardAgentEl) cardAgentEl.textContent = meta?.agent || "—";
+  if (cardModelEl) cardModelEl.textContent = meta?.model || "—";
+  cardHousemateKey = meta?.housemateKey ?? null;
+  if (cardActionsEl) cardActionsEl.hidden = !cardHousemateKey;
   if (cardToolEl) cardToolEl.textContent = c.tool || (c.working ? "thinking" : c.blocked ? "waiting approval" : "—");
   if (cardSubagentsEl) cardSubagentsEl.textContent = String(c.subagentCount);
   if (cardPidEl) {
@@ -848,6 +863,55 @@ if (cardCloseEl) {
     hideCard();
   });
 }
+
+async function cardApi(path: string, init: RequestInit = {}): Promise<Response | null> {
+  try {
+    const tokenRes = await fetch("/api/auth/token");
+    if (!tokenRes.ok) return null;
+    const { token } = (await tokenRes.json()) as { token?: string };
+    if (!token) return null;
+    const headers = new Headers(init.headers);
+    headers.set("authorization", `Bearer ${token}`);
+    return fetch(path, { ...init, headers });
+  } catch {
+    return null;
+  }
+}
+
+cardCallEl?.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  const key = cardHousemateKey;
+  if (!key) return;
+  const message = window.prompt("What should Kuya ask?", "Kumusta! Quick check-in.");
+  if (!message?.trim()) return;
+  const res = await cardApi(`/api/housemates/${encodeURIComponent(key)}/call`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message: message.trim(), when: "interrupt" }),
+  });
+  if (!res?.ok) {
+    const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};
+    alert(`Call failed: ${data.error ?? "no token"}`);
+    return;
+  }
+  pinnedKey = null;
+  hideCard();
+});
+
+cardEvictEl?.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  const key = cardHousemateKey;
+  if (!key) return;
+  if (!confirm(`Evict ${key}? The worktree and branch are kept.`)) return;
+  const res = await cardApi(`/api/housemates/${encodeURIComponent(key)}`, { method: "DELETE" });
+  if (!res?.ok) {
+    const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};
+    alert(`Evict failed: ${data.error ?? "no token"}`);
+    return;
+  }
+  pinnedKey = null;
+  hideCard();
+});
 
 // ---------------------------------------------------------------- CCTV controls
 

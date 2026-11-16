@@ -88,6 +88,7 @@ export class MapRenderer {
     tether: any;
     carrySprite: any;
     badgeSprite: any;
+    guestTag: any;
   }>();
 
   onairSprite: any = null;
@@ -656,6 +657,22 @@ export class MapRenderer {
         badgeSprite.visible = false;
         container.addChild(badgeSprite);
 
+        // GUEST tag (Phase 4 real child sessions)
+        const guestTag = new PIXI.Text({
+          text: "GUEST",
+          style: new PIXI.TextStyle({
+            fontFamily: "ui-monospace, monospace",
+            fontSize: 8,
+            fill: "#7dd3fc",
+            fontWeight: "bold",
+            stroke: { color: "#0c0f16", width: 2 },
+          }),
+        });
+        guestTag.anchor.set(0.5, 1);
+        guestTag.position.set(0, -24);
+        guestTag.visible = false;
+        container.addChild(guestTag);
+
         // Speech / Tool Bubble
         const bubble = new PIXI.Container();
         bubble.visible = false;
@@ -681,7 +698,7 @@ export class MapRenderer {
         const tether = new PIXI.Graphics();
         this.ysortContainer.addChild(tether);
 
-        node = { container, body, shadow, emote, bubble, bubbleText, bubbleBg, tether, carrySprite, badgeSprite };
+        node = { container, body, shadow, emote, bubble, bubbleText, bubbleBg, tether, carrySprite, badgeSprite, guestTag };
         this.charNodes.set(c.key, node);
         this.ysortContainer.addChild(container);
       }
@@ -702,6 +719,8 @@ export class MapRenderer {
         const badgeTex = this.getTexture("prop-lanyard-badge/default");
         if (badgeTex) {
           node.badgeSprite.texture = badgeTex;
+          node.badgeSprite.scale.set(0.9);
+          node.badgeSprite.position.set(7, -14);
           node.badgeSprite.visible = true;
         } else {
           node.badgeSprite.visible = false;
@@ -709,13 +728,14 @@ export class MapRenderer {
       } else {
         node.badgeSprite.visible = false;
       }
+      node.guestTag.visible = Boolean(c.guest);
 
       // Update position
       node.container.position.set(Math.round(c.x), Math.round(c.y));
       (node.container as any).footY = c.y;
 
       // Scale (mini-chibi for subagents)
-      const scale = c.sub ? 0.68 : 1.0;
+      const scale = c.guest ? 0.85 : c.sub ? 0.72 : 1.0;
 
       // Resolve animation frame
       const { frameKey, flipX } = resolveCharacterFrame(
@@ -736,9 +756,19 @@ export class MapRenderer {
         const parent = chars.get(c.parentKey);
         if (parent) {
           node.tether.clear();
-          node.tether.stroke({ color: 0x38bdf8, alpha: 0.4, width: 1.5 });
-          node.tether.moveTo(Math.round(c.x), Math.round(c.y - 12));
-          node.tether.lineTo(Math.round(parent.x), Math.round(parent.y - 14));
+          const ax = Math.round(c.x);
+          const ay = Math.round(c.y - 12);
+          const bx = Math.round(parent.x);
+          const by = Math.round(parent.y - 14);
+          const len = Math.hypot(bx - ax, by - ay);
+          const seg = 6;
+          for (let d = 0; d < len; d += seg * 2) {
+            const t0 = d / len;
+            const t1 = Math.min(1, (d + seg) / len);
+            node.tether.moveTo(ax + (bx - ax) * t0, ay + (by - ay) * t0);
+            node.tether.lineTo(ax + (bx - ax) * t1, ay + (by - ay) * t1);
+          }
+          node.tether.stroke({ color: 0x38bdf8, alpha: 0.9, width: 3 });
           node.tether.visible = true;
         } else {
           node.tether.visible = false;

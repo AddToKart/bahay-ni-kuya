@@ -86,35 +86,39 @@ Evidence: `docs/screenshots/phase-2/` (webp captures from the real page at 1280�
 - Answering through the panel promotes the queued asker (verified by state and screenshot).
 - ON AIR sign appears only while the chair is occupied/called.
 
+
 ---
 
 # Phase 4 — real opencode housemates
 
 Evidence: `docs/screenshots/phase-4/` (webp, 1440×1000 viewport, test port 4792):
-`after-summon`, `after-summon-2`, `after-permission`, `after-permission-allow`,
-`after-permission-answered`, `after-evict`.
+`summon-dialog`, `after-modal-summon`, `guest-office`, `guest-after`,
+`after-summon`, `after-permission`, `after-permission-allow`, `after-permission-answered`,
+`after-evict`.
 
 ## Visible problems still present
 
-1. **Console control row is cramped at 1024 px.** Name, agent, model and Summon wrap onto one
-   line; folder, housemate select, Evict and Call wrap onto the next. The model select truncates
-   `opencode/mimo-v2.6-flash-free` to `opencode/mimo-v2.6-flash-free` (fits) but 281 options make
-   the native dropdown unusable. Fix: a styled summon dialog with searchable model list.
-2. **Summon/evict feedback uses browser alerts.** Functional, but it covers the scene; the diary
-   panel is the only styled interaction. Fix with the same overlay system.
-3. **No agent/model badge on the hover card.** The card still shows harness/state only; the data
-   is present in `/state`.
-4. **Housemate is hard to spot at 1× zoom in the living room.** The walk-in works, but the sprite
-   blends with the rug/sofa. Consider a temporary name tag during `arriving` and after summon.
-5. **Header head-count is confusing.** It reads `2 idle · 3 sleeping` with one real housemate
-   because it counts harness presences and the opencode scan; not a Phase 4 regression.
-6. **No real guest capture.** The guest visual is Phase 2 evidence only; Phase 4 did not create a
-   child session, so no new screenshot exists.
+1. **Hover card has no capture.** Agent/model rows and Call/Evict buttons are implemented in
+   `public/main.ts`/`index.html`, but automated clicks missed the sprites, so no screenshot proves
+   the card layout. Verify by hand: hover a housemate; the card should show Agent, Model and the two
+   buttons.
+2. **GUEST tag is small at 1×.** 8 px with a dark stroke; legible at the 2.2× office zoom, marginal
+   in the all-house view. The dashed 3 px tether is the primary marker. Fix in the next art pass if
+   desired.
+3. **`explore` subagent hangs.** Its configured model `omniroute-local/oc/deepseek-v4-flash-free`
+   points at `http://localhost:20128`, which is offline; the child retries and the host `task` tool
+   never completes. `general` (inherits the host model) works. Not a house rendering defect.
+4. **Header head-count still counts harness presences/scan**, so it can read `2 idle · 3 sleeping`
+   with one real housemate. Pre-existing.
+5. **No guest caps/overrun UI.** `config/guests.json` limits are not enforced; unlimited observed
+   guests and overruns are possible.
 
 ## Passed
 
-- Summoned housemate appears in the house; `/state` reaches `idle` from a real session.
-- Diary panel shows `permission · hm_…`, the bash command, and **Allow once** / **Reject**.
-- Clicking **Allow once** completes the real bash tool (`output: "hi\n"`) and closes the panel.
-- Evict removes the session and keeps the worktree and branch.
-- ON AIR header, queue line and chat line render without overlap at 1440×1000.
+- Summon dialog: name, 19 agents, all 281 models with filter, folder, note, inline errors;
+  submitting created `hm_hana_3zrw` and closed the modal.
+- Console row no longer wraps: Summon, housemate select, Evict, Call on one line at 1024 px.
+- Guest from a real native child: `parentId` + `guest: true`, dashed tether, badge, folder; child
+  returned the `src/` list; host `task` completed; guest left after 3 s.
+- Diary panel shows permission options; Allow once completed `echo hi`.
+- Evict removes the session and keeps the worktree/branch.

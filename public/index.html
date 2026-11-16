@@ -63,6 +63,14 @@
               <span class="char-card-value" id="card-project">—</span>
             </div>
             <div class="char-card-row">
+              <span class="char-card-label">Agent:</span>
+              <span class="char-card-value" id="card-agent">—</span>
+            </div>
+            <div class="char-card-row">
+              <span class="char-card-label">Model:</span>
+              <span class="char-card-value" id="card-model">—</span>
+            </div>
+            <div class="char-card-row">
               <span class="char-card-label">Tool:</span>
               <span class="char-card-value" id="card-tool">—</span>
             </div>
@@ -71,6 +79,10 @@
               <span class="char-card-value" id="card-subagents">0</span>
             </div>
             <div class="char-card-pid" id="card-pid">PID —</div>
+            <div class="char-card-actions" id="card-actions" hidden>
+              <button class="card-action" id="card-call">📞 Call</button>
+              <button class="card-action" id="card-evict">🧳 Evict</button>
+            </div>
           </div>
         </div>
       </div>
@@ -112,10 +124,6 @@
             <button id="btn-submit-task" class="dispatch-btn">🚀 Assign Task</button>
           </div>
           <div class="console-row p2-actions">
-            <input id="summon-name" type="text" placeholder="Name (e.g. Bea)" aria-label="Housemate name" />
-            <select id="summon-agent" aria-label="opencode agent"></select>
-            <select id="summon-model" aria-label="opencode model"></select>
-            <input id="summon-folder" type="text" placeholder="Folder (default this repo)" aria-label="Project folder" />
             <button id="btn-summon" class="dispatch-btn">🚪 Summon</button>
             <select id="housemate-key" aria-label="House housemate"></select>
             <button id="btn-evict" class="dispatch-btn">🧳 Evict</button>
@@ -129,6 +137,38 @@
           </div>
         </div>
       </section>
+
+      <div class="modal-backdrop" id="summon-modal" hidden>
+        <section class="summon-panel" role="dialog" aria-modal="true" aria-labelledby="summon-title">
+          <div class="summon-head">
+            <h3 id="summon-title">Summon a housemate</h3>
+            <button class="summon-close" id="summon-close" aria-label="Close summon dialog">&times;</button>
+          </div>
+          <label class="summon-field">Name
+            <input id="summon-name" type="text" placeholder="e.g. Bea" aria-label="Housemate name" />
+          </label>
+          <div class="summon-grid">
+            <label class="summon-field">Agent
+              <select id="summon-agent" aria-label="opencode agent"></select>
+            </label>
+            <label class="summon-field">Project folder
+              <input id="summon-folder" type="text" placeholder="Default: this repo" aria-label="Project folder" />
+            </label>
+          </div>
+          <label class="summon-field">Model
+            <input id="summon-model-filter" type="text" placeholder="Filter models..." aria-label="Filter models" />
+          </label>
+          <select id="summon-model" size="8" class="summon-models" aria-label="opencode model"></select>
+          <p class="summon-note">
+            Runs in a git worktree; your main tree is untouched. Permissions: bash asks first.
+          </p>
+          <p class="summon-error" id="summon-error" hidden></p>
+          <div class="summon-actions">
+            <button class="dispatch-btn summon-cancel" id="summon-cancel">Cancel</button>
+            <button class="dispatch-btn" id="summon-submit">Summon</button>
+          </div>
+        </section>
+      </div>
 
       <footer class="house-footer">
         <div class="legend" id="legend" aria-label="harness legend"></div>
