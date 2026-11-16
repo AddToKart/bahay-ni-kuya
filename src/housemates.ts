@@ -103,6 +103,7 @@ export class Housemates {
   private callActive = new Map<string, number>();
   private sessionToTaskId = new Map<string, string>();
   onTaskCompleted?: (taskId: string, exitCode: number) => void;
+  onSessionIdle?: (sessionId: string) => Promise<boolean>;
 
   constructor(
     private store: Store,
@@ -519,7 +520,7 @@ export class Housemates {
     return (res.stdout || "").trim();
   }
 
-  private onEvent(event: OpenCodeEvent): void {
+  private async onEvent(event: OpenCodeEvent): Promise<void> {
     const p = (event.properties ?? {}) as Record<string, any>;
     switch (event.type) {
       case "session.created": {
@@ -610,6 +611,14 @@ export class Housemates {
           if (taskId) {
             this.sessionToTaskId.delete(sid);
             this.onTaskCompleted?.(taskId, 0);
+          }
+          if (this.onSessionIdle) {
+            const handled = await this.onSessionIdle(sid);
+            if (handled) {
+              this.activeTurns.delete(key);
+              this.drainQueue();
+              break;
+            }
           }
           if (rec && (rec.state === "called" || this.callActive.has(key))) {
             this.activeTurns.delete(key);

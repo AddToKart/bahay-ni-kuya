@@ -62,6 +62,7 @@ const HELD_STATES: Record<string, true> = {
   queued_for_confession: true,
   in_confession: true,
   called: true,
+  standby: true,
 };
 
 export class Store {
@@ -113,6 +114,10 @@ export class Store {
       "chat_message",
       "guest_arrived",
       "guest_left",
+      "collab_started",
+      "collab_step",
+      "collab_completed",
+      "collab_failed",
     ];
     if (!validTypes.includes(type)) {
       return { ok: false, reason: `bad type: ${String(type)}` };
@@ -239,6 +244,18 @@ export class Store {
     } else if (type === "kuya_call_ended") {
       rec.state = "idle";
       rec.workingUntil = 0;
+    } else if (type === "collab_started" || type === "collab_step") {
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = event.state ?? "working";
+        rec.workingUntil = HOLD;
+        if (event.title) rec.title = clip(event.title, 80);
+      }
+    } else if (type === "collab_completed" || type === "collab_failed") {
+      if (rec.state !== "called" && rec.state !== "in_confession") {
+        rec.state = "idle";
+        rec.workingUntil = 0;
+        rec.tool = undefined;
+      }
     } else if (type === "question_asked") {
       const id = clip(event.id, 80);
       const kind = event.kind;

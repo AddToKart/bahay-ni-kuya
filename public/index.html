@@ -137,7 +137,8 @@
             <button id="btn-summon" class="dispatch-btn">🚪 Summon</button>
             <select id="housemate-key" aria-label="House housemate"></select>
             <button id="btn-evict" class="dispatch-btn">🧳 Evict</button>
-            <button id="btn-call" class="dispatch-btn">📞 Call to Confession Room</button>
+            <button id="btn-call" class="dispatch-btn">📞 Call</button>
+            <button id="btn-collab" class="dispatch-btn" style="background:#7c3aed;">👥 Lingguhang Hamon</button>
           </div>
         </div>
         <div class="tasks-container">
@@ -222,6 +223,38 @@
           <div class="summon-actions">
             <button class="dispatch-btn summon-cancel" id="call-cancel">Cancel</button>
             <button class="dispatch-btn" id="call-submit">Call to Confession</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop" id="collab-modal" hidden>
+        <section class="summon-panel" role="dialog" aria-modal="true" aria-labelledby="collab-title" style="max-width: 520px;">
+          <div class="summon-head">
+            <h3 id="collab-title">👥 Lingguhang Hamon (Group Collaboration)</h3>
+            <button class="summon-close" id="collab-close" aria-label="Close">&times;</button>
+          </div>
+          <p class="summon-note" style="margin-top:0;">
+            Select up to 4 housemates to collaborate autonomously. The developer codes, the tester validates with automated tests, and they self-heal bugs in a loop!
+          </p>
+          <label class="summon-field">Mission Goal / Prompt
+            <textarea id="collab-goal" placeholder="e.g. Build user registration and login forms with password hashing, write unit tests, and verify." rows="3"></textarea>
+          </label>
+          <label class="summon-field">Project Folder
+            <select id="collab-folder" aria-label="Project folder"></select>
+          </label>
+          <div class="summon-field">
+            <label style="display:block; margin-bottom:6px; font-weight:600;">Team Members & Roles (Select 2 to 4)</label>
+            <div id="collab-members-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+              <!-- dynamically populated -->
+            </div>
+          </div>
+          <label class="summon-field" style="margin-top: 8px;">Max Auto-Fix Attempts before Calling Confession
+            <input id="collab-max-attempts" type="number" min="1" max="10" value="3" />
+          </label>
+          <p class="summon-error" id="collab-error" hidden></p>
+          <div class="summon-actions">
+            <button class="dispatch-btn summon-cancel" id="collab-cancel">Cancel</button>
+            <button class="dispatch-btn" id="collab-submit" style="background:#7c3aed;">🚀 Simulan ang Hamon</button>
           </div>
         </section>
       </div>

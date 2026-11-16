@@ -144,6 +144,7 @@ interface Desired {
   room: RoomId;
   label: string;
   working: boolean;
+  standby: boolean;
   blocked: boolean;
   errorState: boolean;
   errorCount: number;
@@ -213,6 +214,7 @@ function reconcile(snap: Snapshot, now: number): number {
     }
 
     const isWorking = s.state === "working";
+    const isStandby = s.state === "standby";
     const isBlocked = s.state === "blocked";
     const isError = s.state === "error";
     const isArriving = s.state === "arriving";
@@ -227,7 +229,7 @@ function reconcile(snap: Snapshot, now: number): number {
       room = "confession";
     } else if (isArriving || isEvicting) {
       room = "hallway";
-    } else if (isWorking) {
+    } else if (isWorking || isStandby) {
       room = s.harness === "hermes" ? "living" : "office";
     }
 
@@ -241,6 +243,7 @@ function reconcile(snap: Snapshot, now: number): number {
       room,
       label,
       working: isWorking,
+      standby: isStandby,
       blocked: isBlocked,
       errorState: isError,
       errorCount: s.errorCount || 0,
@@ -286,7 +289,7 @@ function reconcile(snap: Snapshot, now: number): number {
       // Confession room for blocked / permission required
       poi = lifeManager.getPOI("confession_chair") || null;
       if (poi) lifeManager.reservePOI(d.key, poi.id);
-    } else if (d.working) {
+    } else if (d.working || d.standby) {
       // Hermes special research rule: uses reading nook / bookshelf in living room
       if (d.harness === "hermes") {
         poi = lifeManager.getPOI("living_bookshelf") || null;
@@ -317,7 +320,7 @@ function reconcile(snap: Snapshot, now: number): number {
     }
     const poiFacing: Facing = poi ? poi.facing : "down";
     const poiAction: Action = poi
-      ? poi.action
+      ? (d.standby ? "sit" : poi.action)
       : d.sleeping
         ? "sleep"
         : d.working
@@ -1164,7 +1167,8 @@ function frame(now: number): void {
       c.state === "in_confession" ||
       c.state === "queued_for_confession" ||
       c.room === "confession";
-    if (!c.working && !c.blocked && !c.sleeping && !c.walking && !inConfession) {
+    const onStandby = c.state === "standby";
+    if (!c.working && !onStandby && !c.blocked && !c.sleeping && !c.walking && !inConfession) {
       const state = lifeManager.states.get(c.key);
       if (state && now >= state.activityUntil) {
         const nextPoi = lifeManager.pickIdlePOI(c.key, now);

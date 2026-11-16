@@ -10,6 +10,7 @@ export const INSTALLED_REFRESH_MS = 60_000;
 export type SessionState =
   | "idle"
   | "working"
+  | "standby"
   | "blocked"
   | "error"
   // v2 (Phase 2) states — additive; v1 consumers render unknown states as idle
@@ -42,6 +43,11 @@ export type EventType =
   | "chat_message"
   | "guest_arrived"
   | "guest_left"
+  // Collab (Lingguhang Hamon) events
+  | "collab_started"
+  | "collab_step"
+  | "collab_completed"
+  | "collab_failed"
   // v3 (houses) events — additive
   | "house_opened"
   | "house_closed";

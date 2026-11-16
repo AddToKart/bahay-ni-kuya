@@ -180,6 +180,16 @@ export class OpenCodeClient {
     }
   }
 
+  async messages(sessionId: string, directory: string): Promise<any[]> {
+    try {
+      const res = await fetch(this.url(`/session/${sessionId}/message`, directory), { headers: this.headers() });
+      if (!res.ok) return [];
+      return (await res.json()) as any[];
+    } catch {
+      return [];
+    }
+  }
+
   async children(sessionId: string, directory: string): Promise<OpenCodeSession[]> {
     try {
       const res = await fetch(this.url(`/session/${sessionId}/children`, directory), { headers: this.headers() });

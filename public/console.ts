@@ -371,6 +371,13 @@ export class KuyaConsole {
   private isRefreshingHousemates = false;
   private isRefreshingTasks = false;
 
+  private collabModal: HTMLElement | null = null;
+  private collabGoal: HTMLTextAreaElement | null = null;
+  private collabFolder: HTMLSelectElement | null = null;
+  private collabMembersList: HTMLElement | null = null;
+  private collabMaxAttempts: HTMLInputElement | null = null;
+  private collabError: HTMLElement | null = null;
+
   async init(): Promise<void> {
     this.promptEl = document.getElementById("task-prompt") as HTMLTextAreaElement | null;
     this.harnessSelect = document.getElementById("task-harness") as HTMLSelectElement | null;
@@ -385,6 +392,22 @@ export class KuyaConsole {
     this.summonModal = document.getElementById("summon-modal");
     this.summonError = document.getElementById("summon-error");
     this.modelFilter = document.getElementById("summon-model-filter") as HTMLInputElement | null;
+
+    this.collabModal = document.getElementById("collab-modal");
+    this.collabGoal = document.getElementById("collab-goal") as HTMLTextAreaElement | null;
+    this.collabFolder = document.getElementById("collab-folder") as HTMLSelectElement | null;
+    this.collabMembersList = document.getElementById("collab-members-list");
+    this.collabMaxAttempts = document.getElementById("collab-max-attempts") as HTMLInputElement | null;
+    this.collabError = document.getElementById("collab-error");
+
+    const collabBtn = document.getElementById("btn-collab") as HTMLButtonElement | null;
+    collabBtn?.addEventListener("click", () => void this.openCollab());
+    document.getElementById("collab-close")?.addEventListener("click", () => this.closeCollab());
+    document.getElementById("collab-cancel")?.addEventListener("click", () => this.closeCollab());
+    document.getElementById("collab-submit")?.addEventListener("click", () => void this.submitCollab());
+    this.collabModal?.addEventListener("click", (event) => {
+      if (event.target === this.collabModal) this.closeCollab();
+    });
 
     if (this.submitBtn) {
       this.submitBtn.addEventListener("click", () => this.submitTask());
@@ -804,6 +827,170 @@ export class KuyaConsole {
     }
   }
 
+  private async openCollab(): Promise<void> {
+    if (!this.collabModal || !this.collabMembersList) return;
+    if (this.collabError) this.collabError.hidden = true;
+
+    // Populate project folders
+    if (this.collabFolder) {
+      this.collabFolder.innerHTML = "";
+      const allDirs = Array.from(new Set([...this.roots, ...this.knownDirs])).sort();
+      for (const dir of allDirs) {
+        const opt = document.createElement("option");
+        opt.value = dir;
+        opt.textContent = dir;
+        this.collabFolder.appendChild(opt);
+      }
+    }
+
+    // Fetch housemates
+    let housemates: Array<{ key: string; name: string; model: string }> = [];
+    try {
+      const res = await this.api("/api/housemates");
+      if (res.ok) {
+        const data = await res.json();
+        housemates = (data.housemates ?? []).map((h: any) => ({
+          key: h.key,
+          name: h.name,
+          model: h.model,
+        }));
+      }
+    } catch {}
+
+    if (housemates.length < 2) {
+      alert("Lingguhang Hamon requires at least 2 summoned housemates. Summon more housemates first!");
+      return;
+    }
+
+    this.collabMembersList.innerHTML = "";
+    housemates.forEach((h, idx) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+      row.style.gap = "8px";
+      row.style.padding = "4px 0";
+
+      const left = document.createElement("label");
+      left.style.display = "flex";
+      left.style.alignItems = "center";
+      left.style.gap = "6px";
+      left.style.cursor = "pointer";
+      left.style.fontSize = "12px";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "collab-member-check";
+      checkbox.value = h.key;
+      checkbox.dataset.name = h.name;
+      checkbox.checked = idx < 4; // Check up to 4
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = `🦫 ${h.name} (${h.model})`;
+
+      left.append(checkbox, nameSpan);
+
+      const roleSelect = document.createElement("select");
+      roleSelect.className = "collab-member-role";
+      roleSelect.dataset.key = h.key;
+      roleSelect.innerHTML = `
+        <option value="coder" ${idx === 0 ? "selected" : ""}>Developer / Coder</option>
+        <option value="tester" ${idx === 1 ? "selected" : ""}>Tester / QA</option>
+        <option value="frontend" ${idx === 2 ? "selected" : ""}>Frontend UI</option>
+        <option value="reviewer" ${idx === 3 ? "selected" : ""}>Reviewer</option>
+      `;
+      roleSelect.style.fontSize = "11px";
+      roleSelect.style.padding = "2px 6px";
+
+      row.append(left, roleSelect);
+      this.collabMembersList!.appendChild(row);
+    });
+
+    this.collabModal.hidden = false;
+  }
+
+  private closeCollab(): void {
+    if (this.collabModal) this.collabModal.hidden = true;
+  }
+
+  private async submitCollab(): Promise<void> {
+    if (!this.collabGoal || !this.collabMembersList) return;
+    const goal = this.collabGoal.value.trim();
+    if (!goal) {
+      if (this.collabError) {
+        this.collabError.textContent = "Please enter a mission goal / prompt.";
+        this.collabError.hidden = false;
+      }
+      return;
+    }
+
+    const checks = Array.from(this.collabMembersList.querySelectorAll<HTMLInputElement>(".collab-member-check:checked"));
+    if (checks.length < 2) {
+      if (this.collabError) {
+        this.collabError.textContent = "Please select at least 2 housemates for collaboration.";
+        this.collabError.hidden = false;
+      }
+      return;
+    }
+    if (checks.length > 4) {
+      if (this.collabError) {
+        this.collabError.textContent = "Maximum 4 housemates can participate in a collaboration task.";
+        this.collabError.hidden = false;
+      }
+      return;
+    }
+
+    const members = checks.map((c) => {
+      const key = c.value;
+      const roleSel = this.collabMembersList!.querySelector<HTMLSelectElement>(`.collab-member-role[data-key="${key}"]`);
+      return {
+        key,
+        role: (roleSel?.value || "coder") as "coder" | "tester" | "frontend" | "reviewer",
+      };
+    });
+
+    const cwd = this.collabFolder?.value || "";
+    const maxAttempts = parseInt(this.collabMaxAttempts?.value || "3", 10) || 3;
+
+    try {
+      const res = await this.api("/api/collab/tasks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ goal, cwd, members, maxAttempts }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to start collaboration task" }));
+        if (this.collabError) {
+          this.collabError.textContent = err.error || res.statusText;
+          this.collabError.hidden = false;
+        }
+        return;
+      }
+
+      this.collabGoal.value = "";
+      this.closeCollab();
+      (window as any).selectCamera?.("office");
+      await this.refreshTasks();
+    } catch (err: any) {
+      if (this.collabError) {
+        this.collabError.textContent = err.message || "Network error";
+        this.collabError.hidden = false;
+      }
+    }
+  }
+
+  async cancelCollabTask(id: string): Promise<void> {
+    if (!this.token) return;
+    try {
+      await fetch(`/api/collab/tasks/${id}/cancel`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${this.token}` },
+      });
+      await this.refreshTasks();
+    } catch {}
+  }
+
   async cancelTask(id: string): Promise<void> {
     if (!this.token) return;
     try {
@@ -825,15 +1012,64 @@ export class KuyaConsole {
         headers: { authorization: `Bearer ${this.token}` },
         signal: AbortSignal.timeout(3000),
       });
-      if (!res.ok) return;
-      const tasks: TaskItem[] = await res.json();
+      const tasks: TaskItem[] = res.ok ? await res.json() : [];
 
-      if (tasks.length === 0) {
+      let collabTasks: any[] = [];
+      try {
+        const cRes = await fetch("/api/collab/tasks", {
+          headers: { authorization: `Bearer ${this.token}` },
+          signal: AbortSignal.timeout(3000),
+        });
+        if (cRes.ok) collabTasks = await cRes.json();
+      } catch {}
+
+      if (tasks.length === 0 && collabTasks.length === 0) {
         this.tasksListEl.innerHTML = `<p class="empty-tasks">No tasks dispatched yet.</p>`;
         return;
       }
 
       this.tasksListEl.innerHTML = "";
+
+      // 1. Render active or recent Collab tasks first
+      for (const ct of collabTasks.slice(0, 3)) {
+        const item = document.createElement("div");
+        item.className = "task-item";
+        item.style.borderLeft = "3px solid #8b5cf6";
+        item.style.background = "rgba(139, 92, 246, 0.08)";
+
+        const info = document.createElement("div");
+        info.className = "task-info";
+
+        const badge = document.createElement("span");
+        badge.className = `task-status ${ct.status}`;
+        badge.style.background = "#7c3aed";
+        badge.style.color = "#ffffff";
+        badge.textContent = `👥 HAMON: ${ct.status.toUpperCase()}`;
+
+        const teamSpan = document.createElement("span");
+        teamSpan.className = "task-harness";
+        teamSpan.textContent = `Team: ${ct.members.map((m: any) => `${m.name} (${m.role})`).join(", ")}`;
+
+        const promptSpan = document.createElement("span");
+        promptSpan.className = "task-prompt";
+        promptSpan.textContent = `[Step: ${ct.currentStep} | Try ${ct.attempt}/${ct.maxAttempts}] ${ct.goal}`;
+        promptSpan.title = ct.goal;
+
+        info.append(badge, teamSpan, promptSpan);
+        item.appendChild(info);
+
+        if (ct.status === "running") {
+          const cancelBtn = document.createElement("button");
+          cancelBtn.className = "task-cancel-btn";
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.addEventListener("click", () => this.cancelCollabTask(ct.id));
+          item.appendChild(cancelBtn);
+        }
+
+        this.tasksListEl.appendChild(item);
+      }
+
+      // 2. Render individual tasks
       for (const t of tasks.slice(0, 10)) {
         const item = document.createElement("div");
         item.className = "task-item";

@@ -18,6 +18,7 @@ import { Dispatcher } from "./dispatcher";
 import { Housemates } from "./housemates";
 import { Houses } from "./houses";
 import { OpenCodeSupervisor } from "./opencode-supervisor";
+import { CollabManager } from "./collab";
 import { RateLimiter } from "./ratelimit";
 import { audit, auditTail } from "./audit";
 
@@ -104,6 +105,15 @@ const store = new Store();
 const dispatcher = new Dispatcher(store);
 const supervisor = new OpenCodeSupervisor();
 const housemates = new Housemates(store, supervisor);
+const collab = new CollabManager(store, housemates, supervisor);
+
+collab.onAnnounce = () => scheduleBroadcast();
+
+housemates.onSessionIdle = async (sid) => {
+  const handled = await collab.handleSessionIdle(sid, "");
+  if (handled) scheduleBroadcast();
+  return handled;
+};
 
 housemates.onTaskCompleted = (taskId, exitCode) => {
   dispatcher.completeExternalTask(taskId, exitCode);
@@ -183,7 +193,12 @@ let lastSignature = "";
 
 function fullSnapshot(): object {
   const snap = store.snapshot(Date.now());
-  return { ...snap, houses: houses.list() };
+  return {
+    ...snap,
+    houses: houses.list(),
+    collabTasks: collab.getTasks(),
+    activeCollab: collab.getActiveTask(),
+  };
 }
 
 function broadcast(force = false): void {
@@ -773,6 +788,54 @@ try {
             const taskId = taskMatch[1];
             const task = dispatcher.getTask(taskId);
             if (!task) return jsonResponse({ error: "Task not found" }, 404);
+            return jsonResponse(task);
+          }
+        }
+
+        // Collab (Lingguhang Hamon) endpoints
+        if (url.pathname.startsWith("/api/collab")) {
+          if (!isAuthenticated(req)) {
+            return jsonResponse({ error: "Unauthorized: invalid or missing bearer token" }, 401);
+          }
+
+          // POST /api/collab/tasks
+          if (req.method === "POST" && url.pathname === "/api/collab/tasks") {
+            let body: any;
+            try {
+              body = await req.json();
+            } catch {
+              return jsonResponse({ error: "Invalid JSON body" }, 400);
+            }
+            const { goal, cwd, members, maxAttempts } = body;
+            try {
+              const task = await collab.startTask({ goal, cwd, members, maxAttempts });
+              scheduleBroadcast();
+              return jsonResponse(task, 201);
+            } catch (err: any) {
+              return jsonResponse({ error: err.message || "Failed to start collaboration task" }, 400);
+            }
+          }
+
+          // GET /api/collab/tasks
+          if (req.method === "GET" && url.pathname === "/api/collab/tasks") {
+            return jsonResponse(collab.getTasks());
+          }
+
+          // POST /api/collab/tasks/:id/cancel
+          const cancelCollabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)\/cancel$/);
+          if (req.method === "POST" && cancelCollabMatch) {
+            const taskId = cancelCollabMatch[1];
+            const canceled = collab.cancelTask(taskId);
+            scheduleBroadcast();
+            return jsonResponse({ ok: canceled });
+          }
+
+          // GET /api/collab/tasks/:id
+          const collabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)$/);
+          if (req.method === "GET" && collabMatch) {
+            const taskId = collabMatch[1];
+            const task = collab.getTask(taskId);
+            if (!task) return jsonResponse({ error: "Collaboration task not found" }, 404);
             return jsonResponse(task);
           }
         }
