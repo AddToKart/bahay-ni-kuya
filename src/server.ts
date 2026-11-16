@@ -104,6 +104,18 @@ const store = new Store();
 const dispatcher = new Dispatcher(store);
 const supervisor = new OpenCodeSupervisor();
 const housemates = new Housemates(store, supervisor);
+
+housemates.onTaskCompleted = (taskId, exitCode) => {
+  dispatcher.completeExternalTask(taskId, exitCode);
+  scheduleBroadcast();
+};
+
+dispatcher.onCancel = (taskId) => {
+  const sid = housemates.getSessionIdForTask(taskId);
+  if (sid) {
+    void housemates.abortSession(sid);
+  }
+};
 const houses = new Houses();
 const limiter = new RateLimiter();
 const clients = new Set<WsLike>();
@@ -235,7 +247,7 @@ function reportPortOwner(): void {
       `(Get-NetTCPConnection -LocalPort ${PORT} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess)`,
     ]);
     const pid = new TextDecoder().decode(proc.stdout).trim();
-    if (pid) log(`port ${PORT} is owned by PID ${pid}`);
+    if (pid) log(`port ${PORT} is owned by PID ${pid}. Run 'bun run clean-port' or terminate PID ${pid} to free it.`);
   } catch {
     /* best effort */
   }
@@ -476,7 +488,14 @@ try {
             try {
               const key = decodeURIComponent(taskMatch[1]);
               const result = await housemates.assignTask(key, prompt, cwd);
-              dispatcher.recordExternalTask(result.taskId, "opencode", prompt, cwd || housemates.get(key)?.directory || "");
+              const hm = housemates.get(key);
+              dispatcher.recordExternalTask(
+                result.taskId,
+                "opencode",
+                prompt,
+                cwd || hm?.directory || "",
+                hm?.name
+              );
               scheduleBroadcast();
               return jsonResponse(result, 200);
             } catch (err) {
@@ -810,6 +829,7 @@ const shutdown = async () => {
 
 process.on("SIGINT", () => void shutdown());
 process.on("SIGTERM", () => void shutdown());
+process.on("SIGBREAK", () => void shutdown());
 
 const installed = store
   .snapshot()

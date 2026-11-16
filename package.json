@@ -12,7 +12,8 @@
     "structure-lock": "bun run scripts/structure-lock.ts",
     "validate-furniture": "bun run scripts/validate-furniture.ts",
     "mcp": "bun run src/mcp.ts",
-    "guard": "bun run scripts/guard-no-custom-subagents.ts"
+    "guard": "bun run scripts/guard-no-custom-subagents.ts",
+    "clean-port": "bun run scripts/clean-port.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.4",

@@ -333,7 +333,14 @@ describe("Phase 2 — PBB states and events", () => {
     expect(housemates.get(key)?.state).toBe("working");
     expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("working");
 
-    // OpenCode turn completes (session.status idle)
+    // OpenCode turn completes (session.status idle and session.idle event)
+    let completedTaskId = "";
+    let completedExitCode = -1;
+    housemates.onTaskCompleted = (taskId, exitCode) => {
+      completedTaskId = taskId;
+      completedExitCode = exitCode;
+    };
+
     (housemates as any).onEvent({
       type: "session.status",
       properties: {
@@ -342,7 +349,16 @@ describe("Phase 2 — PBB states and events", () => {
       },
     });
 
+    (housemates as any).onEvent({
+      type: "session.idle",
+      properties: {
+        sessionID: "mock_session_task",
+      },
+    });
+
     expect(housemates.get(key)?.state).toBe("idle");
+    expect(completedTaskId).toBe(taskRes.taskId);
+    expect(completedExitCode).toBe(0);
     expect(store.snapshot(Date.now()).sessions.find((s) => s.housemateKey === key)?.state).toBe("idle");
     await housemates.stop();
   });

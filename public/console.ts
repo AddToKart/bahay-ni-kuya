@@ -847,7 +847,7 @@ export class KuyaConsole {
 
         const harnessSpan = document.createElement("span");
         harnessSpan.className = "task-harness";
-        harnessSpan.textContent = t.harness;
+        harnessSpan.textContent = (t as any).housemateName ? `🦫 ${(t as any).housemateName}` : t.harness;
 
         const promptSpan = document.createElement("span");
         promptSpan.className = "task-prompt";

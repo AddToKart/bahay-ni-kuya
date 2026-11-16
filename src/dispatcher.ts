@@ -26,6 +26,7 @@ export interface TaskRecord {
   callerHarness?: string;
   depth?: number;
   parentTaskId?: string;
+  housemateName?: string;
 }
 
 interface RunnerConfig {
@@ -40,6 +41,7 @@ export class Dispatcher {
   private store: Store;
   private taskCounter = 1;
   private runners: Record<string, RunnerConfig>;
+  onCancel?: (taskId: string) => void;
 
   constructor(store: Store) {
     this.store = store;
@@ -54,12 +56,13 @@ export class Dispatcher {
     return this.tasks.get(id);
   }
 
-  recordExternalTask(id: string, harness: Harness, prompt: string, cwd: string): TaskRecord {
+  recordExternalTask(id: string, harness: Harness, prompt: string, cwd: string, housemateName?: string): TaskRecord {
     const record: TaskRecord = {
       id,
       harness,
       prompt,
       cwd,
+      housemateName,
       status: "running",
       exitCode: null,
       tail: [],
@@ -351,6 +354,7 @@ export class Dispatcher {
     }
 
     this.cleanupWorktree(task);
+    this.onCancel?.(id);
 
     this.store.ingest({
       harness: task.harness,

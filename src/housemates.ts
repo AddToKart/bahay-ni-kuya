@@ -101,6 +101,8 @@ export class Housemates {
   private eventAbort: AbortController | null = null;
   private arrivedTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private callActive = new Map<string, number>();
+  private sessionToTaskId = new Map<string, string>();
+  onTaskCompleted?: (taskId: string, exitCode: number) => void;
 
   constructor(
     private store: Store,
@@ -113,6 +115,21 @@ export class Housemates {
 
   get(key: string): HousemateRec | undefined {
     return this.recs.get(key);
+  }
+
+  getSessionIdForTask(taskId: string): string | undefined {
+    for (const [sid, tid] of this.sessionToTaskId.entries()) {
+      if (tid === taskId) return sid;
+    }
+    return undefined;
+  }
+
+  async abortSession(sessionId: string): Promise<boolean> {
+    const client = this.supervisor.client;
+    const key = this.sessionToKey.get(sessionId);
+    const rec = key ? this.recs.get(key) : undefined;
+    if (!client || !rec) return false;
+    return client.abort(sessionId, rec.directory).catch(() => false);
   }
 
   /** Start the managed server and the event stream (idempotent). */
@@ -284,6 +301,7 @@ export class Housemates {
 
     const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const executionDir = cwd || rec.directory;
+    this.sessionToTaskId.set(rec.sessionId, taskId);
 
     this.store.ingest({
       harness: HARNESS,
@@ -588,6 +606,11 @@ export class Housemates {
         const key = this.sessionToKey.get(sid);
         if (key) {
           const rec = this.recs.get(key);
+          const taskId = this.sessionToTaskId.get(sid);
+          if (taskId) {
+            this.sessionToTaskId.delete(sid);
+            this.onTaskCompleted?.(taskId, 0);
+          }
           if (rec && (rec.state === "called" || this.callActive.has(key))) {
             this.activeTurns.delete(key);
             this.drainQueue();
@@ -606,6 +629,11 @@ export class Housemates {
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         const error = p.error as { message?: string } | undefined;
         if (sid && this.sessionToKey.has(sid)) {
+          const taskId = this.sessionToTaskId.get(sid);
+          if (taskId) {
+            this.sessionToTaskId.delete(sid);
+            this.onTaskCompleted?.(taskId, 1);
+          }
           this.store.ingest({
             harness: HARNESS,
             type: "error",
