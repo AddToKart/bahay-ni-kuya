@@ -290,12 +290,27 @@
             </span>
           </div>
 
-          <div id="hamon-details-log" style="background:#090d16; border:1px solid #1e293b; border-radius:4px; padding:14px; height:460px; min-height:380px; max-height:58vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; font-family:var(--font-mono, monospace); font-size:11px; line-height:1.45;">
+          <div id="hamon-details-log" style="background:#090d16; border:1px solid #1e293b; border-radius:4px; padding:14px; height:440px; min-height:360px; max-height:54vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; font-family:var(--font-mono, monospace); font-size:11px; line-height:1.45;">
             <!-- Message entries populated dynamically -->
           </div>
 
-          <div class="summon-actions" style="margin-top:12px; display:flex; justify-content:space-between;">
-            <div style="display:flex; gap:8px;">
+          <!-- Kuya Follow-up & Task Steering Section -->
+          <div id="hamon-followup-section" style="margin-top:10px; display:flex; flex-direction:column; gap:6px; background:rgba(30, 41, 59, 0.4); border:1px solid rgba(139, 92, 246, 0.25); border-radius:4px; padding:8px 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10px; font-weight:700; color:#cbd5e1; text-transform:uppercase;">💬 Kuya's Follow-up & Direct Guidance:</span>
+              <span id="hamon-followup-hint" style="font-size:9.5px; color:var(--muted);">Instruct the team to continue, tweak, or add new features</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="text" id="hamon-followup-input" placeholder="Mensahe o karagdagang utos kay housemate bago tapusin..." style="flex:1; background:#090d16; border:1px solid #475569; color:#f8fafc; font-size:11px; padding:7px 10px; border-radius:3px;">
+              <select id="hamon-followup-target" style="background:#090d16; border:1px solid #475569; color:#f8fafc; font-size:11px; padding:6px 8px; border-radius:3px; max-width:180px;"></select>
+              <button class="dispatch-btn" id="hamon-followup-send-btn" style="background:#6366f1; color:#fff; font-size:11px; padding:7px 14px; white-space:nowrap; font-weight:600;">🚀 Ipadala</button>
+            </div>
+          </div>
+
+          <div class="summon-actions" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="dispatch-btn" id="hamon-modal-approve-btn" style="background:#10b981; color:#042f2e; font-weight:700; font-size:11px; padding:6px 14px;">✅ Approve & Mark Done</button>
+              <button class="dispatch-btn" id="hamon-modal-retry-btn" style="background:#8b5cf6; color:#ffffff; font-weight:700; font-size:11px; padding:6px 14px; display:none;">🔄 Retry Hamon (+1 Round)</button>
               <button class="dispatch-btn" id="hamon-modal-call-active" style="background:#f59e0b; color:#000; font-weight:600; font-size:11px; padding:6px 14px;">📞 Call Active to Confession</button>
               <button class="dispatch-btn summon-cancel" id="hamon-modal-cancel-task" style="font-size:11px; padding:6px 14px; border-color:#ef4444; color:#f87171;">Cancel Hamon</button>
             </div>
@@ -374,8 +389,11 @@
               <span>COMPLETE OPENCODE INSTANCE CONVERSATION & TURNS</span>
               <span id="inspector-feed-count" style="color:#a78bfa;">0 messages</span>
             </div>
-            <div id="inspector-feed-log" style="background:#090d16; border:1px solid #1e293b; border-radius:4px; padding:12px; height:380px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; font-family:var(--font-mono, monospace); font-size:11px;">
-              <!-- Message entries -->
+            <div style="position:relative;">
+              <div id="inspector-feed-log" style="background:#090d16; border:1px solid #1e293b; border-radius:4px; padding:12px; height:380px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; font-family:var(--font-mono, monospace); font-size:11px;">
+                <!-- Message entries -->
+              </div>
+              <button id="inspector-feed-jump-btn" style="display:none; position:absolute; bottom:12px; right:16px; background:#6366f1; color:#fff; font-size:11px; font-weight:600; padding:6px 14px; border-radius:20px; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.5); cursor:pointer; z-index:10;">⬇ Jump to Latest</button>
             </div>
           </div>
 

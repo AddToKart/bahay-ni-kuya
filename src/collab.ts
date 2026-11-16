@@ -477,4 +477,161 @@ export class CollabManager {
     task.log.push({ agent: "kuya", name: "Kuya", text: `❌ CANCELED: ${cancelMsg}`, ts: Date.now() });
     return true;
   }
+
+  approveTask(id: string): CollabTask {
+    const task = this.tasks.get(id);
+    if (!task) throw new Error("Collaboration task not found");
+    task.status = "done";
+    task.completedAt = Date.now();
+    task.currentStep = "done";
+    if (this.activeTaskId === id) this.activeTaskId = null;
+
+    for (const m of task.members) {
+      m.state = "done";
+      const rec = this.housemates.get(m.key);
+      if (rec) {
+        rec.state = "idle";
+        void this.housemates.dismissCall(m.key).catch(() => undefined);
+      }
+      this.store.ingest({
+        harness: "opencode",
+        sessionId: m.sessionId,
+        type: "collab_completed",
+        state: "idle",
+      });
+    }
+
+    const winMsg = `Inaprubahan at minarkahang TAPOS ni Kuya ang Lingguhang Hamon "${task.goal.slice(0, 40)}"! Mabuhay ang team! 🎉`;
+    this.announce(winMsg);
+    task.log.push({ agent: "kuya", name: "Kuya", text: `✅ APPROVED BY KUYA: ${winMsg}`, ts: Date.now() });
+    audit("kuya", "collab_approved", task.id, { goal: task.goal });
+    return task;
+  }
+
+  async retryTask(id: string, feedback?: string): Promise<CollabTask> {
+    const task = this.tasks.get(id);
+    if (!task) throw new Error("Collaboration task not found");
+
+    task.maxAttempts = Math.max(task.maxAttempts + 1, task.attempt + 1);
+    task.status = "running";
+    this.activeTaskId = id;
+
+    const builder = task.members.find((m) => !m.isVerifier) || task.members[0];
+    task.activeMemberKey = builder.key;
+    task.currentStep = "building";
+
+    // Dismiss builder from confession if called
+    await this.housemates.dismissCall(builder.key).catch(() => undefined);
+
+    for (const m of task.members) {
+      const isWorking = m.key === builder.key;
+      m.state = isWorking ? "working" : "standby";
+      const rec = this.housemates.get(m.key);
+      if (rec) rec.state = isWorking ? "working" : "standby";
+      this.store.ingest({
+        harness: "opencode",
+        sessionId: m.sessionId,
+        type: "collab_step",
+        state: isWorking ? "working" : "standby",
+        title: isWorking
+          ? `[Lingguhang Hamon Retry] ${m.name} Fixing (${task.attempt}/${task.maxAttempts})`
+          : `[Lingguhang Hamon] ${m.name} Standby`,
+      });
+    }
+
+    const retryNotice = `Binuksan muli ni Kuya ang Lingguhang Hamon para sa bagong attempt (${task.attempt}/${task.maxAttempts})! ${builder.name}, simulan ang pag-ayos!`;
+    this.announce(retryNotice);
+    task.log.push({
+      agent: "kuya",
+      name: "Kuya",
+      text: `🔄 RETRY AUTHORIZED BY KUYA: ${retryNotice}${feedback ? `\nKuya's Guidance: ${feedback}` : ""}`,
+      ts: Date.now(),
+    });
+
+    await this.promptActiveMember(
+      task,
+      builder,
+      feedback ? `Kuya's Guidance for this retry:\n${feedback}` : undefined,
+    );
+
+    return task;
+  }
+
+  async followupTask(id: string, message: string, targetKey?: string): Promise<CollabTask> {
+    const task = this.tasks.get(id);
+    if (!task) throw new Error("Collaboration task not found");
+    const cleanMsg = message.trim();
+    if (!cleanMsg) throw new Error("Follow-up message cannot be empty");
+
+    task.status = "running";
+    this.activeTaskId = id;
+
+    let targetMember = targetKey ? task.members.find((m) => m.key === targetKey) : undefined;
+    if (!targetMember) {
+      targetMember = task.members.find((m) => !m.isVerifier) || task.members[0];
+    }
+
+    task.activeMemberKey = targetMember.key;
+    task.currentStep = targetMember.isVerifier ? "verifying" : "building";
+
+    // Dismiss target from confession room if currently called
+    await this.housemates.dismissCall(targetMember.key).catch(() => undefined);
+
+    for (const m of task.members) {
+      const isWorking = m.key === targetMember.key;
+      m.state = isWorking ? "working" : "standby";
+      const rec = this.housemates.get(m.key);
+      if (rec) rec.state = isWorking ? "working" : "standby";
+      this.store.ingest({
+        harness: "opencode",
+        sessionId: m.sessionId,
+        type: "collab_step",
+        state: isWorking ? "working" : "standby",
+        title: isWorking
+          ? `[Lingguhang Hamon] ${m.name} Follow-up`
+          : `[Lingguhang Hamon] ${m.name} Standby`,
+      });
+    }
+
+    const note = `May bagong bilin si Kuya para kay ${targetMember.name}: "${cleanMsg}"`;
+    this.announce(note);
+    task.log.push({
+      agent: "kuya",
+      name: "Kuya",
+      text: `📝 KUYA'S FOLLOW-UP:\n${cleanMsg}`,
+      ts: Date.now(),
+    });
+
+    const client = this.supervisor.client;
+    if (client) {
+      const rec = this.housemates.get(targetMember.key);
+      if (rec) {
+        const fullPrompt = [
+          `[KUYA'S FOLLOW-UP INSTRUCTION - LINGGUHANG HAMON]`,
+          `Task Goal: ${task.goal}`,
+          `New Instruction from Kuya:`,
+          cleanMsg,
+          ``,
+          `Please proceed to address Kuya's request in the codebase.`,
+          `When complete, summarize your changes and report back.`,
+        ].join("\n");
+
+        void client
+          .promptAsync(rec.sessionId, rec.directory, {
+            message: fullPrompt,
+            agent: rec.agent,
+            model: {
+              providerID: rec.provider,
+              modelID: rec.model,
+              ...(rec.variant ? { variant: rec.variant } : {}),
+            },
+          })
+          .catch((err: unknown) => {
+            log(`collab: promptAsync followup failed for ${targetMember.name}: ${String(err)}`);
+          });
+      }
+    }
+
+    return task;
+  }
 }

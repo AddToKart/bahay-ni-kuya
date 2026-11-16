@@ -3,7 +3,7 @@
 //
 // Rule 11: this module never creates a child session and never passes parentID. Child sessions
 // are only observed from the event stream and rendered as guests.
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { Store } from "./store";
@@ -170,6 +170,45 @@ export class Housemates {
       }
     } catch {}
 
+    const discoveredFiles = new Set<string>(rec.filesEdited || []);
+    try {
+      if (existsSync(rec.directory)) {
+        const entries = readdirSync(rec.directory, { withFileTypes: true });
+        for (const ent of entries) {
+          if (ent.isFile() && !ent.name.startsWith(".") && ent.name !== "node_modules") {
+            discoveredFiles.add(ent.name);
+          } else if (ent.isDirectory() && ent.name === "src") {
+            try {
+              const subEntries = readdirSync(join(rec.directory, "src"), { withFileTypes: true });
+              for (const sub of subEntries) {
+                if (sub.isFile() && !sub.name.startsWith(".")) {
+                  discoveredFiles.add(`src/${sub.name}`);
+                }
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+
+    // Also scan fullMessages for file references and tool outputs
+    for (const msg of fullMessages) {
+      const parts = Array.isArray(msg.parts) ? msg.parts : [];
+      for (const p of parts) {
+        if (p.type === "tool") {
+          const input = p.input || p.state?.input || p.args || {};
+          const path = input.path || input.filePath || input.file;
+          if (typeof path === "string") discoveredFiles.add(path);
+          if (typeof input.command === "string") {
+            const m = input.command.match(/(?:>{1,2}|\btouch\s+)\s*([\w./\\-]+\.[a-zA-Z0-9]+|[\w./\\-]+)/);
+            if (m && m[1] && m[1] !== "dev/null") discoveredFiles.add(m[1]);
+          }
+        } else if (p.type === "patch" && (p.file || p.path)) {
+          discoveredFiles.add(String(p.file || p.path));
+        }
+      }
+    }
+
     const state = this.getCollabState?.(rec.sessionId) || rec.state;
     return {
       key: rec.key,
@@ -183,7 +222,7 @@ export class Housemates {
       currentAction: rec.currentAction || (state === "working" ? "Working on task" : state),
       currentThought: rec.currentThought || "",
       currentTool: rec.currentTool || "",
-      filesEdited: rec.filesEdited || [],
+      filesEdited: Array.from(discoveredFiles),
       recentActivities: rec.recentActivities || [],
       messages: fullMessages,
     };
@@ -528,6 +567,10 @@ export class Housemates {
       return { available: true, cost: rec.cost, tokens: rec.tokens };
     }
     return { available: false };
+  }
+
+  async dismiss(key: string): Promise<void> {
+    return this.dismissCall(key);
   }
 
   async dismissCall(key: string): Promise<void> {
@@ -911,15 +954,20 @@ export class Housemates {
         }
 
         // 2. Tool / File Edit / Command
-        else if (part.type === "tool" && part.tool) {
-          const toolName = String(part.tool);
+        else if (part.type === "tool" && (part.tool || part.state?.tool)) {
+          const toolName = String(part.tool || part.state?.tool || "tool");
           let targetFile = "";
           let command = "";
-          const input = part.input || part.args || part.parameters || {};
+          const input = part.input || part.args || part.parameters || part.state?.input || {};
+          const output = typeof part.output === "string" ? part.output : typeof part.state?.output === "string" ? part.state.output : "";
           if (typeof input.path === "string") targetFile = input.path;
           else if (typeof input.filePath === "string") targetFile = input.filePath;
           else if (typeof input.file === "string") targetFile = input.file;
-          if (typeof input.command === "string") command = input.command;
+          if (typeof input.command === "string") {
+            command = input.command;
+            const m = command.match(/(?:>{1,2}|\btouch\s+)\s*([\w./\\-]+\.[a-zA-Z0-9]+|[\w./\\-]+)/);
+            if (m && m[1] && m[1] !== "dev/null") targetFile = m[1];
+          }
 
           if (rec) {
             rec.currentTool = toolName;
@@ -928,21 +976,42 @@ export class Housemates {
               if (!rec.filesEdited.includes(targetFile)) rec.filesEdited.push(targetFile);
               rec.currentAction = `${toolName.includes("edit") || toolName.includes("write") ? "Editing" : "Inspecting"} ${targetFile}`;
             } else if (command) {
-              rec.currentAction = `Running command: ${command.slice(0, 50)}`;
+              const shortCmd = command.trim().split("\n")[0].slice(0, 50);
+              rec.currentAction = `⚡ ${toolName}: ${shortCmd}`;
             } else {
               rec.currentAction = `Using tool: ${toolName}`;
             }
 
             if (!rec.recentActivities) rec.recentActivities = [];
-            rec.recentActivities.push({
-              id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-              type: targetFile ? "patch" : command ? "command" : "tool",
-              title: rec.currentAction,
-              detail: JSON.stringify(input, null, 2),
-              file: targetFile || undefined,
-              ts: Date.now(),
-            });
-            if (rec.recentActivities.length > 60) rec.recentActivities.shift();
+            const displayTitle = targetFile
+              ? `📝 ${toolName}: ${targetFile}`
+              : command
+                ? `⚡ ${toolName}: ${command.trim().split("\n")[0].slice(0, 50)}`
+                : `Using tool: ${toolName}`;
+
+            const displayDetail = command
+              ? (output ? `Command:\n${command}\n\nOutput:\n${output}` : `Command:\n${command}`)
+              : output
+                ? `Input:\n${JSON.stringify(input, null, 2)}\n\nOutput:\n${output}`
+                : JSON.stringify(input, null, 2);
+
+            const lastAct = rec.recentActivities[rec.recentActivities.length - 1];
+            if (lastAct && lastAct.type === (targetFile ? "patch" : command ? "command" : "tool") && Date.now() - lastAct.ts < 3000) {
+              lastAct.title = displayTitle;
+              lastAct.detail = displayDetail;
+              lastAct.file = targetFile || lastAct.file;
+              lastAct.ts = Date.now();
+            } else {
+              rec.recentActivities.push({
+                id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                type: targetFile ? "patch" : command ? "command" : "tool",
+                title: displayTitle,
+                detail: displayDetail,
+                file: targetFile || undefined,
+                ts: Date.now(),
+              });
+              if (rec.recentActivities.length > 60) rec.recentActivities.shift();
+            }
           }
 
           this.store.ingest({

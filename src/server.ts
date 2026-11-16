@@ -841,6 +841,58 @@ try {
             return jsonResponse({ ok: canceled });
           }
 
+          // POST /api/collab/tasks/:id/approve
+          const approveCollabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)\/approve$/);
+          if (req.method === "POST" && approveCollabMatch) {
+            const taskId = approveCollabMatch[1];
+            try {
+              const task = collab.approveTask(taskId);
+              scheduleBroadcast();
+              return jsonResponse(task);
+            } catch (err: any) {
+              return jsonResponse({ error: err.message || "Failed to approve task" }, 400);
+            }
+          }
+
+          // POST /api/collab/tasks/:id/retry
+          const retryCollabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)\/retry$/);
+          if (req.method === "POST" && retryCollabMatch) {
+            const taskId = retryCollabMatch[1];
+            let body: any = {};
+            try {
+              body = await req.json();
+            } catch {}
+            try {
+              const task = await collab.retryTask(taskId, body.feedback);
+              scheduleBroadcast();
+              return jsonResponse(task);
+            } catch (err: any) {
+              return jsonResponse({ error: err.message || "Failed to retry task" }, 400);
+            }
+          }
+
+          // POST /api/collab/tasks/:id/followup
+          const followupCollabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)\/followup$/);
+          if (req.method === "POST" && followupCollabMatch) {
+            const taskId = followupCollabMatch[1];
+            let body: any = {};
+            try {
+              body = await req.json();
+            } catch {
+              return jsonResponse({ error: "Invalid JSON body" }, 400);
+            }
+            if (!body.message) {
+              return jsonResponse({ error: "Follow-up message is required" }, 400);
+            }
+            try {
+              const task = await collab.followupTask(taskId, body.message, body.targetKey);
+              scheduleBroadcast();
+              return jsonResponse(task);
+            } catch (err: any) {
+              return jsonResponse({ error: err.message || "Failed to submit follow-up" }, 400);
+            }
+          }
+
           // GET /api/collab/tasks/:id
           const collabMatch = url.pathname.match(/^\/api\/collab\/tasks\/([^/]+)$/);
           if (req.method === "GET" && collabMatch) {

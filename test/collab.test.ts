@@ -307,4 +307,115 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     await housemates.stop();
   });
+
+  it("supports Kuya circuit-breaker Retry, Follow-up instructions, and explicit Approval", async () => {
+    const store = new Store();
+    let promptAsyncCalls: Array<{ sessionId: string; message: string }> = [];
+
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      promptAsync: async (sid: string, _dir: string, input: any) => {
+        promptAsyncCalls.push({ sessionId: sid, message: input.message });
+      },
+      messages: async () => [],
+    };
+
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+
+    const housemates = new Housemates(store, fakeSupervisor as any);
+
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "code-reviewer",
+      model: { providerID: "openai", modelID: "gpt-4" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    const task = await collab.startTask({
+      goal: "Build coffee shop website",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }],
+      maxAttempts: 1,
+    });
+
+    // Hans hands off
+    await collab.handleSessionIdle(hm1.housemate.sessionId, "Built coffee shop index.html and styles.css");
+
+    // Bea reports verification failure (maxAttempts 1 exceeded -> triggers circuit breaker)
+    await collab.handleSessionIdle(
+      hm2.housemate.sessionId,
+      "VERIFICATION_FAILED: Missing shopping cart drawer button in index.html",
+    );
+
+    expect(task.status).toBe("blocked");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("called"); // Hans called to confession
+
+    // 1. Kuya retries the task (+1 round) with direct guidance
+    promptAsyncCalls = [];
+    const retriedTask = await collab.retryTask(task.id, "Use modal cart drawer with localStorage");
+    expect(retriedTask.status).toBe("running");
+    expect(retriedTask.maxAttempts).toBe(3);
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working"); // Hans dismissed from confession back to office desk
+    expect(promptAsyncCalls.length).toBe(1);
+    expect(promptAsyncCalls[0].message).toContain("Kuya's Guidance for this retry");
+    expect(promptAsyncCalls[0].message).toContain("modal cart drawer");
+
+    // 2. Kuya sends a follow-up instruction
+    promptAsyncCalls = [];
+    await collab.followupTask(task.id, "Also add responsive coffee product cards", hm1.housemate.key);
+    expect(promptAsyncCalls.length).toBe(1);
+    expect(promptAsyncCalls[0].message).toContain("KUYA'S FOLLOW-UP INSTRUCTION");
+    expect(promptAsyncCalls[0].message).toContain("responsive coffee product cards");
+
+    // 3. Simulated bash tool execution creating index.html
+    (housemates as any).onEvent({
+      type: "message.part.updated",
+      properties: {
+        sessionID: hm1.housemate.sessionId,
+        part: {
+          type: "tool",
+          tool: "bash",
+          state: {
+            input: { command: "cat << 'EOF' > index.html\n<!DOCTYPE html><html><body><h1>Coffee</h1></body></html>\nEOF" },
+            output: "File index.html created",
+          },
+        },
+      },
+    });
+
+    const inspection = await housemates.getAgentInspection(hm1.housemate.key);
+    expect(inspection?.filesEdited).toContain("index.html");
+    const bashAct = inspection?.recentActivities.find((a) => a.title.includes("bash"));
+    expect(bashAct).toBeDefined();
+    expect(bashAct?.detail).toContain("Output:\nFile index.html created");
+
+    // 4. Kuya approves and marks the task done
+    collab.approveTask(task.id);
+    expect(task.status).toBe("done");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("idle");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("idle");
+    expect(collab.getActiveTask()).toBeNull();
+
+    await housemates.stop();
+  });
 });

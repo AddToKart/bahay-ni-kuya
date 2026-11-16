@@ -33,6 +33,8 @@ export class DiaryRoom {
   private currentSessionId: string | null = null;
   private currentHousemateKey: string | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private isHousemateTyping = false;
+  private typingTimeout: ReturnType<typeof setTimeout> | null = null;
 
   async init(): Promise<void> {
     this.panel = document.getElementById("diary-panel");
@@ -89,7 +91,22 @@ export class DiaryRoom {
   /** Let main.ts push snapshots it already receives, avoiding a second polling loop. */
   update(state: StateLike): void {
     if (Array.isArray(state.questions)) this.questions = state.questions;
-    if (Array.isArray(state.chat)) this.chat = state.chat;
+    if (Array.isArray(state.chat)) {
+      this.chat = state.chat;
+      if (this.isHousemateTyping) {
+        const lines = this.currentSessionId
+          ? this.chat.filter((line) => line.sessionId === this.currentSessionId)
+          : this.chat;
+        const last = lines[lines.length - 1];
+        if (last && last.role === "housemate") {
+          this.isHousemateTyping = false;
+          if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+            this.typingTimeout = null;
+          }
+        }
+      }
+    }
     this.render();
   }
 
@@ -170,6 +187,33 @@ export class DiaryRoom {
       row.textContent = `${line.role === "kuya" ? "KUYA" : "HOUSEMATE"}: ${line.text}`;
       this.chatEl.appendChild(row);
     }
+
+    if (this.isHousemateTyping) {
+      const typingRow = document.createElement("div");
+      typingRow.className = "diary-line housemate diary-typing";
+      typingRow.style.display = "inline-flex";
+      typingRow.style.alignItems = "center";
+      typingRow.style.gap = "8px";
+      typingRow.style.padding = "6px 12px";
+      typingRow.style.background = "rgba(167, 139, 250, 0.12)";
+      typingRow.style.borderLeft = "3px solid #a78bfa";
+      typingRow.style.borderRadius = "4px";
+      typingRow.style.margin = "6px 0";
+
+      const txt = document.createElement("span");
+      txt.style.fontStyle = "italic";
+      txt.style.color = "#c4b5fd";
+      txt.style.fontSize = "11.5px";
+      txt.textContent = "✍️ HOUSEMATE is thinking & typing";
+
+      const dots = document.createElement("span");
+      dots.className = "typing-indicator-dots";
+      dots.innerHTML = `<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>`;
+
+      typingRow.append(txt, dots);
+      this.chatEl.appendChild(typingRow);
+    }
+
     this.chatEl.scrollTop = this.chatEl.scrollHeight;
   }
 
@@ -178,6 +222,12 @@ export class DiaryRoom {
     if (!question) return;
     if (!this.token) await this.fetchToken();
     if (!this.token) return;
+    this.isHousemateTyping = true;
+    if (this.typingTimeout) clearTimeout(this.typingTimeout);
+    this.typingTimeout = setTimeout(() => {
+      this.isHousemateTyping = false;
+      this.render();
+    }, 45000);
     try {
       const isReal = Boolean(question.housemateKey);
       const url = isReal ? `/api/housemates/${encodeURIComponent(question.housemateKey!)}/answer` : "/api/confession/answer";
@@ -220,6 +270,7 @@ export class DiaryRoom {
       }
       await this.poll();
     } catch (error) {
+      this.isHousemateTyping = false;
       if (this.queueEl) {
         this.queueEl.textContent = `answer failed: ${error instanceof Error ? error.message : String(error)}`;
       }
@@ -233,6 +284,12 @@ export class DiaryRoom {
       if (!this.token) await this.fetchToken();
       if (!this.token) return;
       this.chat.push({ sessionId: this.currentSessionId || "", role: "kuya", text, ts: Date.now() });
+      this.isHousemateTyping = true;
+      if (this.typingTimeout) clearTimeout(this.typingTimeout);
+      this.typingTimeout = setTimeout(() => {
+        this.isHousemateTyping = false;
+        this.render();
+      }, 45000);
       this.renderChat(this.currentSessionId);
       if (this.textEl) this.textEl.value = "";
       try {
@@ -287,6 +344,11 @@ export class DiaryRoom {
       } catch {}
     }
     this.chatMode = false;
+    this.isHousemateTyping = false;
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = null;
+    }
     this.currentHousemateKey = null;
     this.currentSessionId = null;
     if (this.doneEl) this.doneEl.style.display = "none";

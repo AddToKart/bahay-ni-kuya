@@ -442,6 +442,32 @@ export class KuyaConsole {
         }
       }
     });
+    document.getElementById("hamon-modal-approve-btn")?.addEventListener("click", () => {
+      if (this.activeHamonDetailsId) {
+        void this.approveCollabTask(this.activeHamonDetailsId);
+      }
+    });
+    document.getElementById("hamon-modal-retry-btn")?.addEventListener("click", () => {
+      if (this.activeHamonDetailsId) {
+        const feedback = prompt("Magbigay ng dagdag na gabay/feedback para sa bagong round (opsyonal):", "");
+        if (feedback !== null) {
+          void this.retryCollabTask(this.activeHamonDetailsId, feedback);
+        }
+      }
+    });
+    document.getElementById("hamon-followup-send-btn")?.addEventListener("click", () => {
+      if (this.activeHamonDetailsId) {
+        void this.sendHamonFollowup(this.activeHamonDetailsId);
+      }
+    });
+    document.getElementById("hamon-followup-input")?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (this.activeHamonDetailsId) {
+          void this.sendHamonFollowup(this.activeHamonDetailsId);
+        }
+      }
+    });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && this.hamonDetailsModal && !this.hamonDetailsModal.hasAttribute("hidden")) {
         this.closeHamonDetails();
@@ -463,6 +489,19 @@ export class KuyaConsole {
         void this.callHousemateByKey(this.activeInspectorKey);
       }
     });
+    const jumpFeedBtn = document.getElementById("inspector-feed-jump-btn");
+    const feedLogBox = document.getElementById("inspector-feed-log");
+    if (jumpFeedBtn && feedLogBox) {
+      jumpFeedBtn.addEventListener("click", () => {
+        feedLogBox.scrollTo({ top: feedLogBox.scrollHeight, behavior: "smooth" });
+        jumpFeedBtn.style.display = "none";
+      });
+      feedLogBox.addEventListener("scroll", () => {
+        if (feedLogBox.scrollHeight - feedLogBox.scrollTop <= feedLogBox.clientHeight + 40) {
+          jumpFeedBtn.style.display = "none";
+        }
+      });
+    }
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && this.agentInspectorModal && !this.agentInspectorModal.hasAttribute("hidden")) {
         this.closeAgentInspector();
@@ -1143,7 +1182,46 @@ export class KuyaConsole {
         });
         actions.appendChild(inspectBtn);
 
-        if (ct.status === "running") {
+        if (ct.status === "blocked") {
+          const retryBtn = document.createElement("button");
+          retryBtn.className = "task-cancel-btn";
+          retryBtn.style.borderColor = "#8b5cf6";
+          retryBtn.style.color = "#a78bfa";
+          retryBtn.style.background = "rgba(139, 92, 246, 0.2)";
+          retryBtn.textContent = "🔄 Retry";
+          retryBtn.title = "Retry Hamon (+1 Round)";
+          retryBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            void this.retryCollabTask(ct.id);
+          });
+          actions.appendChild(retryBtn);
+
+          const approveBtn = document.createElement("button");
+          approveBtn.className = "task-cancel-btn";
+          approveBtn.style.borderColor = "#10b981";
+          approveBtn.style.color = "#34d399";
+          approveBtn.style.background = "rgba(16, 185, 129, 0.2)";
+          approveBtn.textContent = "✅ Approve";
+          approveBtn.title = "Approve and conclude Hamon";
+          approveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            void this.approveCollabTask(ct.id);
+          });
+          actions.appendChild(approveBtn);
+        } else if (ct.status === "running") {
+          const approveBtn = document.createElement("button");
+          approveBtn.className = "task-cancel-btn";
+          approveBtn.style.borderColor = "#10b981";
+          approveBtn.style.color = "#34d399";
+          approveBtn.style.background = "rgba(16, 185, 129, 0.15)";
+          approveBtn.textContent = "✅ Mark Done";
+          approveBtn.title = "Mark task done and release members";
+          approveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            void this.approveCollabTask(ct.id);
+          });
+          actions.appendChild(approveBtn);
+
           const cancelBtn = document.createElement("button");
           cancelBtn.className = "task-cancel-btn";
           cancelBtn.textContent = "Cancel";
@@ -1398,6 +1476,99 @@ export class KuyaConsole {
         logEl.scrollTop = logEl.scrollHeight;
       }
     }
+
+    // Update Action Buttons & Controls
+    const approveBtn = document.getElementById("hamon-modal-approve-btn") as HTMLButtonElement | null;
+    const retryBtn = document.getElementById("hamon-modal-retry-btn") as HTMLButtonElement | null;
+    const cancelBtn = document.getElementById("hamon-modal-cancel-task") as HTMLButtonElement | null;
+    const followupTarget = document.getElementById("hamon-followup-target") as HTMLSelectElement | null;
+
+    if (retryBtn) {
+      if (task.status === "blocked") {
+        retryBtn.style.display = "inline-block";
+        retryBtn.textContent = `🔄 Retry Hamon (+1 Round)`;
+      } else {
+        retryBtn.style.display = "none";
+      }
+    }
+
+    if (approveBtn) {
+      if (task.status === "done") {
+        approveBtn.textContent = "✅ Approved (Concluded)";
+        approveBtn.disabled = true;
+        approveBtn.style.opacity = "0.6";
+      } else {
+        approveBtn.textContent = "✅ Approve & Mark Done";
+        approveBtn.disabled = false;
+        approveBtn.style.opacity = "1";
+      }
+    }
+
+    if (cancelBtn) {
+      cancelBtn.style.display = (task.status === "done" || task.status === "canceled") ? "none" : "inline-block";
+    }
+
+    if (followupTarget && Array.isArray(task.members)) {
+      const prevVal = followupTarget.value;
+      followupTarget.innerHTML = "";
+      for (const m of task.members) {
+        const opt = document.createElement("option");
+        opt.value = m.key;
+        opt.textContent = `${m.name} [${m.agent}]${m.isVerifier ? " (verifier)" : " (builder)"}`;
+        followupTarget.appendChild(opt);
+      }
+      if (prevVal) followupTarget.value = prevVal;
+    }
+  }
+
+  async approveCollabTask(taskId: string): Promise<void> {
+    if (!taskId) return;
+    try {
+      const res = await fetch(`/api/collab/tasks/${encodeURIComponent(taskId)}/approve`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(this.token ? { authorization: `Bearer ${this.token}` } : {}) },
+      });
+      if (res.ok) {
+        await this.pollHamonDetails();
+        await this.pollTasks();
+      }
+    } catch {}
+  }
+
+  async retryCollabTask(taskId: string, feedback?: string): Promise<void> {
+    if (!taskId) return;
+    try {
+      const res = await fetch(`/api/collab/tasks/${encodeURIComponent(taskId)}/retry`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(this.token ? { authorization: `Bearer ${this.token}` } : {}) },
+        body: JSON.stringify({ feedback: feedback || "" }),
+      });
+      if (res.ok) {
+        await this.pollHamonDetails();
+        await this.pollTasks();
+      }
+    } catch {}
+  }
+
+  async sendHamonFollowup(taskId: string): Promise<void> {
+    if (!taskId) return;
+    const input = document.getElementById("hamon-followup-input") as HTMLInputElement | null;
+    const targetSelect = document.getElementById("hamon-followup-target") as HTMLSelectElement | null;
+    const msg = input?.value?.trim();
+    if (!msg) return;
+
+    try {
+      const res = await fetch(`/api/collab/tasks/${encodeURIComponent(taskId)}/followup`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(this.token ? { authorization: `Bearer ${this.token}` } : {}) },
+        body: JSON.stringify({ message: msg, targetKey: targetSelect?.value || undefined }),
+      });
+      if (res.ok) {
+        if (input) input.value = "";
+        await this.pollHamonDetails();
+        await this.pollTasks();
+      }
+    } catch {}
   }
 
   openAgentInspector(housemateKey: string): void {
@@ -1581,7 +1752,10 @@ export class KuyaConsole {
     if (feedCountEl) feedCountEl.textContent = `${data.messages?.length || 0} messages`;
 
     const feedLogEl = document.getElementById("inspector-feed-log");
+    const jumpBtn = document.getElementById("inspector-feed-jump-btn");
+
     if (feedLogEl) {
+      const wasNearBottom = feedLogEl.scrollHeight - feedLogEl.scrollTop <= feedLogEl.clientHeight + 80;
       feedLogEl.innerHTML = "";
       if (!data.messages || data.messages.length === 0) {
         feedLogEl.innerHTML = `<div style="color:#64748b; font-style:italic;">No conversation messages found for this session.</div>`;
@@ -1624,7 +1798,24 @@ export class KuyaConsole {
               tl.style.padding = "4px 8px";
               tl.style.borderRadius = "3px";
               tl.style.margin = "4px 0";
-              tl.textContent = `⚡ Tool: ${p.tool || "call"} ${p.input?.path ? `(file: ${p.input.path})` : p.input?.command ? `(cmd: ${p.input.command})` : ""}`;
+
+              const input = p.input || p.state?.input || p.args || {};
+              const command = input.command || input.cmd || "";
+              const path = input.path || input.filePath || input.file || "";
+              const output = typeof p.output === "string" ? p.output : typeof p.state?.output === "string" ? p.state.output : "";
+
+              tl.textContent = `⚡ Tool: ${p.tool || p.state?.tool || "call"}${path ? ` (file: ${path})` : command ? ` (cmd: ${command.trim().split("\n")[0].slice(0, 50)})` : ""}`;
+              if (output) {
+                const outEl = document.createElement("pre");
+                outEl.style.margin = "4px 0 0";
+                outEl.style.fontSize = "9.5px";
+                outEl.style.color = "#94a3b8";
+                outEl.style.maxHeight = "110px";
+                outEl.style.overflow = "auto";
+                outEl.style.whiteSpace = "pre-wrap";
+                outEl.textContent = output;
+                tl.appendChild(outEl);
+              }
               msgEl.appendChild(tl);
             } else if (p.text) {
               const txt = document.createElement("div");
@@ -1638,6 +1829,13 @@ export class KuyaConsole {
 
           feedLogEl.appendChild(msgEl);
         }
+      }
+
+      if (wasNearBottom) {
+        feedLogEl.scrollTop = feedLogEl.scrollHeight;
+        if (jumpBtn) jumpBtn.style.display = "none";
+      } else {
+        if (jumpBtn) jumpBtn.style.display = "block";
       }
     }
   }
