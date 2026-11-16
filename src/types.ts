@@ -1,22 +1,5 @@
 export const HARNESSES = ["opencode", "codex", "pi", "omp", "hermes"] as const;
 export type Harness = (typeof HARNESSES)[number];
-export interface TokenUsage {
-  input: number;
-  output: number;
-  reasoning: number;
-  cache: { read: number; write: number };
-  total?: number;
-}
-
-  // real opencode metadata (Phase 4)
-  agent?: string;
-  model?: string;
-  cost?: number;
-  tokens?: TokenUsage;
-  agent?: string;
-  model?: string;
-  cost?: number;
-  tokens?: TokenUsage;
 
 export const IDLE_MS = 4_000;
 export const STALE_MS = 90_000;
@@ -63,6 +46,14 @@ export type EventType =
 export type QuestionKind = "permission" | "question" | "choice" | "text";
 export type QuestionStatus = "queued" | "in_confession" | "answered";
 
+export interface TokenUsage {
+  input: number;
+  output: number;
+  reasoning: number;
+  cache: { read: number; write: number };
+  total?: number;
+}
+
 export interface IngestEvent {
   harness: string;
   sessionId: string;
@@ -87,6 +78,11 @@ export interface IngestEvent {
   guestKey?: string;
   hostKey?: string;
   role?: "housemate" | "kuya";
+  // real opencode metadata (Phase 4)
+  agent?: string;
+  model?: string;
+  cost?: number;
+  tokens?: TokenUsage;
 }
 
 export interface QuestionView {
@@ -126,6 +122,10 @@ export interface SessionView {
   nominated?: boolean;
   housemateKey?: string;
   guest?: boolean;
+  agent?: string;
+  model?: string;
+  cost?: number;
+  tokens?: TokenUsage;
 }
 
 export interface HarnessView {
