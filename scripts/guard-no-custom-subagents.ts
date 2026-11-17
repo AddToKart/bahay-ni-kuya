@@ -11,6 +11,7 @@ import { join, relative } from "node:path";
 
 const SKIP_FILES: Record<string, true> = {
   "scripts/fake-events.ts": true,
+  "scripts/clean-port.ts": true,
   "scripts/guard-no-custom-subagents.ts": true,
 };
 const SPAWN_ALLOWED: Record<string, true> = {

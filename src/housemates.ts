@@ -59,6 +59,8 @@ export interface AgentInspectionData {
   filesEdited: string[];
   recentActivities: AgentActivityItem[];
   messages: any[];
+  lastError?: string;
+  errorTimestamp?: number;
 }
 
 export interface HousemateRec {
@@ -81,7 +83,8 @@ export interface HousemateRec {
     | "blocked"
     | "in_confession"
     | "called"
-    | "evicting";
+    | "evicting"
+    | "error";
   guests: string[];
   cost: number;
   tokens?: TokenUsage;
@@ -93,6 +96,8 @@ export interface HousemateRec {
   currentTool?: string;
   filesEdited?: string[];
   recentActivities?: AgentActivityItem[];
+  lastError?: string;
+  errorTimestamp?: number;
 }
 
 export interface SummonResult {
@@ -142,6 +147,7 @@ export class Housemates {
   private sessionToTaskId = new Map<string, string>();
   onTaskCompleted?: (taskId: string, exitCode: number) => void;
   onSessionIdle?: (sessionId: string) => Promise<boolean>;
+  onSessionError?: (sessionId: string, error: string) => Promise<boolean> | void;
   isSessionInCollab?: (sessionId: string) => boolean;
   getCollabState?: (sessionId: string) => SessionState | null;
 
@@ -191,10 +197,25 @@ export class Housemates {
       }
     } catch {}
 
-    // Also scan fullMessages for file references and tool outputs
+    // Also scan fullMessages for file references and tool outputs, as well as model error details
+    let detectedError = rec.lastError;
+    let detectedErrorTs = rec.errorTimestamp;
+
     for (const msg of fullMessages) {
+      if (msg.error) {
+        detectedError = typeof msg.error === "string" ? msg.error : msg.error.message || JSON.stringify(msg.error);
+        detectedErrorTs = detectedErrorTs || Date.now();
+      }
       const parts = Array.isArray(msg.parts) ? msg.parts : [];
       for (const p of parts) {
+        if (p.type === "error" || p.error) {
+          detectedError = typeof p.error === "string" ? p.error : p.text || (typeof p.error === "object" ? p.error.message : "Turn error");
+          detectedErrorTs = detectedErrorTs || Date.now();
+        }
+        if (typeof p.text === "string" && (/rate\s*limit|quota exceeded|out of tokens|429 too many|credit balance/i.test(p.text))) {
+          detectedError = p.text;
+          detectedErrorTs = detectedErrorTs || Date.now();
+        }
         if (p.type === "tool") {
           const input = p.input || p.state?.input || p.args || {};
           const path = input.path || input.filePath || input.file;
@@ -209,7 +230,18 @@ export class Housemates {
       }
     }
 
-    const state = this.getCollabState?.(rec.sessionId) || rec.state;
+    if (detectedError && !rec.lastError) {
+      rec.lastError = detectedError;
+      rec.errorTimestamp = detectedErrorTs || Date.now();
+      rec.state = "error";
+      rec.currentAction = `Error: ${detectedError.slice(0, 80)}`;
+      if (this.onSessionError) {
+        void this.onSessionError(rec.sessionId, detectedError);
+      }
+    }
+
+    const collabState = this.getCollabState?.(rec.sessionId);
+    const state = (collabState === "error" || rec.lastError) ? "error" : (collabState || rec.state);
     return {
       key: rec.key,
       name: rec.name,
@@ -219,7 +251,9 @@ export class Housemates {
       state,
       directory: rec.directory,
       sessionId: rec.sessionId,
-      currentAction: rec.currentAction || (state === "working" ? "Working on task" : state),
+      lastError: rec.lastError,
+      errorTimestamp: rec.errorTimestamp,
+      currentAction: rec.lastError ? `Error: ${rec.lastError}` : (rec.currentAction || (state === "working" ? "Working on task" : state)),
       currentThought: rec.currentThought || "",
       currentTool: rec.currentTool || "",
       filesEdited: Array.from(discoveredFiles),
@@ -811,13 +845,26 @@ export class Housemates {
               sessionId: sid,
             });
             this.drainQueue();
-          } else if (status.type === "retry" && key) {
+          } else if ((status.type === "retry" || status.type === "error" || status.type === "failed") && key) {
+            const errorMsg = status.message || `Session status: ${status.type}`;
+            const isHardError = status.type === "error" || status.type === "failed" || /rate\s*limit|429|quota|token|credit/i.test(errorMsg);
+            if (rec) {
+              rec.lastError = errorMsg;
+              rec.errorTimestamp = Date.now();
+              if (isHardError) {
+                rec.state = "error";
+                rec.currentAction = `Error: ${errorMsg.slice(0, 60)}`;
+              }
+            }
             this.store.ingest({
               harness: HARNESS,
               type: "error",
               sessionId: sid,
-              error: status.message ?? "retry",
+              error: errorMsg,
             });
+            if (isHardError && this.onSessionError) {
+              void this.onSessionError(sid, errorMsg);
+            }
           }
         } else if (this.guestHost.has(sid) && status.type === "idle") {
           this.scheduleGuestLeft(sid);
@@ -870,6 +917,23 @@ export class Housemates {
         const sid = typeof p.sessionID === "string" ? p.sessionID : "";
         const error = p.error as { message?: string } | undefined;
         if (sid && this.sessionToKey.has(sid)) {
+          const key = this.sessionToKey.get(sid);
+          const rec = key ? this.recs.get(key) : undefined;
+          const errorMsg = error?.message || (typeof p.error === "string" ? p.error : "OpenCode session error");
+          if (rec) {
+            rec.state = "error";
+            rec.lastError = errorMsg;
+            rec.errorTimestamp = Date.now();
+            rec.currentAction = `Error: ${errorMsg.slice(0, 60)}`;
+            if (!rec.recentActivities) rec.recentActivities = [];
+            rec.recentActivities.push({
+              id: `act_${Date.now()}_err`,
+              type: "error",
+              title: "Session Error",
+              detail: errorMsg,
+              ts: Date.now(),
+            });
+          }
           const taskId = this.sessionToTaskId.get(sid);
           if (taskId) {
             this.sessionToTaskId.delete(sid);
@@ -879,8 +943,11 @@ export class Housemates {
             harness: HARNESS,
             type: "error",
             sessionId: sid,
-            error: error?.message ?? "session error",
+            error: errorMsg,
           });
+          if (this.onSessionError) {
+            void this.onSessionError(sid, errorMsg);
+          }
         }
         break;
       }

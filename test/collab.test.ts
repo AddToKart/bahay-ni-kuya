@@ -749,4 +749,97 @@ describe("Lingguhang Hamon — Multi-Housemate Collaboration Flow", () => {
 
     await housemates.stop();
   });
+
+  it("handles rate limit / token quota errors gracefully, marks member in error, sets task to blocked, and recovers on retry", async () => {
+    const store = new Store();
+    let promptAsyncCalls: any[] = [];
+    const fakeClient = {
+      createSession: async (input: any) => ({
+        id: `mock_session_${input.title}`,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 },
+      }),
+      streamEvents: () => {},
+      abort: async () => true,
+      prompt: async () => {},
+      promptAsync: async (_sid: string, _dir: string, opts: any) => {
+        promptAsyncCalls.push(opts);
+      },
+      messages: async () => [],
+    };
+    const fakeSupervisor = {
+      ensure: async () => fakeClient as any,
+      stop: async () => {},
+      client: fakeClient as any,
+    };
+    const housemates = new Housemates(store, fakeSupervisor as any);
+    const collab = new CollabManager(store, housemates, fakeSupervisor as any);
+
+    housemates.isSessionInCollab = (sid) => collab.isSessionInCollab(sid);
+    housemates.getCollabState = (sid) => collab.getMemberCollabState(sid);
+
+    const hm1 = await housemates.summon({
+      name: "Hans",
+      agent: "build",
+      model: { providerID: "opencode", modelID: "deepseek-v4.1-flash-free" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+    const hm2 = await housemates.summon({
+      name: "Bea",
+      agent: "frontend-ui-engineer",
+      model: { providerID: "opencode", modelID: "deepseek-v4.1-flash-free" },
+      projectRoot: process.cwd(),
+      useWorktree: false,
+    });
+
+    const task = await collab.startTask({
+      goal: "Build coffee shop landing page and admin dashboard",
+      members: [{ key: hm1.housemate.key }, { key: hm2.housemate.key }],
+      rushMode: true,
+    });
+
+    expect(task.status).toBe("running");
+    expect(housemates.get(hm1.housemate.key)?.state).toBe("working");
+    expect(housemates.get(hm2.housemate.key)?.state).toBe("working");
+
+    // Hans hits a rate limit 429 / token exhaustion error
+    const rateLimitError = "HTTP 429 Too Many Requests: Rate limit reached. Free tokens exhausted for deepseek-v4.1-flash-free.";
+    const handled = await collab.handleSessionError(hm1.housemate.sessionId, rateLimitError);
+    expect(handled).toBe(true);
+
+    const hansMember = task.members.find((m) => m.key === hm1.housemate.key);
+    expect(hansMember?.state).toBe("error");
+    expect(hansMember?.lastError).toContain("429");
+    expect(collab.getMemberCollabState(hm1.housemate.sessionId)).toBe("error");
+
+    const hansRec = housemates.get(hm1.housemate.key);
+    expect(hansRec?.state).toBe("error");
+    expect(hansRec?.lastError).toContain("Rate limit reached");
+
+    // Inspection data must reflect error instead of "Working on task"
+    const inspection = await housemates.getAgentInspection(hm1.housemate.key);
+    expect(inspection?.state).toBe("error");
+    expect(inspection?.lastError).toContain("429");
+    expect(inspection?.currentAction).toContain("Error:");
+
+    // Bea also hits error -> All builders failed -> Task becomes blocked
+    await collab.handleSessionError(hm2.housemate.sessionId, "Provider quota exceeded (insufficient balance)");
+    expect(task.status).toBe("blocked");
+    expect(task.currentStep).toBe("blocked");
+
+    // Check task log for Kuya error announcement
+    const errLog = task.log.find((l) => l.text.includes("AGENT ERROR [Hans"));
+    expect(errLog).toBeDefined();
+    expect(errLog?.text).toContain("Rate Limit Reached (HTTP 429)");
+
+    // Kuya retries the task
+    await collab.retryTask(task.id, "Switching to refreshed tokens or retry round");
+    expect(task.status).toBe("running");
+    expect(hansMember?.lastError).toBeUndefined();
+    expect(hansRec?.lastError).toBeUndefined();
+    expect(hansRec?.state).toBe("working");
+
+    await housemates.stop();
+  });
 });

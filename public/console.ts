@@ -1242,14 +1242,16 @@ export class KuyaConsole {
         item.title = "Click to inspect live conversation and progress";
         item.addEventListener("click", () => this.openHamonDetails(ct.id));
 
+        const hasError = ct.status === "blocked" || (ct.members || []).some((m: any) => m.state === "error" || m.lastError);
+
         const info = document.createElement("div");
         info.className = "task-info";
 
         const badge = document.createElement("span");
         badge.className = `task-status ${ct.status}`;
-        badge.style.background = "#7c3aed";
+        badge.style.background = hasError ? "#dc2626" : "#7c3aed";
         badge.style.color = "#ffffff";
-        badge.textContent = `👥 HAMON: ${ct.status.toUpperCase()}`;
+        badge.textContent = `👥 HAMON: ${hasError && ct.status === "running" ? "ERROR" : ct.status.toUpperCase()}`;
 
         const teamSpan = document.createElement("span");
         teamSpan.className = "task-harness";
@@ -1281,7 +1283,7 @@ export class KuyaConsole {
         });
         actions.appendChild(inspectBtn);
 
-        if (ct.status === "blocked") {
+        if (ct.status === "blocked" || hasError) {
           const retryBtn = document.createElement("button");
           retryBtn.className = "task-cancel-btn";
           retryBtn.style.borderColor = "#8b5cf6";
@@ -1478,10 +1480,15 @@ export class KuyaConsole {
           statusBadge.style.fontWeight = "700";
           statusBadge.style.textTransform = "uppercase";
 
+          const stMember = (task.members || []).find((m: any) => m.key === st.memberKey);
           if (st.completed) {
             statusBadge.style.background = "#059669";
             statusBadge.style.color = "#ffffff";
             statusBadge.textContent = "✅ DONE";
+          } else if (stMember?.state === "error" || stMember?.lastError) {
+            statusBadge.style.background = "#dc2626";
+            statusBadge.style.color = "#ffffff";
+            statusBadge.textContent = "🛑 ERROR";
           } else {
             statusBadge.style.background = "#7c3aed";
             statusBadge.style.color = "#ffffff";
@@ -1526,7 +1533,11 @@ export class KuyaConsole {
         stateSpan.style.fontWeight = "700";
         stateSpan.style.textTransform = "uppercase";
 
-        if (m.state === "working") {
+        if (m.state === "error" || m.lastError) {
+          stateSpan.style.background = "#dc2626";
+          stateSpan.style.color = "#ffffff";
+          stateSpan.textContent = "🛑 ERROR";
+        } else if (m.state === "working") {
           stateSpan.style.background = "#059669";
           stateSpan.style.color = "#ffffff";
           stateSpan.textContent = "⚡ WORKING";
@@ -1545,7 +1556,7 @@ export class KuyaConsole {
         }
 
         pill.style.cursor = "pointer";
-        pill.title = `Click to inspect ${m.name}'s live OpenCode instance`;
+        pill.title = m.lastError ? `[Error] ${m.lastError} — Click to inspect live instance` : `Click to inspect ${m.name}'s live OpenCode instance`;
         pill.addEventListener("click", () => this.openAgentInspector(m.key));
 
         const inspectBadge = document.createElement("span");
@@ -1625,6 +1636,34 @@ export class KuyaConsole {
       }
     }
 
+    // Update Hamon Error Banner
+    const hamonErrorBanner = document.getElementById("hamon-modal-error-banner");
+    const hamonErrorTitle = document.getElementById("hamon-modal-error-title");
+    const hamonErrorDetail = document.getElementById("hamon-modal-error-detail");
+    const erroredMembers = (task.members || []).filter((m: any) => m.state === "error" || m.lastError);
+    if (hamonErrorBanner) {
+      if (erroredMembers.length > 0 || task.status === "blocked") {
+        hamonErrorBanner.style.display = "block";
+        const firstErr = erroredMembers[0]?.lastError || "Nahinto ang collaboration task dahil nagka-error ang housemate.";
+        let category = "May Problema sa Execution ng Housemate";
+        if (/rate\s*limit|429/i.test(firstErr)) {
+          category = "Rate Limit Reached (HTTP 429) — Quota Exceeded";
+        } else if (/token|quota|credit|balance|exhaust/i.test(firstErr)) {
+          category = "Out of Tokens / Credit Quota Exceeded";
+        } else if (/timeout/i.test(firstErr)) {
+          category = "Model Request Timeout — Provider Unresponsive";
+        }
+        if (hamonErrorTitle) {
+          hamonErrorTitle.textContent = `${category}: ${erroredMembers.map((m: any) => `${m.name} [${m.agent}]`).join(", ")}`;
+        }
+        if (hamonErrorDetail) {
+          hamonErrorDetail.textContent = `${firstErr}\n\n💡 Paalala ni Kuya: Maaaring nag-rate limit ang provider o naubusan ng libreng tokens. Maaaring i-click ang 'Retry Hamon' sa ibaba upang subukan ulit, o mag-evict at mag-summon ng ibang model sa summon panel.`;
+        }
+      } else {
+        hamonErrorBanner.style.display = "none";
+      }
+    }
+
     // Update Action Buttons & Controls
     const approveBtn = document.getElementById("hamon-modal-approve-btn") as HTMLButtonElement | null;
     const retryBtn = document.getElementById("hamon-modal-retry-btn") as HTMLButtonElement | null;
@@ -1632,7 +1671,7 @@ export class KuyaConsole {
     const followupTarget = document.getElementById("hamon-followup-target") as HTMLSelectElement | null;
 
     if (retryBtn) {
-      if (task.status === "blocked") {
+      if (task.status === "blocked" || erroredMembers.length > 0) {
         retryBtn.style.display = "inline-block";
         retryBtn.textContent = `🔄 Retry Hamon (+1 Round)`;
       } else {
@@ -1790,22 +1829,60 @@ export class KuyaConsole {
 
     const stateBadge = document.getElementById("inspector-state-badge");
     if (stateBadge) {
-      stateBadge.textContent = String(data.state).toUpperCase();
-      if (data.state === "working") stateBadge.style.background = "#059669";
-      else if (data.state === "standby") stateBadge.style.background = "#7c3aed";
-      else if (data.state === "called") stateBadge.style.background = "#f59e0b";
-      else if (data.state === "blocked") stateBadge.style.background = "#dc2626";
-      else stateBadge.style.background = "#475569";
+      if (data.state === "error" || data.lastError) {
+        stateBadge.textContent = "🛑 ERROR";
+        stateBadge.style.background = "#dc2626";
+      } else {
+        stateBadge.textContent = String(data.state).toUpperCase();
+        if (data.state === "working") stateBadge.style.background = "#059669";
+        else if (data.state === "standby") stateBadge.style.background = "#7c3aed";
+        else if (data.state === "called") stateBadge.style.background = "#f59e0b";
+        else if (data.state === "blocked") stateBadge.style.background = "#dc2626";
+        else stateBadge.style.background = "#475569";
+      }
     }
 
     const modelEl = document.getElementById("inspector-model");
     if (modelEl) modelEl.textContent = data.model || "—";
 
     const actionEl = document.getElementById("inspector-action");
-    if (actionEl) actionEl.textContent = data.currentAction || (data.state === "working" ? "Working on task" : data.state);
+    if (actionEl) {
+      if (data.lastError || data.state === "error") {
+        actionEl.textContent = `Error: ${data.lastError || "Execution error"}`;
+        actionEl.style.color = "#f87171";
+      } else {
+        actionEl.textContent = data.currentAction || (data.state === "working" ? "Working on task" : data.state);
+        actionEl.style.color = "#38bdf8";
+      }
+    }
 
     const dirEl = document.getElementById("inspector-dir");
     if (dirEl) dirEl.textContent = data.directory || "—";
+
+    // Error Alert Banner
+    const errorBanner = document.getElementById("inspector-error-banner");
+    const errorTitle = document.getElementById("inspector-error-title");
+    const errorDetail = document.getElementById("inspector-error-detail");
+    if (errorBanner) {
+      if (data.lastError || data.state === "error") {
+        errorBanner.style.display = "block";
+        const errText = String(data.lastError || "OpenCode session terminated with an unexpected error.");
+        let title = "OpenCode Agent Execution Error";
+        if (/rate\s*limit|429/i.test(errText)) {
+          title = "Rate Limit Reached (HTTP 429) — Provider Quota Exceeded";
+        } else if (/token|quota|credit|balance|exhaust/i.test(errText)) {
+          title = "Out of Tokens / Credit Quota Exceeded";
+        } else if (/timeout/i.test(errText)) {
+          title = "Model Request Timeout — Provider Unresponsive";
+        }
+        if (errorTitle) errorTitle.textContent = title;
+        if (errorDetail) {
+          errorDetail.textContent = `${errText}\n\n💡 Paalala ni Kuya: Libreng mga model tulad ng DeepSeek flash-free ay mabilis maubusan ng rate limit o tokens. Maaari kang mag-assign ng bagong model o subukan ulit gamit ang Retry button.`;
+        }
+      } else {
+        errorBanner.style.display = "none";
+      }
+    }
 
     // 1. Thought Process View
     const thoughtEl = document.getElementById("inspector-thought-content");

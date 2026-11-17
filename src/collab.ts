@@ -32,8 +32,9 @@ export interface CollabMember {
   name: string;
   agent: string; // The housemate's native OpenCode agent (e.g. "tester", "build", custom agent)
   isVerifier: boolean;
-  state: "standby" | "working" | "blocked" | "done";
+  state: "standby" | "working" | "blocked" | "done" | "error";
   sessionId: string;
+  lastError?: string;
 }
 
 export interface CollabSubtask {
@@ -84,7 +85,11 @@ export class CollabManager {
     private store: Store,
     private housemates: Housemates,
     private supervisor: OpenCodeSupervisor,
-  ) {}
+  ) {
+    this.housemates.onSessionError = (sessionId: string, error: string) => {
+      void this.handleSessionError(sessionId, error);
+    };
+  }
 
   getActiveTask(): CollabTask | null {
     if (!this.activeTaskId) return null;
@@ -107,9 +112,11 @@ export class CollabManager {
 
   getMemberCollabState(sessionId: string): SessionState | null {
     const task = this.getActiveTask();
-    if (!task || task.status !== "running") return null;
+    if (!task || (task.status !== "running" && task.status !== "blocked")) return null;
     const member = task.members.find((m) => m.sessionId === sessionId);
     if (!member) return null;
+    if (member.state === "error") return "error";
+    if (member.state === "blocked") return "blocked";
     return member.state === "working" ? "working" : "standby";
   }
 
@@ -300,7 +307,7 @@ export class CollabManager {
 
         const res: any = await Promise.race([
           promptPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Kuya decomposition timeout")), 15000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Kuya decomposition timeout")), 30000)),
         ]);
 
         let rawContent = "";
@@ -424,7 +431,9 @@ export class CollabManager {
         },
       })
       .catch((err: unknown) => {
-        log(`collab: promptAsync failed for ${member.name}: ${String(err)}`);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        log(`collab: promptAsync failed for ${member.name}: ${errorMsg}`);
+        void this.handleSessionError(rec.sessionId, errorMsg);
       });
   }
 
@@ -545,7 +554,9 @@ export class CollabManager {
         },
       })
       .catch((err: unknown) => {
-        log(`collab: promptAsync failed for ${member.name}: ${String(err)}`);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        log(`collab: promptAsync failed for ${member.name}: ${errorMsg}`);
+        void this.handleSessionError(rec.sessionId, errorMsg);
       });
   }
 
@@ -563,10 +574,21 @@ export class CollabManager {
       if (!member) return false;
 
       const rec = this.housemates.get(member.key);
+      if (member.state === "error" || rec?.lastError) {
+        log(`collab: handleSessionIdle ignored for ${member.name} due to active error state: ${member.lastError || rec?.lastError}`);
+        return true;
+      }
+
       let reply = replyText.trim();
       if (!reply && rec) {
         reply = await this.getLastAssistantMessage(sessionId, rec.directory);
       }
+
+      if (/rate\s*limit|quota exceeded|out of tokens|429 too many|credit balance/i.test(reply)) {
+        await this.handleSessionError(sessionId, reply);
+        return true;
+      }
+
       task.log.push({ agent: member.agent, name: member.name, text: reply, ts: Date.now() });
 
       const subtask = task.subtasks.find((s) => s.memberKey === member.key);
@@ -669,10 +691,21 @@ export class CollabManager {
     }
 
     const rec = this.housemates.get(activeMember.key);
+    if (activeMember.state === "error" || rec?.lastError) {
+      log(`collab: handleSessionIdle ignored for ${activeMember.name} due to active error state: ${activeMember.lastError || rec?.lastError}`);
+      return true;
+    }
+
     let reply = replyText.trim();
     if (!reply && rec) {
       reply = await this.getLastAssistantMessage(sessionId, rec.directory);
     }
+
+    if (/rate\s*limit|quota exceeded|out of tokens|429 too many|credit balance/i.test(reply)) {
+      await this.handleSessionError(sessionId, reply);
+      return true;
+    }
+
     task.log.push({ agent: activeMember.agent, name: activeMember.name, text: reply, ts: Date.now() });
 
     // Step 1: Was active member a Builder?
@@ -943,6 +976,64 @@ export class CollabManager {
     return task;
   }
 
+  /** Handles unexpected errors, rate limits (429), or token exhaustion from an OpenCode housemate */
+  async handleSessionError(sessionId: string, errorText: string): Promise<boolean> {
+    const task = this.getActiveTask();
+    if (!task || (task.status !== "running" && task.status !== "blocked")) return false;
+    const member = task.members.find((m) => m.sessionId === sessionId);
+    if (!member) return false;
+
+    const cleanError = errorText.trim() || "Unknown error occurred";
+    member.state = "error";
+    member.lastError = cleanError;
+
+    const rec = this.housemates.get(member.key);
+    if (rec) {
+      rec.state = "error";
+      rec.lastError = cleanError;
+      rec.errorTimestamp = Date.now();
+      rec.currentAction = `Error: ${cleanError.slice(0, 60)}`;
+    }
+
+    let errorCategory = "Agent Execution Error";
+    if (/rate\s*limit|429/i.test(cleanError)) {
+      errorCategory = "Rate Limit Reached (HTTP 429)";
+    } else if (/token|quota|credit|balance|exhaust/i.test(cleanError)) {
+      errorCategory = "Out of Tokens / Quota Exceeded";
+    } else if (/timeout/i.test(cleanError)) {
+      errorCategory = "Request Timeout";
+    }
+
+    this.announce(`⚠️ May problema kay ${member.name} (${member.agent}): [${errorCategory}] ${cleanError}`);
+    task.log.push({
+      agent: "kuya",
+      name: "Kuya",
+      text: `🛑 AGENT ERROR [${member.name} - ${member.agent}]:\nCategory: ${errorCategory}\nDetails: ${cleanError}\n\n💡 Paalala ni Kuya: Maaaring nag-rate limit ang provider o naubusan ng libreng tokens. Gamitin ang Retry button o magpalit ng model sa housemate summoner.`,
+      ts: Date.now(),
+    });
+
+    this.store.ingest({
+      harness: "opencode",
+      sessionId: member.sessionId,
+      type: "error",
+      state: "error",
+      error: cleanError,
+      currentAction: `Error: ${errorCategory}`,
+    });
+
+    const activeBuilders = task.members.filter((m) => !m.isVerifier);
+    const allBuildersErrored = activeBuilders.every(
+      (b) => b.state === "error" || b.state === "blocked" || b.state === "done",
+    );
+    if (allBuildersErrored && activeBuilders.some((b) => b.state === "error")) {
+      task.status = "blocked";
+      task.currentStep = "blocked";
+      this.announce(`🛑 Nahinto ang Lingguhang Hamon dahil nagka-error ang housemate. Maaari itong i-retry ni Kuya.`);
+    }
+
+    return true;
+  }
+
   async retryTask(id: string, feedback?: string): Promise<CollabTask> {
     const task = this.tasks.get(id);
     if (!task) throw new Error("Collaboration task not found");
@@ -959,10 +1050,16 @@ export class CollabManager {
     await this.housemates.dismissCall(builder.key).catch(() => undefined);
 
     for (const m of task.members) {
+      delete m.lastError;
       const isWorking = m.key === builder.key;
       m.state = isWorking ? "working" : "standby";
       const rec = this.housemates.get(m.key);
-      if (rec) rec.state = isWorking ? "working" : "standby";
+      if (rec) {
+        delete rec.lastError;
+        delete rec.errorTimestamp;
+        rec.state = isWorking ? "working" : "standby";
+        rec.currentAction = isWorking ? "Working on task" : "standby";
+      }
       this.store.ingest({
         harness: "opencode",
         sessionId: m.sessionId,
@@ -972,6 +1069,36 @@ export class CollabManager {
           ? `[Lingguhang Hamon Retry] ${m.name} Fixing (${task.attempt}/${task.maxAttempts})`
           : `[Lingguhang Hamon] ${m.name} Standby`,
       });
+    }
+
+    // If task is in Rush Mode, resume parallel builders
+    if (task.rushMode && task.subtasks && task.subtasks.length > 0) {
+      const unfinished = task.subtasks.filter((s) => !s.completed);
+      const targetSubtasks = unfinished.length > 0 ? unfinished : task.subtasks;
+      for (const st of targetSubtasks) {
+        st.completed = false;
+        const b = task.members.find((m) => m.key === st.memberKey);
+        if (b) {
+          b.state = "working";
+          const rec = this.housemates.get(b.key);
+          if (rec) {
+            delete rec.lastError;
+            delete rec.errorTimestamp;
+            rec.state = "working";
+            rec.currentAction = "Working on subtask";
+          }
+          await this.promptRushBuilder(task, b, st);
+        }
+      }
+      const rushRetryNotice = `Binuksan muli ni Kuya ang Rush Mode Lingguhang Hamon! Lahat ng builders ay muling nagtatrabaho nang sabay-sabay!`;
+      this.announce(rushRetryNotice);
+      task.log.push({
+        agent: "kuya",
+        name: "Kuya",
+        text: `🔄 RUSH MODE RETRY AUTHORIZED BY KUYA: ${rushRetryNotice}${feedback ? `\nKuya's Guidance: ${feedback}` : ""}`,
+        ts: Date.now(),
+      });
+      return task;
     }
 
     const retryNotice = `Binuksan muli ni Kuya ang Lingguhang Hamon para sa bagong attempt (${task.attempt}/${task.maxAttempts})! ${builder.name}, simulan ang pag-ayos!`;
@@ -1013,10 +1140,15 @@ export class CollabManager {
     await this.housemates.dismissCall(targetMember.key).catch(() => undefined);
 
     for (const m of task.members) {
+      delete m.lastError;
       const isWorking = m.key === targetMember.key;
       m.state = isWorking ? "working" : "standby";
       const rec = this.housemates.get(m.key);
-      if (rec) rec.state = isWorking ? "working" : "standby";
+      if (rec) {
+        delete rec.lastError;
+        delete rec.errorTimestamp;
+        rec.state = isWorking ? "working" : "standby";
+      }
       this.store.ingest({
         harness: "opencode",
         sessionId: m.sessionId,

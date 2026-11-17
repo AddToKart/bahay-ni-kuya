@@ -142,6 +142,8 @@ export interface SessionView {
   currentAction?: string;
   currentThought?: string;
   houseId?: string;
+  lastError?: string;
+  errorTimestamp?: number;
 }
 
 export interface HarnessView {

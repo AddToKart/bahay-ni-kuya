@@ -317,6 +317,14 @@
             <div id="hamon-modal-goal" style="font-size:12.5px; color:#f1f5f9; line-height:1.45; margin-bottom:10px; font-weight:500;"></div>
             <div id="hamon-modal-subtasks" style="display:none; flex-direction:column; gap:6px; margin-bottom:10px; background:rgba(0,0,0,0.25); border:1px solid rgba(139,92,246,0.25); border-radius:4px; padding:8px 10px;"></div>
             <div id="hamon-modal-roster" style="display:flex; flex-wrap:wrap; gap:8px; font-size:11px;"></div>
+            <div id="hamon-modal-error-banner" style="display:none; background: rgba(220, 38, 38, 0.15); border: 1px solid #ef4444; border-radius: 4px; padding: 10px 14px; margin-top: 10px;">
+              <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:11.5px; color: #f87171;">
+                <span style="font-size:15px;">🛑</span>
+                <span id="hamon-modal-error-title">Housemate Encountered an Error</span>
+              </div>
+              <div id="hamon-modal-error-detail" style="margin-top:4px; font-size:11px; font-family:var(--font-mono, monospace); line-height:1.4; color: #fecaca; white-space:pre-wrap; word-break:break-word;">
+              </div>
+            </div>
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -384,6 +392,16 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:11px;">
               <div><span style="color:var(--muted);">Current Action:</span> <span id="inspector-action" style="color:#38bdf8; font-weight:600;">Idle</span></div>
               <div><span style="color:var(--muted);">Directory:</span> <code id="inspector-dir" style="color:#a78bfa; font-size:10px;">—</code></div>
+            </div>
+          </div>
+
+          <!-- Error Alert Banner (Hidden by default, shown when agent errors or rate limits) -->
+          <div id="inspector-error-banner" style="display:none; background: rgba(220, 38, 38, 0.15); border: 1px solid #ef4444; border-radius: 4px; padding: 10px 14px; margin-bottom: 12px;">
+            <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:12px; color: #f87171;">
+              <span style="font-size:16px;">🛑</span>
+              <span id="inspector-error-title">OpenCode Agent / Rate Limit Error</span>
+            </div>
+            <div id="inspector-error-detail" style="margin-top:6px; font-size:11px; font-family:var(--font-mono, monospace); line-height:1.45; color: #fecaca; white-space:pre-wrap; word-break:break-word;">
             </div>
           </div>
 

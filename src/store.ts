@@ -40,6 +40,8 @@ interface SessionRec {
   currentAction?: string;
   currentThought?: string;
   houseId?: string;
+  lastError?: string;
+  errorTimestamp?: number;
 }
 
 interface HarnessState {
@@ -218,6 +220,11 @@ export class Store {
       if (rec.state !== "called" && rec.state !== "in_confession") {
         rec.state = "error";
         rec.workingUntil = (rec.workingUntil === HOLD || rec.housemateKey) ? HOLD : now + IDLE_MS;
+      }
+      if (event.error) {
+        rec.lastError = String(event.error);
+        rec.errorTimestamp = now;
+        rec.currentAction = `Error: ${rec.lastError.slice(0, 80)}`;
       }
     } else if (type === "state") {
       if (rec.state !== "called" && rec.state !== "in_confession") {
@@ -518,6 +525,8 @@ export class Store {
         currentAction: rec.currentAction,
         currentThought: rec.currentThought,
         houseId: rec.houseId,
+        lastError: rec.lastError,
+        errorTimestamp: rec.errorTimestamp,
       });
     }
     sessions.sort((a, b) => {
