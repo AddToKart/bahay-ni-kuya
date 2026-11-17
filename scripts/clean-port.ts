@@ -31,8 +31,12 @@ try {
   if (pid && Number(pid) > 0) {
     console.log(`[clean-port] Terminating process holding port ${PORT} (PID ${pid})...`);
     spawnSync("taskkill", ["/T", "/F", "/PID", pid], { stdio: "inherit" });
+    // Also clean up any child opencode instances that might inherit socket handles on Windows
+    spawnSync("taskkill", ["/F", "/IM", "opencode.exe"], { stdio: "ignore" });
     console.log(`[clean-port] Port ${PORT} released.`);
   } else {
+    // Check if opencode.exe is lingering
+    spawnSync("taskkill", ["/F", "/IM", "opencode.exe"], { stdio: "ignore" });
     console.log(`[clean-port] Port ${PORT} is already free.`);
   }
 } catch (err) {
