@@ -315,19 +315,19 @@ export class DiaryRoom {
     if (housemateKey) this.currentHousemateKey = housemateKey;
     this.show();
     if (this.headerEl) this.headerEl.textContent = `ON AIR — ${title || housemateKey || "Confession Room"}`;
-    if (this.questionEl) this.questionEl.textContent = "Kausap si Kuya sa Confession Room…";
+    if (this.questionEl) this.questionEl.textContent = "Speaking with Kuya in the Confession Room…";
     if (this.optionsEl) this.optionsEl.innerHTML = "";
     if (this.textEl) {
       this.textEl.style.display = "block";
-      this.textEl.placeholder = "Mensahe kay housemate (o magtanong muli)…";
+      this.textEl.placeholder = "Message for housemate (or follow-up question)…";
     }
     if (this.submitEl) {
       this.submitEl.style.display = "inline-block";
-      this.submitEl.textContent = "Ipadala";
+      this.submitEl.textContent = "Send";
     }
     if (this.doneEl) {
       this.doneEl.style.display = "inline-block";
-      this.doneEl.textContent = "Done / Bumalik sa Bahay";
+      this.doneEl.textContent = "Done / Return to House";
     }
     if (this.queueEl) this.queueEl.textContent = "";
     this.renderChat(sessionId);

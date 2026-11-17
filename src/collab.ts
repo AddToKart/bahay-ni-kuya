@@ -181,7 +181,7 @@ export class CollabManager {
     this.activeTaskId = taskId;
 
     const memberSummary = resolvedMembers.map((m) => `${m.name} [agent: ${m.agent}]`).join(", ");
-    const startMsg = `Pakinggan ang inyong bagong Lingguhang Hamon: "${goal}". Team: ${memberSummary}`;
+    const startMsg = `Weekly Challenge started: "${goal}". Team: ${memberSummary}`;
     this.announce(startMsg);
     task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HAMON STARTED: "${goal}"\nTeam: ${memberSummary}`, ts: Date.now() });
 
@@ -196,7 +196,7 @@ export class CollabManager {
       const subtasks = await this.decomposeWithKuya(goal, cwd, builders, input.kuyaConfig);
       task.subtasks = subtasks;
 
-      const rushAnnounce = `⚡ RUSH MODE PINAG-USAPAN: Pinamumunuan ni Kuya ang parallel dispatch ng ${builders.length} builders nang sabay-sabay!`;
+      const rushAnnounce = `⚡ RUSH MODE: Kuya is leading parallel dispatch of ${builders.length} builders simultaneously!`;
       this.announce(rushAnnounce);
       task.log.push({
         agent: "kuya",
@@ -307,7 +307,7 @@ export class CollabManager {
 
         const res: any = await Promise.race([
           promptPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Kuya decomposition timeout")), 30000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Kuya decomposition timeout")), 15000)),
         ]);
 
         let rawContent = "";
@@ -319,7 +319,7 @@ export class CollabManager {
         } else if (res && typeof res.text === "string") {
           rawContent = res.text;
         } else {
-          rawContent = await this.getLastAssistantMessage(session.id, cwd);
+          rawContent = (await this.getCompletedTurnResponse(session.id, cwd)) || "";
         }
 
         const jsonMatch = rawContent.match(/\[\s*\{[\s\S]*\}\s*\]/) || rawContent.match(/\{[\s\S]*"subtasks"[\s\S]*\}/);
@@ -449,26 +449,68 @@ export class CollabManager {
     this.onAnnounce?.(text);
   }
 
-  private async getLastAssistantMessage(sessionId: string, directory: string): Promise<string> {
+  /**
+   * Safely retrieves the assistant response for the latest turn dispatched to this session.
+   * If the turn is still ongoing (e.g. latest message is role "user", or assistant hasn't finished),
+   * returns null so we do NOT prematurely complete tasks.
+   */
+  private async getCompletedTurnResponse(sessionId: string, directory: string): Promise<string | null> {
     const client = this.supervisor.client;
-    if (!client) return "";
+    if (!client) return null;
     try {
       const msgs = await client.messages(sessionId, directory);
+      if (!Array.isArray(msgs) || msgs.length === 0) return null;
+
+      // Find the index of the latest user message
+      let lastUserIndex = -1;
       for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === "user") {
+          lastUserIndex = i;
+          break;
+        }
+      }
+
+      // If no user message was found or the user message is the last message in the session,
+      // the assistant is still generating or executing tools!
+      if (lastUserIndex === -1 || lastUserIndex === msgs.length - 1) {
+        return null;
+      }
+
+      // Collect assistant text generated strictly AFTER the latest user message
+      const assistantTexts: string[] = [];
+      let hasCompletedParts = false;
+      for (let i = lastUserIndex + 1; i < msgs.length; i++) {
         const m = msgs[i];
         if (m.role === "assistant") {
           if (Array.isArray(m.parts)) {
-            return m.parts
+            const partText = m.parts
               .filter((p: any) => p.type === "text" && typeof p.text === "string")
               .map((p: any) => p.text)
               .join("\n")
               .trim();
+            if (partText) assistantTexts.push(partText);
+            if (m.parts.some((p: any) => p.type === "step-finish" || p.type === "finish" || p.finish)) {
+              hasCompletedParts = true;
+            }
+          } else if (typeof m.text === "string" && m.text.trim()) {
+            assistantTexts.push(m.text.trim());
           }
-          if (typeof m.text === "string") return m.text.trim();
+          if (m.finish) hasCompletedParts = true;
         }
       }
-    } catch {}
-    return "";
+
+      const combined = assistantTexts.join("\n\n").trim();
+      if (combined.length > 0) return combined;
+      if (hasCompletedParts) return "Subtask completed by housemate.";
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getLastAssistantMessage(sessionId: string, directory: string): Promise<string> {
+    const res = await this.getCompletedTurnResponse(sessionId, directory);
+    return res || "";
   }
 
   /** Dispatches an OpenCode prompt to the active member using their native agent */
@@ -581,7 +623,12 @@ export class CollabManager {
 
       let reply = replyText.trim();
       if (!reply && rec) {
-        reply = await this.getLastAssistantMessage(sessionId, rec.directory);
+        const turnReply = await this.getCompletedTurnResponse(sessionId, rec.directory);
+        if (!turnReply) {
+          log(`collab: handleSessionIdle ignored for ${member.name} because turn response is still in progress`);
+          return false;
+        }
+        reply = turnReply;
       }
 
       if (/rate\s*limit|quota exceeded|out of tokens|429 too many|credit balance/i.test(reply)) {
@@ -606,7 +653,7 @@ export class CollabManager {
           title: `[Hamon] ${member.name} (${member.agent}) Subtask Completed [Standby]`,
         });
 
-        const subtaskDoneMsg = `Natapos na ni ${member.name} (${member.agent}) ang subtask na "${subtask.title}". Naka-standby na habang hinihintay ang iba pang builders.`;
+        const subtaskDoneMsg = `${member.name} (${member.agent}) completed subtask "${subtask.title}". On standby awaiting remaining builders.`;
         this.announce(subtaskDoneMsg);
         task.log.push({ agent: "kuya", name: "Kuya", text: `✅ SUBTASK COMPLETED: ${subtaskDoneMsg}`, ts: Date.now() });
 
@@ -616,7 +663,7 @@ export class CollabManager {
         }
 
         // All parallel builders are finished!
-        const allDoneMsg = `⚡ RUSH MODE SUBTASKS COMPLETE: Natapos na ng lahat ng builders ang kanilang parallel assignments!`;
+        const allDoneMsg = `⚡ RUSH MODE SUBTASKS COMPLETE: All builders have finished their parallel assignments!`;
         this.announce(allDoneMsg);
         task.log.push({
           agent: "kuya",
@@ -631,7 +678,7 @@ export class CollabManager {
 
         const verifier = task.members.find((m) => m.isVerifier);
         if (verifier) {
-          const handoffText = `Natapos na ng lahat ng builders ang kanilang bahagi sa Rush Mode. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
+          const handoffText = `All builders have finished their Rush Mode assignments. Handoff to ${verifier.name} (${verifier.agent}) for verification!`;
           this.announce(handoffText);
           task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF TO VERIFIER: ${handoffText}`, ts: Date.now() });
 
@@ -671,12 +718,12 @@ export class CollabManager {
           });
         }
 
-        const finishMsg = `Natapos ng lahat ng builders ang kanilang bahagi sa Lingguhang Hamon "${task.goal.slice(0, 40)}"! Handa na para sa pagsusuri at final approval ni Kuya. 🎉`;
+        const finishMsg = `All builders have finished their work on "${task.goal.slice(0, 40)}"! Ready for Kuya's inspection and final approval. 🎉`;
         this.announce(finishMsg);
         task.log.push({
           agent: "kuya",
           name: "Kuya",
-          text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Maaaring mag-follow up si Kuya para sa karagdagang utos, o i-click ang Approve & Mark Done upang tapusin.)`,
+          text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Kuya can send follow-up directives, or click 'Approve & Mark Done' to conclude.)`,
           ts: Date.now(),
         });
         audit("kuya", "collab_builders_done", task.id, { goal: task.goal });
@@ -698,7 +745,12 @@ export class CollabManager {
 
     let reply = replyText.trim();
     if (!reply && rec) {
-      reply = await this.getLastAssistantMessage(sessionId, rec.directory);
+      const turnReply = await this.getCompletedTurnResponse(sessionId, rec.directory);
+      if (!turnReply) {
+        log(`collab: handleSessionIdle ignored for ${activeMember.name} because turn response is still in progress`);
+        return false;
+      }
+      reply = turnReply;
     }
 
     if (/rate\s*limit|quota exceeded|out of tokens|429 too many|credit balance/i.test(reply)) {
@@ -718,7 +770,7 @@ export class CollabManager {
 
       // Case 1A: There is another builder in the relay chain!
       if (nextBuilder) {
-        const handoffText = `Natapos na ni ${activeMember.name} (${activeMember.agent}) ang kanyang bahagi. Handoff kay ${nextBuilder.name} (${nextBuilder.agent}) para magpatuloy at mag-enhance!`;
+        const handoffText = `${activeMember.name} (${activeMember.agent}) completed their part. Handoff to ${nextBuilder.name} (${nextBuilder.agent}) to continue and enhance!`;
         this.announce(handoffText);
         task.log.push({ agent: "kuya", name: "Kuya", text: `📢 BUILDER RELAY: ${handoffText}`, ts: Date.now() });
 
@@ -752,7 +804,7 @@ export class CollabManager {
 
       // Case 1B: Last builder finished, and a VERIFIER exists in the team!
       if (verifier) {
-        const handoffText = `Natapos na ng mga builder ang kanilang bahagi. Handoff kay ${verifier.name} (${verifier.agent}) para sa pagsusuri!`;
+        const handoffText = `Builders have completed their parts. Handoff to ${verifier.name} (${verifier.agent}) for verification!`;
         this.announce(handoffText);
         task.log.push({ agent: "kuya", name: "Kuya", text: `📢 HANDOFF TO VERIFIER: ${handoffText}`, ts: Date.now() });
 
@@ -803,12 +855,12 @@ export class CollabManager {
         });
       }
 
-      const finishMsg = `Natapos ng lahat ng builders ang kanilang bahagi sa Lingguhang Hamon "${task.goal.slice(0, 40)}"! Handa na para sa pagsusuri at final approval ni Kuya. 🎉`;
+      const finishMsg = `All builders have finished their work on "${task.goal.slice(0, 40)}"! Ready for Kuya's inspection and final approval. 🎉`;
       this.announce(finishMsg);
       task.log.push({
         agent: "kuya",
         name: "Kuya",
-        text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Maaaring mag-follow up si Kuya para sa karagdagang utos, o i-click ang Approve & Mark Done upang tapusin.)`,
+        text: `🏆 ALL BUILDERS FINISHED: ${finishMsg}\n(Kuya can send follow-up directives, or click 'Approve & Mark Done' to conclude.)`,
         ts: Date.now(),
       });
       audit("kuya", "collab_builders_done", task.id, { goal: task.goal });
@@ -839,7 +891,7 @@ export class CollabManager {
         });
       }
 
-      const winMsg = `Tagumpay ang inyong Lingguhang Hamon! Lahat ng tests ay pumasa. Mahusay, mga housemates! 🎉`;
+      const winMsg = `Challenge Success! All tests have passed. Outstanding work, housemates! 🎉`;
       this.announce(winMsg);
       task.log.push({ agent: "kuya", name: "Kuya", text: `🏆 VICTORY: ${winMsg}`, ts: Date.now() });
       audit("kuya", "collab_done", task.id, { goal: task.goal, attempts: task.attempt });
@@ -850,7 +902,7 @@ export class CollabManager {
     task.attempt++;
     if (task.attempt <= task.maxAttempts) {
       const builder = task.members.find((m) => !m.isVerifier) || task.members[0];
-      const retryMsg = `May nakitang problema si ${activeMember.name} (${activeMember.agent}) sa pagsusuri (Attempt ${task.attempt}/${task.maxAttempts}). ${builder.name} (${builder.agent}), ayusin ang mga bugs!`;
+      const retryMsg = `Verification issues found by ${activeMember.name} (${activeMember.agent}) (Attempt ${task.attempt}/${task.maxAttempts}). ${builder.name} (${builder.agent}), please fix the reported bugs!`;
       this.announce(retryMsg);
       task.log.push({ agent: "kuya", name: "Kuya", text: `⚠️ BUG FIX LOOP: ${retryMsg}`, ts: Date.now() });
 
@@ -900,7 +952,7 @@ export class CollabManager {
       error: `Circuit breaker tripped: ${task.maxAttempts} failed verification attempts`,
     });
 
-    const cbMsg = `Pansamantalang nahinto ang Lingguhang Hamon dahil lumagpas sa ${task.maxAttempts} retry attempts. ${builder.name}, pumunta ka sa Confession Room!`;
+    const cbMsg = `Collaboration challenge paused: exceeded ${task.maxAttempts} retry attempts. ${builder.name}, please report to the Confession Room.`;
     this.announce(cbMsg);
     task.log.push({ agent: "kuya", name: "Kuya", text: `🛑 CIRCUIT BREAKER TRIPPED: ${cbMsg}`, ts: Date.now() });
 
@@ -908,7 +960,7 @@ export class CollabManager {
     await this.housemates
       .call(
         builder.key,
-        `Kuya: May problema sa Lingguhang Hamon (${task.maxAttempts} attempts na ang nag-fail). Ano ang status at blocker?`,
+        `Kuya: The collaboration challenge has encountered issues (${task.maxAttempts} attempts failed). What is your status and blocker?`,
         "interrupt",
       )
       .catch(() => undefined);
@@ -940,7 +992,7 @@ export class CollabManager {
       });
     }
 
-    const cancelMsg = `Itinigil ang Lingguhang Hamon "${task.goal.slice(0, 40)}".`;
+    const cancelMsg = `Collaboration challenge canceled: "${task.goal.slice(0, 40)}".`;
     this.announce(cancelMsg);
     task.log.push({ agent: "kuya", name: "Kuya", text: `❌ CANCELED: ${cancelMsg}`, ts: Date.now() });
     return true;
@@ -954,11 +1006,20 @@ export class CollabManager {
     task.currentStep = "done";
     if (this.activeTaskId === id) this.activeTaskId = null;
 
+    if (task.subtasks) {
+      for (const st of task.subtasks) {
+        st.completed = true;
+      }
+    }
+
     for (const m of task.members) {
       m.state = "done";
+      delete m.lastError;
       const rec = this.housemates.get(m.key);
       if (rec) {
         rec.state = "idle";
+        delete rec.lastError;
+        delete rec.errorTimestamp;
         void this.housemates.dismissCall(m.key).catch(() => undefined);
       }
       this.store.ingest({
@@ -969,7 +1030,7 @@ export class CollabManager {
       });
     }
 
-    const winMsg = `Inaprubahan at minarkahang TAPOS ni Kuya ang Lingguhang Hamon "${task.goal.slice(0, 40)}"! Mabuhay ang team! 🎉`;
+    const winMsg = `Kuya has approved and marked the challenge complete: "${task.goal.slice(0, 40)}"! Outstanding work, team! 🎉`;
     this.announce(winMsg);
     task.log.push({ agent: "kuya", name: "Kuya", text: `✅ APPROVED BY KUYA: ${winMsg}`, ts: Date.now() });
     audit("kuya", "collab_approved", task.id, { goal: task.goal });
@@ -1033,7 +1094,7 @@ export class CollabManager {
     if (allBuildersErrored && activeBuilders.some((b) => b.state === "error")) {
       task.status = "blocked";
       task.currentStep = "blocked";
-      this.announce(`🛑 Nahinto ang Lingguhang Hamon dahil nagka-error ang housemate. Maaari itong i-retry ni Kuya.`);
+      this.announce(`🛑 Collaboration challenge halted due to a housemate error. Kuya can retry or reassign.`);
     }
 
     return true;
@@ -1095,7 +1156,7 @@ export class CollabManager {
           await this.promptRushBuilder(task, b, st);
         }
       }
-      const rushRetryNotice = `Binuksan muli ni Kuya ang Rush Mode Lingguhang Hamon! Lahat ng builders ay muling nagtatrabaho nang sabay-sabay!`;
+      const rushRetryNotice = `Rush Mode resumed by Kuya! All builders are actively working in parallel again!`;
       this.announce(rushRetryNotice);
       task.log.push({
         agent: "kuya",
@@ -1106,7 +1167,7 @@ export class CollabManager {
       return task;
     }
 
-    const retryNotice = `Binuksan muli ni Kuya ang Lingguhang Hamon para sa bagong attempt (${task.attempt}/${task.maxAttempts})! ${builder.name}, simulan ang pag-ayos!`;
+    const retryNotice = `Challenge reopened for new attempt (${task.attempt}/${task.maxAttempts})! ${builder.name}, please begin fixing!`;
     this.announce(retryNotice);
     task.log.push({
       agent: "kuya",
@@ -1133,6 +1194,74 @@ export class CollabManager {
     task.status = "running";
     this.activeTaskId = id;
 
+    if (targetKey === "all") {
+      const builders = task.members.filter((m) => !m.isVerifier);
+      const targetBuilders = builders.length > 0 ? builders : task.members;
+
+      // Dismiss all builders from confession if called
+      for (const b of targetBuilders) {
+        await this.housemates.dismissCall(b.key).catch(() => undefined);
+      }
+
+      // Decompose follow-up among all builders
+      let subtasks: CollabSubtask[] = [];
+      if (task.rushMode && targetBuilders.length >= 2) {
+        subtasks = await this.decomposeWithKuya(cleanMsg, task.cwd, targetBuilders, task.kuyaConfig);
+      } else {
+        subtasks = targetBuilders.map((b, idx) => ({
+          memberKey: b.key,
+          memberName: b.name,
+          agent: b.agent,
+          title: `Follow-up Directive #${idx + 1}`,
+          instructions: cleanMsg,
+          assignedFiles: [],
+          completed: false,
+        }));
+      }
+
+      task.subtasks = subtasks;
+      task.currentStep = "building";
+
+      for (const m of task.members) {
+        delete m.lastError;
+        const isTarget = targetBuilders.some((b) => b.key === m.key);
+        m.state = isTarget ? "working" : "standby";
+        const rec = this.housemates.get(m.key);
+        if (rec) {
+          delete rec.lastError;
+          delete rec.errorTimestamp;
+          rec.state = isTarget ? "working" : "standby";
+          rec.currentAction = isTarget ? "Working on follow-up directive" : "standby";
+        }
+        this.store.ingest({
+          harness: "opencode",
+          sessionId: m.sessionId,
+          type: "collab_step",
+          state: isTarget ? "working" : "standby",
+          title: isTarget
+            ? `[Lingguhang Hamon] ${m.name} Follow-up Directive`
+            : `[Lingguhang Hamon] ${m.name} Standby`,
+        });
+      }
+
+      const note = `Kuya dispatched team follow-up directive to all builders: "${cleanMsg}"`;
+      this.announce(note);
+      task.log.push({
+        agent: "kuya",
+        name: "Kuya",
+        text: `👥 KUYA'S TEAM FOLLOW-UP DIRECTIVE:\n${cleanMsg}\n\nDecomposed to ${targetBuilders.length} builders:\n${subtasks.map((s) => `• 🦫 ${s.memberName} [${s.title}]: ${s.instructions}`).join("\n")}`,
+        ts: Date.now(),
+      });
+
+      // Prompt all target builders in parallel
+      for (const b of targetBuilders) {
+        const sub = subtasks.find((s) => s.memberKey === b.key);
+        await this.promptRushBuilder(task, b, sub);
+      }
+
+      return task;
+    }
+
     let targetMember = targetKey ? task.members.find((m) => m.key === targetKey) : undefined;
     if (!targetMember) {
       targetMember = task.members.find((m) => !m.isVerifier) || task.members[0];
@@ -1144,6 +1273,15 @@ export class CollabManager {
     // Dismiss target from confession room if currently called
     await this.housemates.dismissCall(targetMember.key).catch(() => undefined);
 
+    // If subtasks exist, update target member's subtask
+    if (task.subtasks) {
+      const existingSub = task.subtasks.find((s) => s.memberKey === targetMember.key);
+      if (existingSub) {
+        existingSub.completed = false;
+        existingSub.instructions = cleanMsg;
+      }
+    }
+
     for (const m of task.members) {
       delete m.lastError;
       const isWorking = m.key === targetMember.key;
@@ -1153,6 +1291,7 @@ export class CollabManager {
         delete rec.lastError;
         delete rec.errorTimestamp;
         rec.state = isWorking ? "working" : "standby";
+        rec.currentAction = isWorking ? "Working on follow-up" : "standby";
       }
       this.store.ingest({
         harness: "opencode",
@@ -1165,7 +1304,7 @@ export class CollabManager {
       });
     }
 
-    const note = `May bagong bilin si Kuya para kay ${targetMember.name}: "${cleanMsg}"`;
+    const note = `New guidance from Kuya for ${targetMember.name}: "${cleanMsg}"`;
     this.announce(note);
     task.log.push({
       agent: "kuya",

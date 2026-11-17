@@ -21,7 +21,7 @@
 
       <div class="kuya-banner" id="kuya-banner" hidden aria-live="assertive">
         <span class="kuya-badge">📢 KUYA</span>
-        <span class="kuya-msg" id="kuya-msg">Pumunta po kayo sa office. May task po kayo.</span>
+        <span class="kuya-msg" id="kuya-msg">Please head to the office. You have an active task.</span>
       </div>
 
       <aside class="diary-panel" id="diary-panel" hidden aria-live="assertive" aria-label="Confession Room diary panel">
@@ -32,10 +32,10 @@
         </div>
         <p class="diary-question" id="diary-question"></p>
         <div class="diary-options" id="diary-options"></div>
-        <textarea id="diary-text" rows="2" placeholder="Sagot para kay Kuya…"></textarea>
+        <textarea id="diary-text" rows="2" placeholder="Response for Kuya…"></textarea>
         <div class="diary-actions">
-          <button class="diary-submit" id="diary-submit">Ipadala</button>
-          <button class="diary-done" id="diary-done" style="display:none;">Done / Bumalik sa Bahay</button>
+          <button class="diary-submit" id="diary-submit">Send</button>
+          <button class="diary-done" id="diary-done" style="display:none;">Done / Return to House</button>
           <span class="diary-queue" id="diary-queue"></span>
         </div>
         <div class="diary-chat" id="diary-chat"></div>
@@ -295,7 +295,7 @@
           <p class="summon-error" id="collab-error" hidden></p>
           <div class="summon-actions">
             <button class="dispatch-btn summon-cancel" id="collab-cancel">Cancel</button>
-            <button class="dispatch-btn" id="collab-submit" style="background:#7c3aed;">🚀 Simulan ang Hamon</button>
+            <button class="dispatch-btn" id="collab-submit" style="background:#7c3aed;">🚀 Start Challenge</button>
           </div>
         </section>
       </div>
@@ -345,9 +345,9 @@
               <span id="hamon-followup-hint" style="font-size:9.5px; color:var(--muted);">Instruct the team to continue, tweak, or add new features</span>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
-              <input type="text" id="hamon-followup-input" placeholder="Mensahe o karagdagang utos kay housemate bago tapusin..." style="flex:1; background:#090d16; border:1px solid #475569; color:#f8fafc; font-size:11px; padding:7px 10px; border-radius:3px;">
+              <input type="text" id="hamon-followup-input" placeholder="Instruct the team or housemates with follow-up directives..." style="flex:1; background:#090d16; border:1px solid #475569; color:#f8fafc; font-size:11px; padding:7px 10px; border-radius:3px;">
               <select id="hamon-followup-target" style="background:#090d16; border:1px solid #475569; color:#f8fafc; font-size:11px; padding:6px 8px; border-radius:3px; max-width:180px;"></select>
-              <button class="dispatch-btn" id="hamon-followup-send-btn" style="background:#6366f1; color:#fff; font-size:11px; padding:7px 14px; white-space:nowrap; font-weight:600;">🚀 Ipadala</button>
+              <button class="dispatch-btn" id="hamon-followup-send-btn" style="background:#6366f1; color:#fff; font-size:11px; padding:7px 14px; white-space:nowrap; font-weight:600;">🚀 Send Directive</button>
             </div>
           </div>
 

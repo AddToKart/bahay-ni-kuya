@@ -230,7 +230,13 @@ function reconcile(snap: Snapshot, now: number): number {
       harnessInstances.set(s.harness, instanceIndex + 1);
     }
 
-    const isWorking = s.state === "working";
+    const hasActiveActivity = Boolean(
+      s.state === "working" ||
+      s.tool ||
+      (typeof s.currentThought === "string" && s.currentThought.trim().length > 0) ||
+      (typeof s.currentAction === "string" && /thinking|tool|patch|run|execut|analyz|work/i.test(s.currentAction))
+    );
+    const isWorking = hasActiveActivity || s.state === "working";
     const isStandby = s.state === "standby";
     const isBlocked = s.state === "blocked";
     const isError = s.state === "error";

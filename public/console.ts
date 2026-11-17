@@ -1483,7 +1483,7 @@ export class KuyaConsole {
           statusBadge.style.textTransform = "uppercase";
 
           const stMember = (task.members || []).find((m: any) => m.key === st.memberKey);
-          if (st.completed) {
+          if (task.status === "done" || st.completed) {
             statusBadge.style.background = "#059669";
             statusBadge.style.color = "#ffffff";
             statusBadge.textContent = "✅ DONE";
@@ -1535,7 +1535,11 @@ export class KuyaConsole {
         stateSpan.style.fontWeight = "700";
         stateSpan.style.textTransform = "uppercase";
 
-        if (m.state === "error" || m.lastError) {
+        if (task.status === "done" || m.state === "done") {
+          stateSpan.style.background = "#059669";
+          stateSpan.style.color = "#ffffff";
+          stateSpan.textContent = "✅ DONE";
+        } else if (m.state === "error" || m.lastError) {
           stateSpan.style.background = "#dc2626";
           stateSpan.style.color = "#ffffff";
           stateSpan.textContent = "🛑 ERROR";
@@ -1700,6 +1704,12 @@ export class KuyaConsole {
     if (followupTarget && Array.isArray(task.members)) {
       const prevVal = followupTarget.value;
       followupTarget.innerHTML = "";
+      if (task.members.length > 1) {
+        const allOpt = document.createElement("option");
+        allOpt.value = "all";
+        allOpt.textContent = "👥 All Builders (Kuya / Rush Mode AI Delegated)";
+        followupTarget.appendChild(allOpt);
+      }
       for (const m of task.members) {
         const opt = document.createElement("option");
         opt.value = m.key;
