@@ -772,7 +772,9 @@ export class KuyaConsole {
     const agent = this.agentSelect?.value ?? "";
     if (!agent) return this.showSummonError("No opencode agent available. Check the managed opencode server.");
     const model = this.modelSelect?.value ?? "";
-    const [providerID, modelID] = model.split("/");
+    const firstSlash = model.indexOf("/");
+    const providerID = firstSlash !== -1 ? model.slice(0, firstSlash) : "";
+    const modelID = firstSlash !== -1 ? model.slice(firstSlash + 1) : "";
     if (!providerID || !modelID) return this.showSummonError("Pick a model.");
     const activeHouse = this.houseManager?.getActiveHouse();
     const projectRoot = this.folderInput?.value.trim() || activeHouse?.root || "";
@@ -1644,12 +1646,12 @@ export class KuyaConsole {
     if (hamonErrorBanner) {
       if (erroredMembers.length > 0 || task.status === "blocked") {
         hamonErrorBanner.style.display = "block";
-        const firstErr = erroredMembers[0]?.lastError || "Nahinto ang collaboration task dahil nagka-error ang housemate.";
-        let category = "May Problema sa Execution ng Housemate";
+        const firstErr = erroredMembers[0]?.lastError || "Hamon collaboration stopped due to housemate error.";
+        let category = "Housemate Execution Error";
         if (/rate\s*limit|429/i.test(firstErr)) {
           category = "Rate Limit Reached (HTTP 429) — Quota Exceeded";
         } else if (/token|quota|credit|balance|exhaust/i.test(firstErr)) {
-          category = "Out of Tokens / Credit Quota Exceeded";
+          category = "Token Quota Exceeded";
         } else if (/timeout/i.test(firstErr)) {
           category = "Model Request Timeout — Provider Unresponsive";
         }
@@ -1657,7 +1659,7 @@ export class KuyaConsole {
           hamonErrorTitle.textContent = `${category}: ${erroredMembers.map((m: any) => `${m.name} [${m.agent}]`).join(", ")}`;
         }
         if (hamonErrorDetail) {
-          hamonErrorDetail.textContent = `${firstErr}\n\n💡 Paalala ni Kuya: Maaaring nag-rate limit ang provider o naubusan ng libreng tokens. Maaaring i-click ang 'Retry Hamon' sa ibaba upang subukan ulit, o mag-evict at mag-summon ng ibang model sa summon panel.`;
+          hamonErrorDetail.textContent = `${firstErr}\n\n💡 Tip: Check provider status and model configuration, or click 'Retry Hamon' to try again.`;
         }
       } else {
         hamonErrorBanner.style.display = "none";
@@ -1877,7 +1879,7 @@ export class KuyaConsole {
         }
         if (errorTitle) errorTitle.textContent = title;
         if (errorDetail) {
-          errorDetail.textContent = `${errText}\n\n💡 Paalala ni Kuya: Libreng mga model tulad ng DeepSeek flash-free ay mabilis maubusan ng rate limit o tokens. Maaari kang mag-assign ng bagong model o subukan ulit gamit ang Retry button.`;
+          errorDetail.textContent = `${errText}\n\n💡 Tip: Check if the model ID, provider, and credentials are valid in OpenCode, or click Retry Hamon below.`;
         }
       } else {
         errorBanner.style.display = "none";

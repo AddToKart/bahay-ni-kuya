@@ -919,7 +919,21 @@ export class Housemates {
         if (sid && this.sessionToKey.has(sid)) {
           const key = this.sessionToKey.get(sid);
           const rec = key ? this.recs.get(key) : undefined;
-          const errorMsg = error?.message || (typeof p.error === "string" ? p.error : "OpenCode session error");
+          let errorMsg = "OpenCode session error";
+          if (typeof p.error === "string" && p.error) {
+            errorMsg = p.error;
+          } else if (error && typeof error.message === "string") {
+            errorMsg = error.message;
+          } else if ((p as any).error?.data?.message) {
+            errorMsg = String((p as any).error.data.message);
+          } else if (typeof (p as any).message === "string") {
+            errorMsg = (p as any).message;
+          } else if (p.error && typeof p.error === "object") {
+            try {
+              errorMsg = JSON.stringify(p.error);
+            } catch {}
+          }
+          log(`housemates: session.error for ${key} (${sid}): ${errorMsg}`);
           if (rec) {
             rec.state = "error";
             rec.lastError = errorMsg;

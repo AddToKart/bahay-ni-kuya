@@ -1004,11 +1004,16 @@ export class CollabManager {
       errorCategory = "Request Timeout";
     }
 
-    this.announce(`⚠️ May problema kay ${member.name} (${member.agent}): [${errorCategory}] ${cleanError}`);
+    let tip = "💡 Tip: Check if the model ID, provider, and credentials are valid in OpenCode. You can click 'Retry Hamon' to retry.";
+    if (errorCategory.includes("Rate Limit") || errorCategory.includes("Tokens")) {
+      tip = "💡 Tip: Provider rate limit or token quota exceeded. Switch models or wait a moment before retrying.";
+    }
+
+    this.announce(`⚠️ Problem with ${member.name} (${member.agent}): [${errorCategory}] ${cleanError}`);
     task.log.push({
       agent: "kuya",
       name: "Kuya",
-      text: `🛑 AGENT ERROR [${member.name} - ${member.agent}]:\nCategory: ${errorCategory}\nDetails: ${cleanError}\n\n💡 Paalala ni Kuya: Maaaring nag-rate limit ang provider o naubusan ng libreng tokens. Gamitin ang Retry button o magpalit ng model sa housemate summoner.`,
+      text: `🛑 AGENT ERROR [${member.name} - ${member.agent}]:\nCategory: ${errorCategory}\nDetails: ${cleanError}\n\n${tip}`,
       ts: Date.now(),
     });
 
